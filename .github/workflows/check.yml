@@ -1,0 +1,17 @@
+# Every push gets a tick or a cross on GitHub, and the Actions tab shows the same
+# checklist `uv run check.py --assignment 2` prints on your machine. Nothing to edit.
+name: Assignment check
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.repository != 'sd5913/assignment-2-template'   # the template itself has nothing to check
+    uses: sd5913/pfad/.github/workflows/check-assignment.yml@2026
+    with:
+      assignment: "2"
