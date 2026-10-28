@@ -1,34 +1,40 @@
-# The phenomenon
+# BothPls
 
-<!-- This is the SD5913 assignment 2 template. Everything in this file is yours to
-replace, and the check counts words: comments like this one are not words, so
-delete each one as you write. Start with the heading: name the phenomenon.
+> **[TODO: Add a catchy 1-sentence tagline or short description of BothPls, e.g., A playful social decision-making app designed to help friends overcome choice paralysis together.]**
 
-Then, in this order, at least 150 words in total.
+---
 
-New to folders, paths, or the files here whose names start with a dot? Read
-https://github.com/sd5913/pfad/blob/2026/reference/files.md first. Ten minutes. -->
+## 📱 Visual Previews & UI Design
+<!-- 
+  [Placeholder for App Mockups / Screenshots]
+  Recommended layout: Display key screens (Home, Voting, Results).
+  Example: <img src="path/to/preview.png" alt="BothPls App Screens" width="100%" />
+-->
 
-![what the picture is](out/plot.png)
+---
 
-## The phenomenon
+## 👥 Team & Contributions
 
-<!-- What goes up and down, and why you looked at it. -->
+- **Team Members**: 
+  - **Xiao Yitian** ([TODO: Add role/responsibilities if needed])
+  - **[TODO: Teammate Name]** ([TODO: Add role/responsibilities])
 
-## The source
+---
 
-<!-- A link to the page or endpoint the file came from, and one line on what is in
-the file: how many rows, what a row means, what the units are. -->
+## 🎯 Project Overview & Target Audience
 
-## What the picture shows
+- **What it is**: BothPls is an interactive web/mobile application designed to solve choice paralysis. When users (and their friends) struggle to decide between options (e.g., what to eat, what to buy, where to go), BothPls turns the dilemma into a quick, engaging, and collaborative decision poll.
+- **Intended Audience**: **[TODO: Briefly describe who will use this app, e.g., Groups of friends, couples, or individuals looking for crowdsourced opinions on daily choices.]**
+- **Core Value**: Transforms stressful decision-making into a lighthearted, social experience with transparent voting mechanics (such as Borda count ranking) and playful feedback loops.
 
-<!-- Two or three sentences. Including what it hides: every transformation throws
-something away, and naming what yours threw away is the easiest way to sound like
-you know what you did. -->
+---
 
-## Run it
+## 🚀 Getting Started & Prerequisites
 
-```
-uv run fetch.py
-uv run plot.py
-```
+### Prerequisites
+- **[TODO: List required software, e.g., Node.js (v18+), modern web browser, or Unity version]**
+
+### Setup & Installation
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/your-username/BothPls.git](https://github.com/your-username/BothPls.git)
