@@ -1,3 +1,4 @@
+// Shared page frame with optional mobile navigation. / 共用页面框架及可选的移动端导航。
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { BottomNav } from "./BottomNav";

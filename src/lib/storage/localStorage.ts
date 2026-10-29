@@ -1,3 +1,4 @@
+// Safe JSON persistence helpers for browser storage. / 用于浏览器存储的安全 JSON 读写工具。
 export const POLLS_STORAGE_KEY = "bothpls:polls:v1";
 export const VOTER_STORAGE_KEY = "bothpls:voter:v1";
 

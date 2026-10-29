@@ -3,6 +3,8 @@
 # dependencies = ["requests"]
 # ///
 
+# Example data-fetching utility for the repository's Python workflow. / 仓库 Python 数据处理流程的示例数据获取工具。
+
 """
 Fetch the numbers once, save the raw reply to data/, and never fetch again.
 

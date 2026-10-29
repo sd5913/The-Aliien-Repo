@@ -1,3 +1,4 @@
+// Bottom navigation for the main app sections. / 应用主要区域的底部导航。
 import { NavLink } from "react-router-dom";
 
 export function BottomNav() {

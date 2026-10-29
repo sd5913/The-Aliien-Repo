@@ -1,3 +1,4 @@
+// Poll creation form and local prototype workflow. / 投票创建表单及本地原型流程。
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";

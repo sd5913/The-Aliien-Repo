@@ -1,3 +1,4 @@
+// Poll list and management pages for the local prototype. / 本地原型的投票列表与管理页面。
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";

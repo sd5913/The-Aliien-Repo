@@ -1,3 +1,4 @@
+// Public poll voting page with choice and ranking interactions. / 支持选择与排序交互的公开投票页面。
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";

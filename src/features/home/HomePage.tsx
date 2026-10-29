@@ -1,3 +1,4 @@
+// Landing page with the product introduction and recent polls. / 展示产品介绍和最近投票的首页。
 import { Link } from "react-router-dom";
 import { PageShell } from "../../components/layout/PageShell";
 import { StatusPill } from "../../components/ui/StatusPill";

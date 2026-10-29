@@ -1,3 +1,4 @@
+// Application route definitions. / 应用页面的路由定义。
 import { createBrowserRouter } from "react-router-dom";
 import { HomePage } from "../features/home/HomePage";
 import { CreatePollPage } from "../features/polls/create/CreatePollPage";

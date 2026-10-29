@@ -3,6 +3,8 @@
 # dependencies = ["matplotlib"]
 # ///
 
+# Example plotting utility for the repository's Python workflow. / 仓库 Python 数据处理流程的示例绘图工具。
+
 """
 Read the file in data/, make one picture, save it to out/.
 

@@ -1,3 +1,4 @@
+// Poll-specific LocalStorage persistence. / 投票数据专用的 LocalStorage 持久化模块。
 import type { Poll } from "../../types/poll";
 import { POLLS_STORAGE_KEY, readLocalJson, writeLocalJson } from "./localStorage";
 

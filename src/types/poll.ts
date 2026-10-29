@@ -1,3 +1,4 @@
+// Core poll, option, vote, and voter types. / 投票、选项、投票记录及投票者的核心类型。
 export type PollStatus = "open" | "closed";
 
 export interface PollOption {

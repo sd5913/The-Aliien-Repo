@@ -1,3 +1,4 @@
+// Poll results, Borda scores, and comment management. / 投票结果、Borda 计分与评论管理页面。
 import { Link, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill } from "../../../components/ui/StatusPill";
