@@ -1,6 +1,8 @@
 # Made from data/ on every run. Commit out/; never commit site/.
 site/
 data/cache/
+node_modules/
+dist/
 
 # Machinery, not work.
 .venv/
