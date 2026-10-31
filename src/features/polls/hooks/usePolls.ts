@@ -1,7 +1,7 @@
 // React state and updates for locally stored polls. / 本地投票数据的 React 状态与更新逻辑。
 import { useCallback, useEffect, useState } from "react";
-import type { Poll } from "../types/poll";
-import { readPolls, writePolls } from "../lib/storage/polls";
+import type { Poll } from "../../../types/poll";
+import { readPolls, writePolls } from "../services/polls";
 
 export function usePolls() {
   const [polls, setPolls] = useState<Poll[]>(readPolls);

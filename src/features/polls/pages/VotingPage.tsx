@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
-import { StatusPill } from "../../../components/ui/StatusPill";
-import { usePolls } from "../../../hooks/usePolls";
-import { getRandomNickname, getVotingMode, isPollOpen } from "../../../lib/voting";
+import { StatusPill } from "../components/StatusPill";
+import { usePolls } from "../hooks/usePolls";
+import { getRandomNickname, getVotingMode, isPollOpen } from "../utils/voting";
 import { VOTER_STORAGE_KEY, readLocalJson, writeLocalJson } from "../../../lib/storage/localStorage";
 import type { VoterIdentity } from "../../../types/poll";
 

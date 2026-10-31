@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
-import { usePolls } from "../../../hooks/usePolls";
+import { usePolls } from "../hooks/usePolls";
 import type { PollOption } from "../../../types/poll";
 
 const makeOption = (): PollOption => ({ id: crypto.randomUUID(), name: "", imageUrl: "" });

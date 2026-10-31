@@ -1,5 +1,5 @@
 // Reusable voting mode, status, scoring, and identity helpers. / 可复用的投票模式、状态、计分和身份工具。
-import type { Poll, PollOption, VotingMode } from "../types/poll";
+import type { Poll, PollOption, VotingMode } from "../../../types/poll";
 
 export interface RankedOptionResult {
   option: PollOption;

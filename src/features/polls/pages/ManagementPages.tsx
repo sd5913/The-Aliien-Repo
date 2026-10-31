@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
-import { StatusPill } from "../../../components/ui/StatusPill";
-import { usePolls } from "../../../hooks/usePolls";
-import { isPollOpen } from "../../../lib/voting";
+import { StatusPill } from "../components/StatusPill";
+import { usePolls } from "../hooks/usePolls";
+import { isPollOpen } from "../utils/voting";
 
 export function MyPollsPage() {
   const { polls } = usePolls();
