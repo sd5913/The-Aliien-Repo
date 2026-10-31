@@ -1,4 +1,4 @@
-/* Global responsive styles and design tokens. / 全局响应式样式与设计变量。 */
+/* Global styles and design tokens. / 全局样式与设计变量。 */
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap");
 
 :root {
@@ -15,6 +15,9 @@
   --orange: #e7835c;
   --sage: #dfe8d8;
   --line: #e9e3d8;
+  /* Fixed design canvas; adjust these values together when the target size changes. */
+  --canvas-width: 393px;
+  --canvas-height: 873px;
 }
 
 * { box-sizing: border-box; }
@@ -26,20 +29,20 @@ button { color: inherit; }
 a { color: inherit; text-decoration: none; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #d9906e; outline-offset: 3px; }
 
-.app-shell { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
-.app-shell.has-bottom-nav .page-content { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
-.topbar { height: 66px; padding: 0 max(22px, calc((100vw - 740px) / 2)); display: flex; align-items: center; gap: 10px; }
+.app-shell { position: relative; display: flex; width: var(--canvas-width); height: var(--canvas-height); flex-direction: column; margin: 0 auto; overflow: hidden; background: var(--cream); }
+.app-shell.has-bottom-nav .page-content { padding-bottom: 112px; }
+.topbar { height: 66px; flex: 0 0 66px; padding: 0 22px; display: flex; align-items: center; gap: 10px; }
 .brand-mark { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 11px; background: var(--orange); color: white; font-size: 19px; font-weight: 800; }
 .wordmark { font-size: 19px; letter-spacing: -.7px; font-weight: 800; }
 .topbar-title { margin-left: 8px; color: var(--muted); font-size: 13px; }
 .topbar-spacer { flex: 1; }
 .back-link { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); font-size: 25px; }
-.page-content { width: min(100% - 36px, 680px); margin: 0 auto; padding: 15px 0 42px; }
+.page-content { width: 100%; min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; margin: 0 auto; padding: 15px 18px 42px; }
 
 .hero-card { position: relative; overflow: hidden; min-height: 325px; padding: 37px 32px; border-radius: 28px; background: #e9eee2; }
 .eyebrow { color: #83816f; text-transform: uppercase; letter-spacing: 1.15px; font-size: 11px; font-weight: 700; }
 h1, h2, h3, p { margin-top: 0; }
-.hero-card h1 { margin: 15px 0 13px; font-size: clamp(32px, 8vw, 46px); line-height: 1.22; letter-spacing: -1.6px; }
+.hero-card h1 { margin: 15px 0 13px; font-size: 32px; line-height: 1.22; letter-spacing: -1.6px; }
 .hero-card p { max-width: 350px; margin-bottom: 24px; color: #65675d; font-size: 14px; line-height: 1.75; }
 .hero-actions { display: flex; align-items: center; gap: 19px; flex-wrap: wrap; }
 .button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 0 20px; border: 0; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 700; transition: transform .16s ease, background .16s ease; }
@@ -77,7 +80,7 @@ h1, h2, h3, p { margin-top: 0; }
 .empty-card h3, .empty-card h2 { margin-bottom: 7px; font-size: 16px; }
 .empty-card p { margin-bottom: 17px; color: var(--muted); font-size: 13px; }
 
-.bottom-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; gap: min(13vw, 64px); padding: 10px 24px calc(11px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(226,220,210,.8); background: rgba(255,253,248,.96); backdrop-filter: blur(15px); }
+.bottom-nav { position: absolute; z-index: 5; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; gap: 51px; padding: 10px 24px 11px; border-top: 1px solid rgba(226,220,210,.8); background: rgba(255,253,248,.96); backdrop-filter: blur(15px); }
 .nav-item { width: 76px; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 17px; color: #85847b; }
 .nav-item > span { font-size: 21px; line-height: 1.1; }
 .nav-item small { font-size: 10px; font-weight: 600; }
@@ -85,7 +88,7 @@ h1, h2, h3, p { margin-top: 0; }
 .nav-create > span { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 50%; background: #e7835c; color: white; font-size: 21px; }
 
 .form-intro { margin: 10px 0 22px; }
-.form-intro h1, .management-heading h1, .voting-heading h1 { margin: 8px 0 7px; font-size: clamp(26px, 7vw, 34px); line-height: 1.3; letter-spacing: -.9px; }
+.form-intro h1, .management-heading h1, .voting-heading h1 { margin: 8px 0 7px; font-size: 28px; line-height: 1.3; letter-spacing: -.9px; }
 .form-intro p, .management-heading > p, .voting-heading > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .form-card, .content-card { margin-bottom: 14px; padding: 22px 19px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); }
 .field-label { display: block; margin: 16px 0 8px; font-size: 13px; font-weight: 700; }
@@ -185,22 +188,6 @@ h1, h2, h3, p { margin-top: 0; }
 .comment-body p { margin: 6px 0 0; overflow-wrap: anywhere; color: #5f6058; font-size: 12px; line-height: 1.6; }
 .comment-delete { width: 34px; height: 34px; font-size: 19px; }
 
-@media (min-width: 700px) {
-  .page-content { padding-top: 23px; }
-  .hero-card { padding: 42px 44px; }
-  .form-card, .content-card { padding: 25px 24px; }
-  .step-card { padding: 18px; }
-}
-@media (max-width: 380px) {
-  .page-content { width: calc(100% - 28px); }
-  .hero-card { min-height: 310px; padding: 31px 23px; }
-  .hero-doodle { right: 15px; font-size: 40px; }
-  .steps-grid { gap: 7px; }
-  .step-card { padding: 13px 9px; }
-  .step-card p { font-size: 10px; }
-  .share-block { align-items: flex-start; }
-  .share-block .button { padding: 0 12px; }
-}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

@@ -6,6 +6,11 @@ BothPls is an interactive project designed to help people who struggle to make d
 
 Instead of making a decision alone, users can share their options with friends and collect votes and opinions. BothPls aims to make everyday decisions easier, more interactive, and more enjoyable.
 
+| Main Page | Create poll | My Page |
+| --- | --- | --- |
+| ![alt text](image.png) | ![alt text](image-2.png) | ![alt text](image-1.png) |
+
+ 
 > **Project status:** In Development  
 > **Project type:** Interactive Web App  
 > **Course:** Group Project — Build Something Together  
