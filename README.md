@@ -10,10 +10,10 @@ Instead of making a decision alone, users can share their options with friends a
 | --- | --- | --- |
 | ![Main Page](images/image.png) | ![Create poll](images/image-2.png) | ![My Page](images/image-1.png) |
 
- 
-> **Project status:** In Development  
-> **Project type:** Interactive Web App  
-> **Course:** Group Project — Build Something Together  
+&nbsp;
+> **Project status:** In Development&nbsp;
+> **Project type:** Interactive Web App&nbsp;
+> **Course:** Group Project — Build Something Together&nbsp;
 > **Final Deadline:** 6 December 2026, 23:59 HKT
 
 ---
@@ -48,11 +48,11 @@ For example, a user might be unsure which jacket to buy, which colour suits them
 
 - **Project name:** BothPls
 - **Project category:** Social Shopping Decision App
-- **Primary platform:** [TODO: Web app / other]
+- **Primary platform:** Mobile Web App (Android Chrome)
 - **Target audience:** People who need help choosing between multiple options
-- **Development team:** [TODO: Team name or members]
+- **Development team:** The Aliien (2 members)
 - **Live demo:** [TODO: Add URL]
-- **Design prototype:** [TODO: Add Figma URL]
+- **Design prototype:** [Figma](https://www.figma.com/design/dWtx6LBsB3EmKM5ElXQaR4/SD5913Teamwork)
 
 ## 2. Problem Statement
 
@@ -75,18 +75,18 @@ Although shopping is the primary use case, the broader concept may also support 
 
 ## 4. Core Features
 
-The following features describe the planned initial product. Their final implementation and scope will be updated as development progresses.
+The following features describe the confirmed MVP scope. Their implementation will be updated as development progresses.
 
 | Feature | Description | Status |
 |---|---|---|
-| Create a decision post | Add a question and product images or options. | Planned |
-| Share with friends | Generate a link that allows friends to access the decision post. | Planned |
-| Vote on options | Allow friends to select their preferred option. | Planned |
-| View voting results | Display voting statistics to help users compare opinions. | Planned |
-| Optional comments | Let friends explain their choices or leave feedback. | Planned |
-| Manage a decision post | Allow the creator to manage or end a voting session. | Planned |
+| Create a decision post | Add a question, 2–5 options with images, and choose single or multiple choice mode. | Confirmed (MVP) |
+| Share with friends | Generate a public link that allows friends to access the decision post. | Confirmed (MVP) |
+| Vote on options | Allow friends to vote anonymously and modify their vote while the poll is open. | Confirmed (MVP) |
+| View voting results | Display valid votes, percentages, and leading or tie status. | Confirmed (MVP) |
+| Optional comments | Let friends explain their choices or leave feedback; comments are revealed after the poll ends. | Confirmed (MVP) |
+| Manage a decision post | Allow the creator to manage polls, set deadlines, end voting, and delete a poll. | Confirmed (MVP) |
 
-**MVP priority:** Focus on the core interaction of creating a choice, sharing it, collecting votes, and viewing the results.
+**MVP priority:** Focus on the core loop of creating a poll, sharing it, collecting votes, viewing results, and managing or ending the poll.
 
 Additional features will be considered based on the team's development progress and testing results.
 
@@ -104,18 +104,18 @@ The first interaction to validate is whether users can easily create a choice, s
 
 ## 6. Technology Stack
 
-The technology stack is currently being confirmed.
+The frontend stack is confirmed; backend and deployment choices are still being finalised.
 
 | Component | Technology |
 |---|---|
-| Frontend | [TODO] |
-| Backend | [TODO] |
-| Database | [TODO] |
-| UI/UX Design | [TODO] |
-| Deployment | [TODO] |
-| Development Tools | [TODO] |
+| Frontend | React + Vite |
+| Backend | [TODO: not yet finalised (Supabase under evaluation)] |
+| Database | [TODO: not yet finalised] |
+| UI/UX Design | Figma |
+| Deployment | [TODO: Vercel under evaluation] |
+| Development Tools | VS Code, GitHub |
 
-The final stack will be documented here once the implementation decisions have been confirmed.
+The final backend stack will be documented here once the implementation decisions have been confirmed.
 
 ## 7. Getting Started
 
@@ -132,14 +132,14 @@ Before running the project, make sure the following tools are installed:
 Clone the repository:
 
 ```bash
-git clone [TODO: Repository URL]
-cd [TODO: Repository Folder]
+git clone https://github.com/sd5913/The-Aliien-Repo.git
+cd The-Aliien-Repo
 ```
 
 Install dependencies:
 
 ```bash
-[TODO: Installation command]
+npm install
 ```
 
 ### Run Locally
@@ -147,13 +147,13 @@ Install dependencies:
 Start the development server:
 
 ```bash
-[TODO: Development command]
+npm run dev
 ```
 
 Open the local URL shown in the terminal:
 
 ```text
-[TODO: Local development URL]
+http://localhost:5173
 ```
 
 ### Online Demo
@@ -167,15 +167,15 @@ Open the local URL shown in the terminal:
 
 ### Supported Platforms
 
-- **Primary platform:** [TODO]
-- **Supported browsers:** [TODO]
-- **Mobile compatibility:** [TODO]
-- **Desktop compatibility:** [TODO]
+- **Primary platform:** Mobile Web App (Android Chrome)
+- **Supported browsers:** Chrome (Android)
+- **Mobile compatibility:** Primary target; designed for a fixed viewport (393 × 873 px reference, also tested at 360 px and 412 px)
+- **Desktop compatibility:** Not adapted (mobile-only design)
 
 ### Current Limitations
 
 - [TODO: Features that are not yet implemented]
-- [TODO: Browser, device, or network limitations]
+- Anonymous participant identity is device-bound: clearing browser data or switching devices may lose it.
 - [TODO: Login, data storage, or sharing limitations]
 - [TODO: Other known issues]
 
@@ -187,7 +187,9 @@ The team will develop BothPls through small, incremental steps and document prog
 
 | Week / Date | Work Completed | Challenges / Next Steps |
 |---|---|---|
-| [TODO] | Initial idea and project scope | [TODO] |
+| 2026-10-29 | PRD v0.5 draft: core modules (create poll / vote / comments) defined | [TODO] |
+| 2026-10-31 | PRD v1.0: voting modes, comment permissions, deletion rules and tech stack confirmed | [TODO] |
+| 2026-11-01 | PRD v1.1: re-organised into the standard PRD template | [TODO] |
 | [TODO] | UI/UX design and prototype | [TODO] |
 | [TODO] | Core feature implementation | [TODO] |
 | [TODO] | Integration and testing | [TODO] |
@@ -201,11 +203,8 @@ Each team member's responsibilities and contributions will be documented to make
 
 | Team Member | Role / Responsibilities | Contributions |
 |---|---|---|
-| [TODO: Name] | [TODO] | [TODO] |
-| [TODO: Name] | [TODO] | [TODO] |
-| [TODO: Name] | [TODO] | [TODO] |
-| [TODO: Name] | [TODO] | [TODO] |
-| [TODO: Name] | [TODO] | [TODO] |
+| Member 1 | [TODO] | [TODO] |
+| Member 2 | [TODO] | [TODO] |
 
 Contributions may include planning, UI/UX design, frontend development, backend development, testing, documentation, and integration.
 
@@ -221,7 +220,7 @@ BothPls will be tested through actual interactions with users, rather than relyi
 - Identify confusing interactions and usability issues.
 - Verify the experience on supported mobile devices and browsers.
 
-**Testing method:** [TODO]
+**Testing method:** Run the project locally with Node.js/npm and open the local page in the browser to test the interactions. Teammates can also view the same page by configuring the Live Share extension in VS Code.
 
 **Test participants:** [TODO]
 
@@ -268,4 +267,4 @@ These ideas are possibilities rather than confirmed commitments.
 
 **Final Submission Deadline:** Sunday, 6 December 2026, 23:59 Hong Kong time.
 
-BothPls will be submitted through its shared GitHub repository, including the completed project, source code, an up-to-date README, and relevant development records.
+BothPls will be submitted through its shared GitHub repository ([The-Aliien-Repo](https://github.com/sd5913/The-Aliien-Repo.git)), including the completed project, source code, an up-to-date README, and relevant development records.
