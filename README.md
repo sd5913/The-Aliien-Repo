@@ -8,7 +8,7 @@ Instead of making a decision alone, users can share their options with friends a
 
 | Main Page | Create poll | My Page |
 | --- | --- | --- |
-| ![alt text](image.png) | ![alt text](image-2.png) | ![alt text](image-1.png) |
+| ![Main Page](images/image.png) | ![Create poll](images/image-2.png) | ![My Page](images/image-1.png) |
 
  
 > **Project status:** In Development  
