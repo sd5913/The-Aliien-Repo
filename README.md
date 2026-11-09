@@ -14,6 +14,7 @@ Instead of making a decision alone, users can share their options with friends a
 > **Project status:** In Development&nbsp;
 > **Project type:** Interactive Web App&nbsp;
 > **Course:** Group Project — Build Something Together&nbsp;
+> **Current PRD version:** v1.2 MVP (see [`docs\PRD.md`](docs/PRD.md))&nbsp;
 > **Final Deadline:** 6 December 2026, 23:59 HKT
 
 ---
@@ -40,7 +41,7 @@ Instead of making a decision alone, users can share their options with friends a
 
 BothPls is a social decision-making app that allows users to ask friends for help when they cannot decide between multiple options.
 
-For example, a user might be unsure which jacket to buy, which colour suits them better, or which of two products is the better choice. They can create a decision post, share it with friends, and use the feedback to help make their final decision.
+For example, a user might be unsure which jacket to buy, which colour suits them better, or which of two products is the better choice. They can create a single-choice poll, share it with friends, and use the feedback to help make their final decision.
 
 **Our goal is to turn an individual decision-making problem into a simple, shared, and interactive experience.**
 
@@ -51,6 +52,7 @@ For example, a user might be unsure which jacket to buy, which colour suits them
 - **Primary platform:** Mobile Web App (Android Chrome)
 - **Target audience:** People who need help choosing between multiple options
 - **Development team:** The Aliien (2 members)
+- **Product requirements document (PRD):** [`docs\PRD.md`](docs/PRD.md) — the full v1.2 PRD (requirements, user flows, rules, edge cases, analytics and roadmap). The PRD is the source of truth for product scope and rules; this README summarises it.
 - **Live demo:** [TODO: Add URL]
 - **Design prototype:** [Figma](https://www.figma.com/design/dWtx6LBsB3EmKM5ElXQaR4/SD5913Teamwork)
 
@@ -58,11 +60,15 @@ For example, a user might be unsure which jacket to buy, which colour suits them
 
 People often struggle to choose between similar products, styles, or colours. Too many options can make decisions difficult, and users may want a second opinion before making a choice.
 
-Asking friends individually can be inconvenient, and collecting different opinions through separate conversations can make comparisons harder.
+Asking friends individually can be inconvenient: users have to send images repeatedly in chat apps, collect different opinions across separate conversations, and manually count votes and summarise reasons.
 
-BothPls addresses this problem by providing a shared space where users can present their options and gather friends' opinions in one place.
+BothPls addresses this problem by providing a shared space where users can present their options and gather friends' opinions in one place. Since most shopping decisions come down to picking one item, the poll is **single-choice by design**, so creators do not need to decide on a voting format.
 
 ## 3. Target Users
+
+**Creators** (poll initiators) are shoppers who find it hard to decide, often on a limited budget. They register or log in, create single-choice polls, share them, view live results, and edit or delete their polls.
+
+**Participants** are the creators' friends. They open a public link with an automatically generated random username, with **no registration or login required**, pick one option, optionally leave a comment, and then view the results.
 
 BothPls is designed for people who:
 
@@ -75,18 +81,22 @@ Although shopping is the primary use case, the broader concept may also support 
 
 ## 4. Core Features
 
-The following features describe the confirmed MVP scope. Their implementation will be updated as development progresses.
+The following features describe the confirmed MVP scope (PRD v1.2). Their implementation will be updated as development progresses. See [`docs\PRD.md`](docs/PRD.md) for the full feature list and priorities.
 
 | Feature | Description | Status |
 |---|---|---|
-| Create a decision post | Add a question, 2–5 options with images, and choose single or multiple choice mode. | Confirmed (MVP) |
-| Share with friends | Generate a public link that allows friends to access the decision post. | Confirmed (MVP) |
-| Vote on options | Allow friends to vote anonymously and modify their vote while the poll is open. | Confirmed (MVP) |
-| View voting results | Display valid votes, percentages, and leading or tie status. | Confirmed (MVP) |
-| Optional comments | Let friends explain their choices or leave feedback; comments are revealed after the poll ends. | Confirmed (MVP) |
-| Manage a decision post | Allow the creator to manage polls, set deadlines, end voting, and delete a poll. | Confirmed (MVP) |
+| Creator account | Register with a valid email and a nickname (custom or randomly generated), or log in with email + nickname. Email verification codes are deferred to a later version. | Confirmed (MVP) |
+| Create / edit a poll | Add a poll name (required), optional background, 2–5 options (2 by default) with images, and an optional deadline. Editing reuses the creation page. | Confirmed (MVP) |
+| Share with friends | Publishing generates a public link that friends can open without an account. | Confirmed (MVP) |
+| Vote on options | **Fixed single-choice**: each participant selects exactly one option. Participants join anonymously with a random username and can change their choice while the poll is open (only the latest valid choice counts). | Confirmed (MVP) |
+| View voting results | Display the total number of voters, votes and percentages per option. Ties are shown as ties (no random tie-break). | Confirmed (MVP) |
+| Optional comments | Participants may leave a comment with their vote. Comments are hidden while the poll is open and revealed to everyone after it ends. Commenters can edit or delete their own comments; the creator can delete any comment. Comment actions never affect vote counts. | Confirmed (MVP) |
+| Manage polls (My Polls) | View all polls (newest edit first), poll info (participants, optional closing time, comments, number of options), live results, edit, share, and delete (with a confirmation dialog; creator only). | Confirmed (MVP) |
+| Settings | User settings and system settings. | Planned (P1) |
 
-**MVP priority:** Focus on the core loop of creating a poll, sharing it, collecting votes, viewing results, and managing or ending the poll.
+**MVP priority:** Focus on the core loop of creating a poll, sharing it, collecting single-choice votes, viewing results, and managing or ending the poll.
+
+**Ending a poll:** the creator ends it manually, or it ends automatically when the optional deadline is reached (the backend time is authoritative). After a poll ends, the public link shows final results and comments, and new votes or changes are rejected.
 
 Additional features will be considered based on the team's development progress and testing results.
 
@@ -94,13 +104,16 @@ Additional features will be considered based on the team's development progress 
 
 The intended core interaction is:
 
-1. **Create:** The user creates a decision post and adds the options they want to compare.
-2. **Share:** The user shares the post with friends through a link.
-3. **Vote:** Friends open the link and select their preferred option.
-4. **Review:** The user views the voting results and optional comments.
-5. **Decide:** The user considers the feedback and makes their own final decision.
+1. **Sign in (creator):** The creator registers or logs in with email and nickname. Participants skip this step entirely.
+2. **Create:** The creator builds a poll with a name, optional background, 2–5 options with images, and an optional deadline, then publishes it.
+3. **Share:** The creator copies the public link and sends it to friends.
+4. **Vote:** Friends open the link (anonymously, with a random username), select one option, optionally add a comment, and submit.
+5. **Review:** After submitting, participants see the number of voters, result percentages, and (once the poll has ended) comments. The creator can check live results at any time.
+6. **Manage and decide:** The creator can edit, share, or delete the poll, then considers the feedback and makes their own final decision.
 
-The first interaction to validate is whether users can easily create a choice, share it, and collect votes from friends.
+The first interaction to validate is whether users can easily create a poll, share it, and collect votes from friends in under a minute per participant.
+
+For the finalised creator and participant flow charts, see Section 5 of [`docs\PRD.md`](docs/PRD.md).
 
 ## 6. Technology Stack
 
@@ -174,8 +187,10 @@ http://localhost:5173
 
 ### Current Limitations
 
+- Voting is **single-choice only**. Multiple-choice mode is not available in the MVP (planned for v1.5).
+- Email verification codes are not implemented yet: creators log in with email + nickname only (planned for a later version).
+- Anonymous participant identity (random username) is device/browser-bound: clearing browser data or switching devices may lose it, and it cannot be recovered.
 - [TODO: Features that are not yet implemented]
-- Anonymous participant identity is device-bound: clearing browser data or switching devices may lose it.
 - [TODO: Login, data storage, or sharing limitations]
 - [TODO: Other known issues]
 
@@ -188,14 +203,15 @@ The team will develop BothPls through small, incremental steps and document prog
 | Week / Date | Work Completed | Challenges / Next Steps |
 |---|---|---|
 | 2026-10-29 | PRD v0.5 draft: core modules (create poll / vote / comments) defined | [TODO] |
-| 2026-10-31 | PRD v1.0: voting modes, comment permissions, deletion rules and tech stack confirmed | [TODO] |
+| 2026-10-31 | PRD v1.0: comment permissions, deletion rules and tech stack confirmed | [TODO] |
 | 2026-11-01 | PRD v1.1: re-organised into the standard PRD template | [TODO] |
+| 2026-11-09 | PRD v1.2: removed the single/multiple-choice mode selection (voting is now fixed single-choice); restructured creator and participant flows based on the two finalised flow charts | [TODO] |
 | [TODO] | UI/UX design and prototype | [TODO] |
 | [TODO] | Core feature implementation | [TODO] |
 | [TODO] | Integration and testing | [TODO] |
 | [TODO] | Final improvements and submission | [TODO] |
 
-This table will be updated regularly. Relevant Git commits and pull requests will also document implementation progress.
+This table will be updated regularly. Relevant Git commits and pull requests will also document implementation progress. The full revision history of the requirements is kept in [`docs\PRD.md`](docs/PRD.md).
 
 ## 10. Team Contributions
 
@@ -214,11 +230,15 @@ BothPls will be tested through actual interactions with users, rather than relyi
 
 ### Testing Goals
 
-- Check whether users understand how to create a decision post.
-- Check whether friends can access a shared post and submit a vote.
-- Check whether voting results are displayed correctly.
+- Check whether users understand how to create a poll.
+- Check whether friends can access a shared link without an account and submit a single-choice vote in under a minute.
+- Check whether voting results (vote counts, percentages, ties) are displayed correctly.
+- Check comment rules: hidden while the poll is open, revealed after it ends, and correct edit/delete permissions.
+- Check ending and deletion rules: manual end, automatic end at the deadline, and delete with confirmation (creator only).
 - Identify confusing interactions and usability issues.
 - Verify the experience on supported mobile devices and browsers.
+
+Acceptance criteria and edge cases are listed in [`docs\PRD.md`](docs/PRD.md) (Section 7).
 
 **Testing method:** Run the project locally with Node.js/npm and open the local page in the browser to test the interactions. Teammates can also view the same page by configuring the Live Share extension in VS Code.
 
@@ -244,12 +264,23 @@ All third-party materials must be original or appropriately licensed for their i
 
 ## 13. Future Improvements
 
-Potential improvements will be evaluated based on the MVP's performance, user feedback, and available development time.
+Potential improvements will be evaluated based on the MVP's performance, user feedback, and available development time. The roadmap below follows [`docs\PRD.md`](docs/PRD.md).
 
-- [TODO: Additional voting options]
-- [TODO: Improved sharing and participation]
-- [TODO: Enhanced mobile experience]
-- [TODO: Additional decision-making scenarios]
+**v1.5 (planned):**
+
+- Multiple-choice voting mode
+- Cross-device identity sync
+- Voting notifications and reminders
+- Product price and purchase-link fields
+- A simple data dashboard
+
+**v2.0 (exploratory):**
+
+- Friend system and public discovery
+- AI-assisted recommendations for decision making
+- Comment replies and reporting
+- Data analytics export
+- Native app exploration
 
 These ideas are possibilities rather than confirmed commitments.
 
@@ -261,7 +292,7 @@ These ideas are possibilities rather than confirmed commitments.
 - Store required secrets in environment variables or the appropriate secure configuration system.
 - Document the required environment variables in an example configuration file, without including real secret values.
 - Keep the repository accessible to the instructor for assessment.
-- Update this README as the project evolves.
+- Update this README as the project evolves, and keep it consistent with [`docs\PRD.md`](docs/PRD.md).
 
 ---
 
