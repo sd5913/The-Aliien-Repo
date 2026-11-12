@@ -54,10 +54,9 @@ export function SettingsPage() {
   };
 
   return (
-    <PageShell>
-      <div className="settings-heading"><h1>设置</h1><p>管理你的个人资料与使用偏好。</p></div>
+    <PageShell title="设置" showHeaderTitle>
       <section className="settings-card profile-card">
-        <div className="settings-section-heading"><div><span className="eyebrow">YOUR PROFILE</span><h2>个人资料</h2></div><span className="profile-private-pill">本地保存</span></div>
+        <div className="settings-section-heading"><div><h2>个人资料</h2></div><span className="profile-private-pill">本地保存</span></div>
         <div className="profile-summary">
           <div className="profile-avatar" aria-label={`当前头像 ${settings.avatar}`}>{settings.avatar}</div>
           <div className="profile-summary-copy"><strong>{settings.nickname}</strong><span>{settings.email}</span></div>
@@ -81,14 +80,14 @@ export function SettingsPage() {
       </section>
 
       <section className="settings-card">
-        <div className="settings-section-heading"><div><span className="eyebrow">APP PERMISSIONS</span><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
+        <div className="settings-section-heading"><div><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
         <p className="settings-helper">仅保存你的偏好；不会请求设备权限或上传资料。</p>
-        <SettingToggle title="相机" description="允许在添加商品时使用相机" checked={settings.cameraEnabled} onChange={() => toggleSetting("cameraEnabled")} />
-        <SettingToggle title="相册" description="允许从相册选择商品图片" checked={settings.photosEnabled} onChange={() => toggleSetting("photosEnabled")} />
+        <SettingToggle title="相机" checked={settings.cameraEnabled} onChange={() => toggleSetting("cameraEnabled")} />
+        <SettingToggle title="相册" checked={settings.photosEnabled} onChange={() => toggleSetting("photosEnabled")} />
       </section>
 
       <section className="settings-card privacy-card">
-        <div className="settings-section-heading"><div><span className="eyebrow">PRIVACY</span><h2>隐私设置</h2></div><span className="settings-heading-icon">♡</span></div>
+        <div className="settings-section-heading"><div><h2>隐私设置</h2></div><span className="settings-heading-icon">♡</span></div>
         <SettingToggle title="在投票评论中显示昵称" description="关闭后，评论仅显示为匿名朋友" checked={settings.showNickname} onChange={() => toggleSetting("showNickname")} />
         <div className="privacy-note"><span>🔒</span><p>个人资料和这些偏好只保存在当前浏览器，不会发送到服务器。</p></div>
       </section>
@@ -97,10 +96,10 @@ export function SettingsPage() {
   );
 }
 
-function SettingToggle({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: () => void }) {
+function SettingToggle({ title, description, checked, onChange }: { title: string; description?: string; checked: boolean; onChange: () => void }) {
   return (
     <div className="setting-toggle-row">
-      <div className="setting-toggle-copy"><strong>{title}</strong><span>{description}</span></div>
+      <div className="setting-toggle-copy"><strong>{title}</strong>{description && <span>{description}</span>}</div>
       <button className={`toggle-switch${checked ? " checked" : ""}`} type="button" role="switch" aria-checked={checked} aria-label={title} onClick={onChange}><span /></button>
     </div>
   );

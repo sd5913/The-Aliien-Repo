@@ -9,7 +9,7 @@
   --deep-purple: #4c1d95;
   --ink: #5b21b6;
   --soft-shadow: 0 8px 24px rgba(124, 58, 237, .12);
-  --bottom-nav-height: 60px;
+  --bottom-nav-height: 64px;
 }
 
 * { box-sizing: border-box; }
@@ -53,9 +53,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .brand-copy small { color: #8b5cf6; font-size: 10px; font-weight: 600; }
 .back-link { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--deep-purple); background: #ffffff9c; font-size: 23px; }
 .topbar-title { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--deep-purple); }
+.page-header-title { margin: 0; color: var(--deep-purple); font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
 .topbar-spacer { flex: 1; }
 .page-content { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 22px calc(var(--bottom-nav-height) + 20px); scrollbar-width: none; }
 .page-content::-webkit-scrollbar { display: none; }
+.create-submit-footer { position: relative; z-index: 4; flex: 0 0 auto; padding: 10px 22px 14px; background: linear-gradient(180deg, #f3edfbdd, #f3edfb); }
 .bottom-nav {
   position: absolute;
   z-index: 5;

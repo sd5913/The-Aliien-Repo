@@ -59,9 +59,14 @@ export function CreatePollPage() {
   };
 
   return (
-    <PageShell showNavigation={false} backTo="/my" title={editingPoll ? "编辑投票" : "创建投票"}>
-      <div className="page-heading create-heading"><h1>{editingPoll ? "编辑投票" : "创建投票"}</h1><p>标题、选项与投票规则</p></div>
-      <form className="create-form" onSubmit={submit}>
+    <PageShell
+      showNavigation={false}
+      backTo="/my"
+      title={editingPoll ? "编辑投票" : "创建投票"}
+      showHeaderTitle
+      footer={<div className="create-submit-footer"><PurpleButton type="submit" form="create-poll-form" fullWidth>{editingPoll ? "保存修改" : "创建投票"} <span>↗</span></PurpleButton></div>}
+    >
+      <form id="create-poll-form" className="create-form" onSubmit={submit}>
         <label className="field-label" htmlFor="poll-title">投票标题 <span className="required">*</span></label>
         <input id="poll-title" className="text-input" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：周末穿哪件外套？" maxLength={100} required />
         <label className="field-label" htmlFor="poll-description">说明 <span className="optional">可选</span></label>
@@ -78,7 +83,6 @@ export function CreatePollPage() {
         {options.length < 5 && <button className="add-option-button" type="button" onClick={() => setOptions((current) => [...current, makeOption(current.length + 1)])}>＋ 添加选项</button>}
         <div className="deadline-row"><label className="field-label" htmlFor="deadline">截止时间</label><select id="deadline" className="text-input deadline-select" value={deadline} onChange={(event) => setDeadline(event.target.value)}><option value="none">不设置</option><option value="24">24 小时后</option><option value="72">3 天后</option><option value="168">7 天后</option>{editingPoll?.endsAt && <option value="custom">保留原截止时间</option>}</select></div>
         {error && <p className="form-error" role="alert">{error}</p>}
-        <PurpleButton type="submit" fullWidth>{editingPoll ? "保存修改" : "创建投票"} <span>↗</span></PurpleButton>
       </form>
       <div className="create-back-link"><Link to="/my">取消并返回</Link></div>
     </PageShell>

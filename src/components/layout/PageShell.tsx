@@ -8,20 +8,28 @@ interface PageShellProps {
   title?: string;
   showNavigation?: boolean;
   backTo?: string;
+  showHeaderTitle?: boolean;
+  footer?: ReactNode;
 }
 
-export function PageShell({ children, title, showNavigation = true, backTo }: PageShellProps) {
+export function PageShell({ children, title, showNavigation = true, backTo, showHeaderTitle = false, footer }: PageShellProps) {
   return (
     <div className={`app-shell${showNavigation ? " has-bottom-nav" : ""}`}>
       <header className="topbar">
-        {backTo ? <Link className="back-link" to={backTo} aria-label="返回">←</Link> : <Link className="brand-bubbles" to="/" aria-label="BothPls 首页"><span /><span /></Link>}
-        <Link className="brand-copy" to="/">
-          <strong>BothPls</strong>
-        </Link>
-        {!backTo && title && <span className="topbar-title">{title}</span>}
+        {backTo && <Link className="back-link" to={backTo} aria-label="返回">←</Link>}
+        {showHeaderTitle && title ? (
+          <h1 className="page-header-title">{title}</h1>
+        ) : (
+          <>
+            {!backTo && <Link className="brand-bubbles" to="/" aria-label="BothPls 首页"><span /><span /></Link>}
+            <Link className="brand-copy" to="/"><strong>BothPls</strong></Link>
+            {title && !backTo && <span className="topbar-title">{title}</span>}
+          </>
+        )}
         <span className="topbar-spacer" />
       </header>
       <main className="page-content">{children}</main>
+      {footer}
       {showNavigation && <BottomNav />}
     </div>
   );
