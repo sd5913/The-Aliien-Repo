@@ -1,50 +1,59 @@
-// Poll results, Borda scores, and comment management. / 投票结果、Borda 计分与评论管理页面。
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
-import { StatusPill } from "../components/StatusPill";
+import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
+import { Modal } from "../../../components/ui/Modal";
+import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
-import { getBordaResults, getVotingMode } from "../utils/voting";
+import { ResultBubbles } from "../components/ResultBubbles";
+import { CommentList } from "../components/CommentList";
 
 export function ResultsPage() {
-  const { pollId = "" } = useParams();
-  const { polls, updatePoll } = usePolls();
-  const poll = polls.find((item) => item.id === pollId);
-  if (!poll) return <PageShell title="投票结果"><div className="empty-card"><h2>没有找到这次投票</h2><Link to="/polls" className="button button-dark">回到我的投票</Link></div></PageShell>;
+  const { id = "" } = useParams();
+  const { polls } = usePolls();
+  const poll = polls.find((item) => item.id === id);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState("");
 
-  const mode = getVotingMode(poll.options);
-  const choiceCounts = new Map(poll.options.map((option) => [option.id, 0]));
-  if (mode === "choice") poll.votes.forEach((vote) => {
-    if (vote.selectedOptionId && choiceCounts.has(vote.selectedOptionId)) choiceCounts.set(vote.selectedOptionId, (choiceCounts.get(vote.selectedOptionId) ?? 0) + 1);
-  });
-  const tiedChoice = mode === "choice" && poll.options.length > 0 &&
-    poll.options.every((option) => choiceCounts.get(option.id) === choiceCounts.get(poll.options[0].id));
-  const bordaResults = mode === "ranking" ? getBordaResults(poll) : [];
-
-  const deleteComment = (commentId: string) => {
+  const copyLink = async () => {
+    if (!poll) return;
     try {
-      updatePoll(poll.id, (current) => ({ ...current, comments: current.comments.filter((item) => item.id !== commentId) }));
+      await navigator.clipboard.writeText(`${window.location.origin}/poll/${poll.id}`);
+      setMenuOpen(false);
+      setToast("链接已复制");
     } catch (error) {
-      console.error("Could not delete the comment.", error);
+      console.error("Could not copy poll link.", error);
+      setToast("复制失败，请检查剪贴板权限");
     }
   };
 
+  if (!poll) return <PageShell showNavigation={false} backTo="/"><div className="empty-state"><h2>没有找到这次投票</h2><Link to="/" className="purple-button">回到首页</Link></div></PageShell>;
+
+  const counts = new Map(poll.options.map((option) => [option.id, 0]));
+  poll.votes.forEach((vote) => {
+    const optionId = vote.selectedOptionId;
+    if (optionId && counts.has(optionId)) counts.set(optionId, (counts.get(optionId) ?? 0) + 1);
+  });
+  const open = isPollOpen(poll);
+  const colorList = ["#8b5cf6", "#ec4899", "#3b82f6", "#f59e0b", "#22c55e"];
+
   return (
-    <PageShell title="结果与评论">
-      <section className="management-heading"><span className="eyebrow">大家怎么想</span><div className="title-with-status"><h1>{poll.title}</h1><StatusPill poll={poll} /></div><p>{poll.votes.length} 人参与 · {mode === "choice" ? "二选一投票" : "Borda 排序计分"}</p></section>
-      <section className="content-card results-card"><div className="section-heading"><div><span className="eyebrow">投票结果</span><h2>{mode === "choice" ? "大家的选择" : "排序得分"}</h2></div><span className="result-symbol">✦</span></div>
-        {mode === "choice" ? <>{tiedChoice && poll.votes.length > 0 && <div className="notice-banner">目前是平票，没有单独的领先选项。</div>}{poll.options.map((option) => {
-          const count = choiceCounts.get(option.id) ?? 0;
-          const percent = poll.votes.length ? Math.round(count / poll.votes.length * 100) : 0;
-          return <div className="result-row" key={option.id}><div className="result-label"><strong>{option.name}</strong><span>{count} 票 · {percent}%</span></div><div className="progress-track"><span style={{ width: `${percent}%` }} /></div></div>;
-        })}</> :
-          bordaResults.map((result) => <div className="borda-row" key={result.option.id}><span className="borda-rank">{result.rank}{result.tied ? "=" : ""}</span><div className="borda-copy"><strong>{result.option.name}</strong><span>{result.tied ? "并列" : "名次"} · {result.score} 分</span></div><span className="borda-score">{result.score}<small>分</small></span></div>)}
-        {poll.votes.length === 0 && <p className="empty-inline">还没有人投票，分享链接邀请朋友来参与吧。</p>}
+    <PageShell showNavigation={false} backTo="/" title="投票结果">
+      <div className="results-topline"><span className="eyebrow">大家的心意</span><button className="more-button" aria-label="更多操作" onClick={() => setMenuOpen(true)}>···</button></div>
+      <div className="results-heading"><StatusPill poll={poll} /><h1>{poll.title}</h1><p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p></div>
+      <section className="results-card">
+        <ResultBubbles options={poll.options} counts={counts} total={poll.votes.length} />
+        <div className="result-option-list">{poll.options.map((option, index) => {
+          const count = counts.get(option.id) ?? 0;
+          const percent = poll.votes.length ? Math.round((count / poll.votes.length) * 100) : 0;
+          return <div className="result-option-row" key={option.id}><span className="result-color" style={{ background: colorList[index % colorList.length] }} /><strong>{option.name}</strong><span>{count} 票 · {percent}%</span></div>;
+        })}</div>
+        {!poll.votes.length && <p className="empty-inline">还没有人投票，分享链接邀请朋友来参与吧。</p>}
       </section>
-      <section className="content-card"><div className="section-heading"><div><span className="eyebrow">听听理由</span><h2>朋友的评论 <span className="heading-count">{poll.comments.length}</span></h2></div></div>
-        {poll.comments.length ? <div className="comments-list">{poll.comments.map((item) => <article className="comment-card" key={item.id}><div className="comment-avatar">{item.voter.nickname.slice(0, 1)}</div><div className="comment-body"><div className="comment-meta"><strong>{item.voter.nickname}</strong><time>{new Date(item.createdAt).toLocaleDateString()}</time></div><p>{item.text}</p></div><button className="icon-button comment-delete" aria-label={`删除 ${item.voter.nickname} 的评论`} onClick={() => deleteComment(item.id)}>×</button></article>)}</div> : <p className="empty-inline">还没有评论。理由和建议会显示在这里。</p>}
-      </section>
-      <div className="management-actions"><Link className="button button-dark" to={`/polls/${poll.id}/manage`}>返回投票管理 <span>→</span></Link><Link className="button button-outline" to={`/polls/${poll.id}/vote`}>打开投票页</Link></div>
-      <p className="prototype-note">删除评论不会影响投票记录和统计结果。</p>
+      <section className="comments-section"><div className="section-title-row"><div><span className="eyebrow">听听大家的理由</span><h2>评论 <span className="heading-count">{poll.comments.length} 条</span></h2></div></div><CommentList comments={poll.comments} options={poll.options} /></section>
+      {!open ? <div className="locked-bottom">🔒 投票已结束，你只能查看结果和评论</div> : <Link className="purple-button button-full result-vote-button" to={`/poll/${poll.id}`}>改票 <span>↗</span></Link>}
+      {menuOpen && <Modal title="分享这次投票" onClose={() => setMenuOpen(false)} actions={<><button className="button-soft" onClick={() => setMenuOpen(false)}>关闭</button><button className="purple-button" onClick={() => void copyLink()}>复制链接</button></>}><p>邀请朋友一起看看结果，也可以继续帮忙投票。</p></Modal>}
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
   );
 }
