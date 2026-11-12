@@ -6,7 +6,8 @@ const avatars = ["🌷", "🐰", "🧸", "🍑", "🐱", "☁️"];
 
 export function SettingsPage() {
   const [settings, setSettings] = useState(readUserSettings);
-  const [draft, setDraft] = useState({ nickname: settings.nickname, email: settings.email });
+  const [draft, setDraft] = useState({ nickname: settings.nickname, email: settings.email, avatar: settings.avatar });
+  const [editingProfile, setEditingProfile] = useState(false);
   const [feedback, setFeedback] = useState("");
 
   const saveSettings = (next: UserSettings, message: string) => {
@@ -30,7 +31,9 @@ export function SettingsPage() {
       setFeedback("昵称和邮箱都需要填写。");
       return;
     }
-    saveSettings({ ...settings, nickname, email }, "个人资料已保存");
+    if (saveSettings({ ...settings, nickname, email, avatar: draft.avatar }, "个人资料已保存")) {
+      setEditingProfile(false);
+    }
   };
 
   const toggleSetting = (key: "cameraEnabled" | "photosEnabled" | "showNickname") => {
@@ -38,27 +41,43 @@ export function SettingsPage() {
     saveSettings(next, "偏好设置已更新");
   };
 
-  const chooseAvatar = (avatar: string) => {
-    saveSettings({ ...settings, avatar }, "头像已更新");
+  const editProfile = () => {
+    setDraft({ nickname: settings.nickname, email: settings.email, avatar: settings.avatar });
+    setEditingProfile((current) => !current);
+    setFeedback("");
+  };
+
+  const cancelProfileEdit = () => {
+    setDraft({ nickname: settings.nickname, email: settings.email, avatar: settings.avatar });
+    setEditingProfile(false);
+    setFeedback("");
   };
 
   return (
     <PageShell>
-      <div className="settings-heading"><span className="eyebrow">让 BothPls 更适合你</span><h1>设置</h1><p>管理你的个人资料与使用偏好。</p></div>
+      <div className="settings-heading"><h1>设置</h1><p>管理你的个人资料与使用偏好。</p></div>
       <section className="settings-card profile-card">
         <div className="settings-section-heading"><div><span className="eyebrow">YOUR PROFILE</span><h2>个人资料</h2></div><span className="profile-private-pill">本地保存</span></div>
-        <div className="avatar-picker-row">
+        <div className="profile-summary">
           <div className="profile-avatar" aria-label={`当前头像 ${settings.avatar}`}>{settings.avatar}</div>
-          <div className="avatar-picker-copy"><strong>选择你的头像</strong><span>挑一个喜欢的糖果头像</span></div>
+          <div className="profile-summary-copy"><strong>{settings.nickname}</strong><span>{settings.email}</span></div>
+          <button className="edit-profile-button" type="button" aria-label={editingProfile ? "关闭编辑个人资料" : "编辑个人资料"} aria-expanded={editingProfile} onClick={editProfile}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.9L19 8.3a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z" /></svg>
+          </button>
         </div>
-        <div className="avatar-options" role="group" aria-label="选择头像">{avatars.map((avatar) => <button key={avatar} type="button" className={`avatar-option${settings.avatar === avatar ? " selected" : ""}`} aria-label={`选择头像 ${avatar}`} aria-pressed={settings.avatar === avatar} onClick={() => chooseAvatar(avatar)}>{avatar}</button>)}</div>
-        <form className="profile-form" onSubmit={saveProfile}>
+        {editingProfile && <form className="profile-form profile-edit-card" onSubmit={saveProfile}>
+          <span className="eyebrow">EDIT PROFILE</span>
+          <div className="avatar-picker-row">
+            <div className="profile-avatar" aria-label={`当前头像 ${draft.avatar}`}>{draft.avatar}</div>
+            <div className="avatar-picker-copy"><strong>选择头像</strong><span>挑一个喜欢的糖果头像</span></div>
+          </div>
+          <div className="avatar-options" role="group" aria-label="选择头像">{avatars.map((avatar) => <button key={avatar} type="button" className={`avatar-option${draft.avatar === avatar ? " selected" : ""}`} aria-label={`选择头像 ${avatar}`} aria-pressed={draft.avatar === avatar} onClick={() => setDraft((current) => ({ ...current, avatar }))}>{avatar}</button>)}</div>
           <label className="field-label" htmlFor="settings-nickname">昵称</label>
           <input id="settings-nickname" className="text-input" value={draft.nickname} maxLength={24} onChange={(event) => setDraft((current) => ({ ...current, nickname: event.target.value }))} placeholder="输入昵称" />
           <label className="field-label" htmlFor="settings-email">邮箱</label>
           <input id="settings-email" className="text-input" type="email" value={draft.email} maxLength={120} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} placeholder="name@example.com" />
-          <button className="purple-button button-full" type="submit">保存个人资料</button>
-        </form>
+          <div className="profile-edit-actions"><button className="profile-cancel-button" type="button" onClick={cancelProfileEdit}>取消</button><button className="purple-button" type="submit">保存修改</button></div>
+        </form>}
       </section>
 
       <section className="settings-card">

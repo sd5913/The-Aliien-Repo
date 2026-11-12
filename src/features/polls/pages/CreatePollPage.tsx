@@ -60,7 +60,7 @@ export function CreatePollPage() {
 
   return (
     <PageShell showNavigation={false} backTo="/my" title={editingPoll ? "编辑投票" : "创建投票"}>
-      <div className="page-heading create-heading"><span className="eyebrow">让朋友帮你选</span><h1>{editingPoll ? "编辑投票" : "创建投票"}</h1><p>标题、选项与投票规则</p></div>
+      <div className="page-heading create-heading"><h1>{editingPoll ? "编辑投票" : "创建投票"}</h1><p>标题、选项与投票规则</p></div>
       <form className="create-form" onSubmit={submit}>
         <label className="field-label" htmlFor="poll-title">投票标题 <span className="required">*</span></label>
         <input id="poll-title" className="text-input" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：周末穿哪件外套？" maxLength={100} required />

@@ -14,8 +14,8 @@
 
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-width: 320px; min-height: 100%; margin: 0; }
-body { min-height: 100vh; background: #f3f4f6; }
-#root { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+body { min-height: 100dvh; background: #f3f4f6; }
+#root { min-height: 100dvh; display: flex; align-items: center; justify-content: center; }
 button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
@@ -25,8 +25,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .app-shell {
   position: relative;
   width: 390px;
-  height: 844px;
-  min-height: 844px;
+  min-width: 390px;
+  height: min(844px, 100dvh);
+  min-height: 0;
+  flex: 0 0 390px;
   overflow: hidden;
   background: linear-gradient(160deg, #fce7f3, #ede9fe 48%, #dbeafe);
   box-shadow: 0 12px 50px rgba(72, 43, 107, .14);
@@ -94,6 +96,16 @@ h1, h2, h3 { color: var(--deep-purple); }
 .home-welcome h1 { margin: 11px 0 8px; font-size: 27px; line-height: 1.35; letter-spacing: -.7px; }
 .home-welcome p { max-width: 260px; margin-bottom: 18px; color: #7956a5; font-size: 13px; line-height: 1.7; }
 .welcome-sticker { position: absolute; right: 22px; top: 31px; color: #f0abfc; font-size: 39px; transform: rotate(12deg); }
+.home-steps { margin: 0 0 25px; }
+.home-steps .section-title-row { margin-bottom: 11px; }
+.home-steps .section-title-row h2 { font-size: 18px; }
+.steps-sparkle { color: #c084fc; font-size: 22px; }
+.steps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.step-card { position: relative; min-height: 125px; padding: 13px 10px 11px; overflow: hidden; border: 1px solid #fff; border-radius: 20px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
+.step-number { position: absolute; top: 8px; right: 9px; color: #c4b5fd; font-size: 9px; font-weight: 800; }
+.step-icon { width: 31px; height: 31px; display: grid; place-items: center; margin-bottom: 8px; border-radius: 11px; color: #7c3aed; background: linear-gradient(140deg, #fce7f3, #ede9fe); font-size: 16px; }
+.step-card h3 { margin: 0 0 4px; font-size: 11px; white-space: nowrap; }
+.step-card p { margin: 0; color: #8c6eaa; font-size: 9px; line-height: 1.45; }
 .purple-button {
   min-height: 46px;
   border: 0;
@@ -286,17 +298,12 @@ h1, h2, h3 { color: var(--deep-purple); }
 .lightbox-image span { color: #a78bfa; font-size: 60px; }
 .toast-message { position: absolute; z-index: 30; bottom: 93px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 34px); padding: 12px 18px; border: 1px solid #ffffffc9; border-radius: 999px; background: #4c1d95eF; box-shadow: 0 8px 24px #32115433; color: #fff; font-size: 11px; font-weight: 700; text-align: center; }
 
-@media (max-width: 389px) {
-  .page-content { padding-right: 18px; padding-left: 18px; }
-  .topbar { padding-right: 18px; padding-left: 18px; }
-  .carousel-image-wrap { height: min(265px, 68vw); }
-}
 @media (min-width: 600px) {
   .app-shell { border-radius: 30px; }
 }
 @media (max-height: 843px) {
   #root { height: 100vh; min-height: 0; align-items: flex-start; overflow: clip; }
-  .bottom-nav { position: fixed; left: 50%; width: min(390px, 100vw); transform: translateX(-50%); }
+  .bottom-nav { position: fixed; left: 50%; width: 390px; transform: translateX(-50%); }
 }
 .settings-heading { margin: 8px 0 17px; }
 .settings-heading h1 { margin: 5px 0 4px; font-size: 26px; letter-spacing: -.5px; }
@@ -305,6 +312,24 @@ h1, h2, h3 { color: var(--deep-purple); }
 .settings-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .settings-section-heading h2 { margin: 4px 0 0; font-size: 17px; }
 .profile-private-pill { padding: 5px 9px; border-radius: 999px; background: #ede9fe; color: #7c3aed; font-size: 9px; font-weight: 700; }
+.profile-summary { display: flex; align-items: center; gap: 12px; margin-top: 15px; padding: 13px; border: 1px solid #f4eafe; border-radius: 19px; background: #ffffffb8; }
+.profile-summary .profile-avatar { flex: 0 0 58px; }
+.profile-summary-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.profile-summary-copy strong { overflow: hidden; color: #4c1d95; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.profile-summary-copy span { overflow: hidden; color: #9678ad; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.edit-profile-button { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border: 0; border-radius: 12px; background: #ede9fe; color: #7c3aed; cursor: pointer; }
+.edit-profile-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.profile-edit-card { margin-top: 12px; padding: 14px; border: 1px solid #f0e5fa; border-radius: 19px; background: #fff9; animation: profile-expand .2s ease-out; }
+@keyframes profile-expand { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+.profile-edit-card > .eyebrow { display: block; margin-bottom: 9px; }
+.profile-edit-card .avatar-picker-row { margin: 8px 0; }
+.profile-edit-card .profile-avatar { width: 45px; height: 45px; flex-basis: 45px; border-radius: 16px; font-size: 23px; }
+.profile-edit-card .avatar-options { gap: 7px; margin-bottom: 12px; }
+.profile-edit-card .avatar-option { width: 31px; height: 31px; font-size: 16px; }
+.profile-edit-card .text-input { min-height: 38px; margin-bottom: 9px; font-size: 11px; }
+.profile-edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 5px; }
+.profile-edit-actions button { min-height: 38px; padding: 0 15px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.profile-edit-actions .profile-cancel-button { color: #7c3aed; background: #ede9fe; }
 .avatar-picker-row { display: flex; align-items: center; gap: 12px; margin: 14px 0 10px; }
 .profile-avatar { width: 58px; height: 58px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 21px; background: linear-gradient(140deg, #fbcfe8, #c4b5fd); box-shadow: 0 5px 14px #7c3aed20; font-size: 28px; }
 .avatar-picker-copy { display: flex; flex-direction: column; gap: 4px; }
