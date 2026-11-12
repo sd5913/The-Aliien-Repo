@@ -54,6 +54,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .back-link { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--deep-purple); background: #ffffff9c; font-size: 23px; }
 .topbar-title { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--deep-purple); }
 .page-header-title { margin: 0; color: var(--deep-purple); font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
+.settings-nav-button { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ffffffa8; box-shadow: 0 4px 12px #7c3aed18; }
+.settings-nav-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .topbar-spacer { flex: 1; }
 .page-content { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 22px calc(var(--bottom-nav-height) + 20px); scrollbar-width: none; }
 .page-content::-webkit-scrollbar { display: none; }

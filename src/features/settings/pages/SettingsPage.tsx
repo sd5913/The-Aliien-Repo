@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { readUserSettings, USER_SETTINGS_STORAGE_KEY, type UserSettings } from "../services/settings";
+import { MyPollsSection } from "../../polls/pages/MyPollsPage";
 const avatars = ["🌷", "🐰", "🧸", "🍑", "🐱", "☁️"];
 
 
@@ -36,11 +38,6 @@ export function SettingsPage() {
     }
   };
 
-  const toggleSetting = (key: "cameraEnabled" | "photosEnabled" | "showNickname") => {
-    const next = { ...settings, [key]: !settings[key] };
-    saveSettings(next, "偏好设置已更新");
-  };
-
   const editProfile = () => {
     setDraft({ nickname: settings.nickname, email: settings.email, avatar: settings.avatar });
     setEditingProfile((current) => !current);
@@ -54,7 +51,7 @@ export function SettingsPage() {
   };
 
   return (
-    <PageShell title="设置" showHeaderTitle>
+    <PageShell title="设置" showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label="权限和隐私设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8.1 3.5a8.6 8.6 0 0 0-.1-1.3l1.5-1.2-1.5-2.6-1.9.7a8.7 8.7 0 0 0-2.2-1.3L15.6 4h-3.1l-.3 2.3A8.7 8.7 0 0 0 10 7.6l-1.9-.7-1.5 2.6 1.5 1.2a8.6 8.6 0 0 0 0 2.6l-1.5 1.2 1.5 2.6 1.9-.7a8.7 8.7 0 0 0 2.2 1.3l.3 2.3h3.1l.3-2.3a8.7 8.7 0 0 0 2.2-1.3l1.9.7 1.5-2.6-1.5-1.2a8.6 8.6 0 0 0 .1-1.3Z" /></svg></Link>}>
       <section className="settings-card profile-card">
         <div className="settings-section-heading"><div><h2>个人资料</h2></div><span className="profile-private-pill">本地保存</span></div>
         <div className="profile-summary">
@@ -78,29 +75,8 @@ export function SettingsPage() {
           <div className="profile-edit-actions"><button className="profile-cancel-button" type="button" onClick={cancelProfileEdit}>取消</button><button className="purple-button" type="submit">保存修改</button></div>
         </form>}
       </section>
-
-      <section className="settings-card">
-        <div className="settings-section-heading"><div><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
-        <p className="settings-helper">仅保存你的偏好；不会请求设备权限或上传资料。</p>
-        <SettingToggle title="相机" checked={settings.cameraEnabled} onChange={() => toggleSetting("cameraEnabled")} />
-        <SettingToggle title="相册" checked={settings.photosEnabled} onChange={() => toggleSetting("photosEnabled")} />
-      </section>
-
-      <section className="settings-card privacy-card">
-        <div className="settings-section-heading"><div><h2>隐私设置</h2></div><span className="settings-heading-icon">♡</span></div>
-        <SettingToggle title="在投票评论中显示昵称" description="关闭后，评论仅显示为匿名朋友" checked={settings.showNickname} onChange={() => toggleSetting("showNickname")} />
-        <div className="privacy-note"><span>🔒</span><p>个人资料和这些偏好只保存在当前浏览器，不会发送到服务器。</p></div>
-      </section>
+      <MyPollsSection />
       {feedback && <p className="settings-feedback" role="status">{feedback}</p>}
     </PageShell>
-  );
-}
-
-function SettingToggle({ title, description, checked, onChange }: { title: string; description?: string; checked: boolean; onChange: () => void }) {
-  return (
-    <div className="setting-toggle-row">
-      <div className="setting-toggle-copy"><strong>{title}</strong>{description && <span>{description}</span>}</div>
-      <button className={`toggle-switch${checked ? " checked" : ""}`} type="button" role="switch" aria-checked={checked} aria-label={title} onClick={onChange}><span /></button>
-    </div>
   );
 }

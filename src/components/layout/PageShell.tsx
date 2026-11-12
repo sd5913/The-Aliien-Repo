@@ -10,9 +10,10 @@ interface PageShellProps {
   backTo?: string;
   showHeaderTitle?: boolean;
   footer?: ReactNode;
+  headerAction?: ReactNode;
 }
 
-export function PageShell({ children, title, showNavigation = true, backTo, showHeaderTitle = false, footer }: PageShellProps) {
+export function PageShell({ children, title, showNavigation = true, backTo, showHeaderTitle = false, footer, headerAction }: PageShellProps) {
   return (
     <div className={`app-shell${showNavigation ? " has-bottom-nav" : ""}`}>
       <header className="topbar">
@@ -27,6 +28,7 @@ export function PageShell({ children, title, showNavigation = true, backTo, show
           </>
         )}
         <span className="topbar-spacer" />
+        {headerAction}
       </header>
       <main className="page-content">{children}</main>
       {footer}
