@@ -8,32 +8,71 @@ src/
 │   ├── App.tsx
 │   └── router.tsx
 ├── components/
-│   └── layout/
-│       ├── BottomNav.tsx
-│       └── PageShell.tsx
+│   ├── layout/
+│   │   ├── BottomNav.tsx
+│   │   ├── PageShell.tsx
+│   │   └── TopBar.tsx
+│   └── ui/
+│       ├── Button.tsx
+│       ├── Input.tsx
+│       ├── Tabs.tsx
+│       ├── Avatar.tsx
+│       ├── ConfirmDialog.tsx
+│       ├── ShareSheet.tsx
+│       └── EmptyState.tsx
 ├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   │   ├── AvatarPicker.tsx
+│   │   │   └── NicknameField.tsx
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts
+│   │   ├── pages/
+│   │   │   ├── VoterLoginPage.tsx
+│   │   │   └── CreatorAuthPage.tsx
+│   │   └── services/
+│   │       └── auth.ts
 │   ├── home/
 │   │   └── pages/
-│   │       └── HomePage.tsx
-│   └── polls/
-│       ├── components/
-│       │   └── StatusPill.tsx
-│       ├── hooks/
-│       │   └── usePolls.ts
-│       ├── pages/
-│       │   ├── CreatePollPage.tsx
-│       │   ├── ManagementPages.tsx
-│       │   ├── ResultsPage.tsx
-│       │   └── VotingPage.tsx
-│       ├── services/
-│       │   └── polls.ts
-│       └── utils/
-│           └── voting.ts
+│   │       ├── HomePage.tsx
+│   │       └── OnboardingPages.tsx
+│   ├── polls/
+│   │   ├── components/
+│   │   │   ├── PollCard.tsx
+│   │   │   ├── StatusPill.tsx
+│   │   │   ├── PollOptionEditor.tsx
+│   │   │   ├── OptionCarousel.tsx
+│   │   │   ├── ChoiceJar.tsx
+│   │   │   ├── ResultBubbles.tsx
+│   │   │   ├── ResultBar.tsx
+│   │   │   ├── CommentList.tsx
+│   │   │   └── CommentComposer.tsx
+│   │   ├── hooks/
+│   │   │   ├── usePolls.ts
+│   │   │   └── usePollDetail.ts
+│   │   ├── pages/
+│   │   │   ├── MyPollsPage.tsx
+│   │   │   ├── CreatePollPage.tsx
+│   │   │   ├── VotingPage.tsx
+│   │   │   ├── PollInfoPage.tsx
+│   │   │   └── ResultsPage.tsx
+│   │   ├── services/
+│   │   │   └── polls.ts
+│   │   └── utils/
+│   │       └── voting.ts
+│   └── settings/
+│       └── pages/
+│           └── SettingsPage.tsx
 ├── lib/
-│   └── storage/
-│       └── localStorage.ts
+│   ├── storage/
+│   │   └── localStorage.ts
+│   └── identity/
+│       └── randomIdentity.ts
 ├── types/
-│   └── poll.ts
+│   ├── poll.ts
+│   └── user.ts
+├── assets/
+│   └── avatars/
 ├── main.tsx
 └── styles.css
 ```
