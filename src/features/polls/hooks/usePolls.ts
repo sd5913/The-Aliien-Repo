@@ -28,5 +28,11 @@ export function usePolls() {
     setPolls(next);
   }, []);
 
-  return { polls, savePoll, updatePoll };
+  const removePoll = useCallback((pollId: string) => {
+    const next = readPolls().filter((poll) => poll.id !== pollId);
+    writePolls(next);
+    setPolls(next);
+  }, []);
+
+  return { polls, savePoll, updatePoll, removePoll };
 }

@@ -14,9 +14,11 @@ export function PageShell({ children, title, showNavigation = true, backTo }: Pa
   return (
     <div className={`app-shell${showNavigation ? " has-bottom-nav" : ""}`}>
       <header className="topbar">
-        {backTo ? <Link className="back-link" to={backTo} aria-label="返回">←</Link> : <span className="brand-mark">b.</span>}
-        <Link className="wordmark" to="/">BothPls</Link>
-        {title && <span className="topbar-title">{title}</span>}
+        {backTo ? <Link className="back-link" to={backTo} aria-label="返回">←</Link> : <Link className="brand-bubbles" to="/" aria-label="BothPls 首页"><span /><span /></Link>}
+        <Link className="brand-copy" to="/">
+          <strong>BothPls</strong>
+        </Link>
+        {!backTo && title && <span className="topbar-title">{title}</span>}
         <span className="topbar-spacer" />
       </header>
       <main className="page-content">{children}</main>

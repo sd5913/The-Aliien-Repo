@@ -26,6 +26,7 @@ export interface PollComment {
   voter: VoterIdentity;
   text: string;
   createdAt: string;
+  optionId?: string;
 }
 
 export interface Poll {
