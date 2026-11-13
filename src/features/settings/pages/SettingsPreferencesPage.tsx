@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PageShell } from "../../../components/layout/PageShell";
 import { readUserSettings, USER_SETTINGS_STORAGE_KEY } from "../services/settings";
+import { ProfileSettingsSection } from "../components/ProfileSettingsSection";
 
 export function SettingsPreferencesPage() {
   const [settings, setSettings] = useState(readUserSettings);
@@ -20,6 +21,7 @@ export function SettingsPreferencesPage() {
 
   return (
     <PageShell title="设置" showHeaderTitle backTo="/settings">
+      <ProfileSettingsSection />
       <section className="settings-card">
         <div className="settings-section-heading"><div><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
         <p className="settings-helper">仅保存你的偏好；不会请求设备权限或上传资料。</p>

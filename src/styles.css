@@ -178,6 +178,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .filter-tabs button.active { color: #fff; background: linear-gradient(100deg, #7c3aed, #a855f7); box-shadow: 0 4px 10px #7c3aed33; }
 .swipe-card { position: relative; border-radius: 23px; overflow: hidden; background: #fde68a; touch-action: pan-y; }
 .my-poll-card { position: relative; z-index: 1; min-height: 126px; padding: 12px 13px; border-radius: 23px; background: #ffffffd9; box-shadow: var(--soft-shadow); transition: transform .18s ease; }
+.settings-my-polls .swipe-card { background: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, .06); }
+.settings-my-polls .my-poll-card { border: 1px solid #ffffff; background: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, .07); }
 .my-poll-main { display: flex; align-items: center; gap: 12px; }
 .my-poll-main img { width: 68px; height: 68px; flex: 0 0 68px; border-radius: 18px; object-fit: cover; }
 .my-poll-info { min-width: 0; }
@@ -313,6 +315,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .settings-heading h1 { margin: 5px 0 4px; font-size: 26px; letter-spacing: -.5px; }
 .settings-heading p { margin: 0; color: #8969a6; font-size: 12px; }
 .settings-card { margin-bottom: 13px; padding: 16px; border: 1px solid #fff; border-radius: 24px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
+.settings-profile-intro { margin: 8px 0 22px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.settings-profile-intro .profile-summary { border: 0; padding: 12px 0; background: transparent; box-shadow: none; }
 .settings-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .settings-section-heading h2 { margin: 4px 0 0; font-size: 17px; }
 .profile-private-pill { padding: 5px 9px; border-radius: 999px; background: #ede9fe; color: #7c3aed; font-size: 9px; font-weight: 700; }
