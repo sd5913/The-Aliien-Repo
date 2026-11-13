@@ -34,6 +34,8 @@ export interface Poll {
   title: string;
   description: string;
   createdAt: string;
+  creatorId?: string;
+  commentsPublic?: boolean;
   endsAt?: string;
   status: PollStatus;
   options: PollOption[];

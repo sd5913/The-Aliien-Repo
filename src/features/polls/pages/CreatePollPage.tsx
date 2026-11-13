@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
 import { usePolls } from "../hooks/usePolls";
+import { getVoter, isPollOwner } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
 function makeOption(index: number): PollOption {
@@ -14,7 +15,9 @@ export function CreatePollPage() {
   const [params] = useSearchParams();
   const editingId = params.get("id");
   const { polls, savePoll } = usePolls();
+  const [voter] = useState(getVoter);
   const editingPoll = polls.find((poll) => poll.id === editingId);
+  const canEdit = !editingPoll || isPollOwner(editingPoll, voter.id);
   const [title, setTitle] = useState(editingPoll?.title ?? "");
   const [description, setDescription] = useState(editingPoll?.description ?? "");
   const [deadline, setDeadline] = useState("none");
@@ -31,9 +34,12 @@ export function CreatePollPage() {
     }
   }, [editingId, editingPoll]);
 
+  if (!canEdit) return <PageShell showNavigation={false} backTo="/my" title="编辑投票" showHeaderTitle><div className="empty-state"><h2>无法编辑这次投票</h2><p>只有发起者可以修改投票内容。</p><Link className="purple-button" to={`/poll/${editingPoll?.id}/manage`}>返回投票详情</Link></div></PageShell>;
+
   const updateOption = (id: string, name: string) => setOptions((current) => current.map((option) => option.id === id ? { ...option, name } : option));
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canEdit) return;
     const cleanOptions = options.map((option) => ({ ...option, name: option.name.trim() }));
     if (!title.trim()) { setError("請先寫下投票標題。"); return; }
     if (cleanOptions.some((option) => !option.name)) { setError("請為每個選項填寫名稱。"); return; }
@@ -43,6 +49,8 @@ export function CreatePollPage() {
       title: title.trim(),
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
+      creatorId: editingPoll?.creatorId ?? voter.id,
+      commentsPublic: editingPoll?.commentsPublic ?? true,
       ...(endsAt ? { endsAt } : {}),
       status: editingPoll?.status ?? "open",
       options: cleanOptions,

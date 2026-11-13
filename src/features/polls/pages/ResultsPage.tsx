@@ -7,6 +7,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { ResultBubbles } from "../components/ResultBubbles";
 import { CommentList } from "../components/CommentList";
+import { getVoter, isPollOwner } from "../utils/voting";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
@@ -14,6 +15,7 @@ export function ResultsPage() {
   const poll = polls.find((item) => item.id === id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [voter] = useState(getVoter);
 
   const copyLink = async () => {
     if (!poll) return;
@@ -35,6 +37,8 @@ export function ResultsPage() {
     if (optionId && counts.has(optionId)) counts.set(optionId, (counts.get(optionId) ?? 0) + 1);
   });
   const open = isPollOpen(poll);
+  const owner = isPollOwner(poll, voter.id);
+  const commentsVisible = poll.commentsPublic !== false || owner;
   const colorList = ["#8b5cf6", "#ec4899", "#3b82f6", "#f59e0b", "#22c55e"];
 
   return (
@@ -50,7 +54,7 @@ export function ResultsPage() {
         })}</div>
         {!poll.votes.length && <p className="empty-inline">还没有人投票，分享链接邀请朋友来参与吧。</p>}
       </section>
-      <section className="comments-section"><div className="section-title-row"><div><span className="eyebrow">听听大家的理由</span><h2>评论 <span className="heading-count">{poll.comments.length} 条</span></h2></div></div><CommentList comments={poll.comments} options={poll.options} /></section>
+      {commentsVisible && <section className="comments-section"><div className="section-title-row"><div><span className="eyebrow">听听大家的理由</span><h2>评论 <span className="heading-count">{poll.comments.length} 条</span></h2></div></div><CommentList comments={poll.comments} options={poll.options} /></section>}
       {!open ? <div className="locked-bottom">🔒 投票已结束，你只能查看结果和评论</div> : <Link className="purple-button button-full result-vote-button" to={`/poll/${poll.id}`}>改票 <span>↗</span></Link>}
       {menuOpen && <Modal title="分享这次投票" onClose={() => setMenuOpen(false)} actions={<><button className="button-soft" onClick={() => setMenuOpen(false)}>关闭</button><button className="purple-button" onClick={() => void copyLink()}>复制链接</button></>}><p>邀请朋友一起看看结果，也可以继续帮忙投票。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}

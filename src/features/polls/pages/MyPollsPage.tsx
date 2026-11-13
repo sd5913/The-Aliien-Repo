@@ -33,11 +33,11 @@ function MyPollCard({ poll, onDelete, notify }: { poll: Poll; onDelete: (poll: P
       <button className={`swipe-action swipe-edit${offset < 0 ? " visible" : ""}`} onClick={() => navigate(`/create?id=${poll.id}`)}>编辑</button>
       <button className={`swipe-action swipe-delete${offset > 0 ? " visible" : ""}`} onClick={() => onDelete(poll)}>删除</button>
       <article className="my-poll-card" style={{ transform: `translateX(${-offset}px)` }}>
-        <Link className="my-poll-main" to={`/poll/${poll.id}`}>
+        <Link className="my-poll-main" to={`/poll/${poll.id}/manage`}>
           <img src={poll.options[0]?.imageUrl ?? "https://picsum.photos/seed/bothpls-cover/240/240"} alt="" />
           <div className="my-poll-info"><StatusPill poll={poll} /><h3>{poll.title}</h3><p>{poll.votes.length} 人参与</p></div>
         </Link>
-        <div className="my-poll-actions"><Link to={`/poll/${poll.id}/results`} aria-label="管理投票">⚙ <span>管理</span></Link><button onClick={() => void share()} aria-label="分享投票">↗ <span>分享</span></button></div>
+        <div className="my-poll-actions"><Link to={`/poll/${poll.id}/manage`} aria-label="管理投票">⚙ <span>管理</span></Link><button onClick={() => void share()} aria-label="分享投票">↗ <span>分享</span></button></div>
       </article>
     </div>
   );

@@ -1,5 +1,6 @@
 // Reusable voting mode, status, scoring, and identity helpers. / 可复用的投票模式、状态、计分和身份工具。
-import type { Poll, PollOption, VotingMode } from "../../../types/poll";
+import type { Poll, PollOption, VoterIdentity, VotingMode } from "../../../types/poll";
+import { VOTER_STORAGE_KEY, readLocalJson, writeLocalJson } from "../../../lib/storage/localStorage";
 
 export interface RankedOptionResult {
   option: PollOption;
@@ -14,6 +15,19 @@ export function getVotingMode(options: PollOption[]): VotingMode {
 
 export function isPollOpen(poll: Poll, now = Date.now()): boolean {
   return poll.status === "open" && (!poll.endsAt || new Date(poll.endsAt).getTime() > now);
+}
+
+export function getVoter(): VoterIdentity {
+  const isIdentity = (value: unknown): value is VoterIdentity => Boolean(value && typeof value === "object" && "id" in value && "nickname" in value && typeof value.id === "string" && typeof value.nickname === "string");
+  const stored = readLocalJson(VOTER_STORAGE_KEY, null, isIdentity);
+  if (stored) return stored;
+  const voter = { id: crypto.randomUUID(), nickname: "朋友" };
+  writeLocalJson(VOTER_STORAGE_KEY, voter);
+  return voter;
+}
+
+export function isPollOwner(poll: Poll, voterId: string): boolean {
+  return !poll.creatorId || poll.creatorId === voterId;
 }
 
 export function getBordaResults(poll: Poll): RankedOptionResult[] {

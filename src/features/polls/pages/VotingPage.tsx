@@ -2,20 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
+import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
-import { VOTER_STORAGE_KEY, readLocalJson, writeLocalJson } from "../../../lib/storage/localStorage";
-import type { VoterIdentity } from "../../../types/poll";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
-
-function getVoter(): VoterIdentity {
-  const isIdentity = (value: unknown): value is VoterIdentity => Boolean(value && typeof value === "object" && "id" in value && "nickname" in value && typeof value.id === "string" && typeof value.nickname === "string");
-  const stored = readLocalJson(VOTER_STORAGE_KEY, null, isIdentity);
-  if (stored) return stored;
-  const voter = { id: crypto.randomUUID(), nickname: "朋友" };
-  writeLocalJson(VOTER_STORAGE_KEY, voter);
-  return voter;
-}
+import { getVoter } from "../utils/voting";
 
 export function VotingPage() {
   const { id = "" } = useParams();
@@ -24,9 +15,11 @@ export function VotingPage() {
   const poll = polls.find((item) => item.id === id);
   const [voter] = useState(getVoter);
   const existingVote = poll?.votes.find((vote) => vote.voter.id === voter.id);
+  const existingComment = poll?.comments.find((item) => item.voteId === existingVote?.id);
   const [activeId, setActiveId] = useState(existingVote?.selectedOptionId ?? poll?.options[0]?.id ?? "");
   const [selectedId, setSelectedId] = useState(existingVote?.selectedOptionId ?? "");
-  const [comment, setComment] = useState(() => poll?.comments.find((item) => item.voteId === existingVote?.id)?.text ?? "");
+  const [comment, setComment] = useState(existingComment?.text ?? "");
+  const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState("");
   const open = poll ? isPollOpen(poll) : false;
 
@@ -35,7 +28,7 @@ export function VotingPage() {
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
   const otherOption = poll.options[(activeIndex + 1) % poll.options.length];
-  const submitVote = () => {
+  const saveVote = () => {
     if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
     const now = new Date().toISOString();
     const voteId = existingVote?.id ?? crypto.randomUUID();
@@ -53,6 +46,15 @@ export function VotingPage() {
     }
   };
 
+  const submitVote = () => {
+    if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
+    if (existingComment && !comment.trim()) {
+      setConfirmCommentDelete(true);
+      return;
+    }
+    saveVote();
+  };
+
   return (
     <PageShell showNavigation={false} backTo="/" title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
@@ -64,9 +66,10 @@ export function VotingPage() {
       </div>
       <div className="vote-progress"><div className="vote-progress-top"><span>朋友们已经参与</span><strong>已选 {poll.votes.length}</strong></div><div className="progress-track"><span style={{ width: `${Math.min(100, poll.votes.length * 12)}%` }} /></div></div>
       <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
-      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={240} />
+      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
       <button className="purple-button button-full submit-vote" disabled={!open} onClick={submitVote}>{existingVote ? "提交修改" : "提交我的选择"} <span>↗</span></button>
+      {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
   );

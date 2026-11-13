@@ -284,6 +284,38 @@ h1, h2, h3 { color: var(--deep-purple); }
 .comment-meta time { color: #ae98c2; font-size: 9px; }
 .comment-copy p { margin: 5px 0 0; color: #70538d; font-size: 11px; line-height: 1.55; }
 .comment-color-dot { margin: 4px 0 0 3px; width: 8px; height: 8px; }
+
+.management-edit-button { min-height: 36px; display: inline-flex; align-items: center; gap: 4px; padding: 0 12px; border-radius: 12px; color: #7c3aed; background: #ffffffa8; box-shadow: 0 4px 12px #7c3aed18; font-size: 15px; }
+.management-edit-button span { font-size: 11px; font-weight: 700; }
+.management-heading { margin: 7px 0 15px; }
+.management-heading h1 { margin: 9px 0 5px; font-size: 23px; line-height: 1.35; }
+.management-heading p { margin: 0; color: #8969a6; font-size: 11px; line-height: 1.6; }
+.management-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 14px; }
+.management-stat { min-height: 76px; display: flex; flex-direction: column; justify-content: center; padding: 12px 14px; border: 1px solid #fff; border-radius: 19px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
+.management-stat strong { color: #4c1d95; font-size: 22px; line-height: 1.2; }
+.management-stat span { margin-top: 5px; color: #9673b7; font-size: 10px; }
+.management-stat-deadline strong { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.management-card { margin-bottom: 14px; padding: 15px; border: 1px solid #fff; border-radius: 23px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
+.management-card .section-title-row { margin-bottom: 8px; }
+.management-card .section-title-row h2 { font-size: 17px; }
+.management-share-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #eee4f7; }
+.management-share-row > div { min-width: 0; }
+.management-share-row strong { color: #5b21b6; font-size: 11px; }
+.management-share-row p { margin: 4px 0 0; color: #9678ad; font-size: 9px; line-height: 1.5; }
+.management-share-row button { min-height: 32px; flex: 0 0 auto; padding: 0 12px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; cursor: pointer; }
+.management-actions { display: flex; gap: 9px; }
+.management-actions > a, .management-actions > button { min-height: 40px; flex: 1; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.management-actions > a:only-child { flex: 0 0 100%; }
+.management-comments-toggle { margin-top: 12px; padding-top: 10px; }
+.management-comments { margin-top: 19px; }
+.comment-management-actions { display: flex; flex-direction: column; gap: 3px; margin-left: 2px; }
+.comment-management-actions button { padding: 3px 4px; border: 0; border-radius: 7px; color: #7c3aed; background: #f3e8ff; font-size: 9px; cursor: pointer; }
+.comment-management-actions .comment-delete-button { color: #be123c; background: #fff1f2; }
+.comment-editor { margin-top: 8px; }
+.comment-editor .text-input { min-height: 70px; margin: 0; background: #fff; font-size: 11px; }
+.comment-editor-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.comment-editor-actions button { min-height: 31px; padding: 0 13px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; box-shadow: none; cursor: pointer; }
+.comment-editor-actions .purple-button:disabled { cursor: not-allowed; }
 .locked-bottom { position: sticky; bottom: -30px; margin: 0 -22px -30px; padding: 16px 15px calc(17px + env(safe-area-inset-bottom)); text-align: center; color: #866c9e; background: #fffc; backdrop-filter: blur(14px); font-size: 11px; font-weight: 600; }
 .result-vote-button { margin-bottom: 11px; }
 .empty-inline { margin: 10px 0 0; color: #a18ab6; font-size: 11px; text-align: center; }
