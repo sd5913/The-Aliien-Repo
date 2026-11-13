@@ -34,7 +34,7 @@ export function CreatePollPage() {
     }
   }, [editingId, editingPoll]);
 
-  if (!canEdit) return <PageShell showNavigation={false} backTo="/my" title="编辑投票" showHeaderTitle><div className="empty-state"><h2>无法编辑这次投票</h2><p>只有发起者可以修改投票内容。</p><Link className="purple-button" to={`/poll/${editingPoll?.id}/manage`}>返回投票详情</Link></div></PageShell>;
+  if (!canEdit) return <PageShell showNavigation={false} backTo="/" title="编辑投票" showHeaderTitle><div className="empty-state"><h2>无法编辑这次投票</h2><p>只有发起者可以修改投票内容。</p><Link className="purple-button" to={`/poll/${editingPoll?.id}/manage`}>返回投票详情</Link></div></PageShell>;
 
   const updateOption = (id: string, name: string) => setOptions((current) => current.map((option) => option.id === id ? { ...option, name } : option));
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -59,7 +59,7 @@ export function CreatePollPage() {
     };
     try {
       savePoll(poll);
-      navigate("/my", { state: { toast: editingPoll ? "已保存" : "已发布" } });
+      navigate("/settings", { state: { toast: editingPoll ? "已保存" : "已发布" } });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
       setError("保存失败，请检查浏览器存储设置后重试。");
@@ -69,7 +69,7 @@ export function CreatePollPage() {
   return (
     <PageShell
       showNavigation={false}
-      backTo="/my"
+      backTo="/"
       title={editingPoll ? "编辑投票" : "创建投票"}
       showHeaderTitle
       footer={<div className="create-submit-footer"><PurpleButton type="submit" form="create-poll-form" fullWidth>{editingPoll ? "保存修改" : "创建投票"} <span>↗</span></PurpleButton></div>}
@@ -92,7 +92,6 @@ export function CreatePollPage() {
         <div className="deadline-row"><label className="field-label" htmlFor="deadline">截止时间</label><select id="deadline" className="text-input deadline-select" value={deadline} onChange={(event) => setDeadline(event.target.value)}><option value="none">不设置</option><option value="24">24 小时后</option><option value="72">3 天后</option><option value="168">7 天后</option>{editingPoll?.endsAt && <option value="custom">保留原截止时间</option>}</select></div>
         {error && <p className="form-error" role="alert">{error}</p>}
       </form>
-      <div className="create-back-link"><Link to="/my">取消并返回</Link></div>
     </PageShell>
   );
 }

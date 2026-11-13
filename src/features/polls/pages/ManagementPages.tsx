@@ -1,6 +1,6 @@
 // Poll list and management pages for the local prototype. / 本地原型的投票列表与管理页面。
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { Modal } from "../../../components/ui/Modal";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
@@ -10,27 +10,21 @@ import { CommentList } from "../components/CommentList";
 import { usePolls } from "../hooks/usePolls";
 import { getVoter, isPollOwner } from "../utils/voting";
 
-export function MyPollsPage() {
-  const { polls } = usePolls();
-  return (
-    <PageShell title="我的投票">
-      <section className="form-intro"><span className="eyebrow">都在这里</span><h1>我的投票</h1><p>你在此浏览器创建或参与的原型投票。</p></section>
-      {polls.length ? <div className="poll-list">{polls.map((poll) => <Link className="poll-card" key={poll.id} to={`/polls/${poll.id}/manage`}><div className="poll-card-copy"><StatusPill poll={poll} /><h3>{poll.title}</h3><p>{poll.options.length} 个选项 · {poll.votes.length} 人参与 · {poll.comments.length} 条评论</p></div><span className="card-arrow">↗</span></Link>)}</div> :
-        <div className="empty-card"><span className="empty-illustration">☁</span><h3>这里还空空的</h3><p>创建一个投票，开始听听大家的想法。</p><Link className="button button-dark" to="/polls/new">创建投票 <span>↗</span></Link></div>}
-    </PageShell>
-  );
-}
-
 export function PollManagementPage() {
   const { id = "" } = useParams();
+  const location = useLocation();
   const { polls, updatePoll } = usePolls();
   const [voter] = useState(getVoter);
   const [toast, setToast] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const poll = polls.find((item) => item.id === id);
+  const returnTo = location.state && typeof location.state === "object" && "returnTo" in location.state &&
+    (location.state.returnTo === "/" || location.state.returnTo === "/settings")
+    ? location.state.returnTo
+    : "/";
 
-  if (!poll) return <PageShell showNavigation={false} backTo="/my" title="投票详情" showHeaderTitle><div className="empty-state"><h2>没有找到这次投票</h2><p>它可能已被清除，或不在当前浏览器中。</p><Link className="purple-button" to="/my">回到我的投票</Link></div></PageShell>;
+  if (!poll) return <PageShell showNavigation={false} backTo={returnTo} title="投票详情" showHeaderTitle><div className="empty-state"><h2>没有找到这次投票</h2><p>它可能已被清除，或不在当前浏览器中。</p><Link className="purple-button" to={returnTo}>{returnTo === "/" ? "回到首页" : "回到个人页面"}</Link></div></PageShell>;
 
   const owner = isPollOwner(poll, voter.id);
   const open = isPollOpen(poll);
@@ -113,7 +107,7 @@ export function PollManagementPage() {
   return (
     <PageShell
       showNavigation={false}
-      backTo="/my"
+      backTo={returnTo}
       title="投票详情"
       showHeaderTitle
       headerAction={owner ? <Link className="management-edit-button" to={`/create?id=${poll.id}`} aria-label="编辑投票">✎ <span>编辑</span></Link> : undefined}

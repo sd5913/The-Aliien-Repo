@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import type { Poll } from "../../../types/poll";
 import { StatusPill } from "../../../components/ui/StatusPill";
 
-export function PollCard({ poll, to, compact = false }: { poll: Poll; to: string; compact?: boolean }) {
+export function PollCard({ poll, to, compact = false, returnTo = "/" }: { poll: Poll; to: string; compact?: boolean; returnTo?: string }) {
   const image = poll.options[0]?.imageUrl;
   return (
-    <Link className={`poll-card${compact ? " poll-card-compact" : ""}`} to={to}>
+    <Link className={`poll-card${compact ? " poll-card-compact" : ""}`} to={to} state={{ returnTo }}>
       {image ? <img className="poll-card-image" src={image} alt="" /> : <div className="poll-card-image image-placeholder">✦</div>}
       <span className="poll-card-chevron" aria-hidden="true">↗</span>
       <div className="poll-card-copy">
