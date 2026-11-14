@@ -117,28 +117,23 @@ For the finalised creator and participant flow charts, see Section 5 of [`docs\P
 
 ## 6. Technology Stack
 
-The frontend stack is confirmed; backend and deployment choices are still being finalised.
-
 | Component | Technology |
 |---|---|
-| Frontend | React + Vite |
-| Backend | [TODO: not yet finalised (Supabase under evaluation)] |
-| Database | [TODO: not yet finalised] |
+| Frontend | React 18 + Vite 7 + React Router 7 + TypeScript |
+| Backend | Supabase (Postgres, accessed through `@supabase/supabase-js`) |
+| Database | Supabase Postgres: `polls`, `poll_options`, `votes` |
 | UI/UX Design | Figma |
-| Deployment | [TODO: Vercel under evaluation] |
+| Deployment | Vercel (static SPA with client-side rewrite) |
 | Development Tools | VS Code, GitHub |
 
-The final backend stack will be documented here once the implementation decisions have been confirmed.
+Comments, comment visibility and user preferences are stored in the browser LocalStorage at this stage; the poll, options and votes live in Supabase.
 
 ## 7. Getting Started
 
 ### Prerequisites
 
-Before running the project, make sure the following tools are installed:
-
-- [TODO: Runtime or programming language and version]
-- [TODO: Package manager]
-- [TODO: Other dependencies]
+- Node.js 22.x
+- npm 10.x
 
 ### Installation
 
@@ -155,6 +150,17 @@ Install dependencies:
 npm install
 ```
 
+Copy the environment example and fill in your Supabase project values:
+
+```bash
+cp .env.example .env
+```
+
+```text
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<publishable or anon key>
+```
+
 ### Run Locally
 
 Start the development server:
@@ -167,6 +173,13 @@ Open the local URL shown in the terminal:
 
 ```text
 http://localhost:5173
+```
+
+Other scripts:
+
+```bash
+npm run build     # type-check + production build to dist
+npm run preview   # preview the production build locally
 ```
 
 ### Online Demo
@@ -190,9 +203,8 @@ http://localhost:5173
 - Voting is **single-choice only**. Multiple-choice mode is not available in the MVP (planned for v1.5).
 - Email verification codes are not implemented yet: creators log in with email + nickname only (planned for a later version).
 - Anonymous participant identity (random username) is device/browser-bound: clearing browser data or switching devices may lose it, and it cannot be recovered.
-- [TODO: Features that are not yet implemented]
-- [TODO: Login, data storage, or sharing limitations]
-- [TODO: Other known issues]
+- Comments, comment visibility and user preferences are stored in the browser LocalStorage for this stage; they do not sync across devices yet.
+- There is no account system yet: RLS currently allows anonymous read/write for the prototype; production should add Supabase Auth and per-author write restrictions.
 
 Known limitations will be documented as they are identified during development and testing.
 

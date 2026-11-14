@@ -2,7 +2,7 @@
 
 ## 技术栈
 
-React 18 + React Router 7 + Vite + TypeScript。当前为前端原型，投票数据与用户偏好保存在浏览器 LocalStorage，尚未接入后端 API。
+React 18 + React Router 7 + Vite 7 + TypeScript。投票主链路（投票、选项、票数）保存在 Supabase Postgres 三表；评论、评论可见性与个人设置本期留在浏览器 LocalStorage，尚未落库。
 
 ## 源码目录（实际现状）
 
@@ -16,9 +16,9 @@ src/
 │   │   ├── BottomNav.tsx                # 底部主导航：首页 / 发起投票 / 个人
 │   │   └── PageShell.tsx                # 页面框架：顶栏、返回键、底部导航、footer
 │   └── ui/
-│       ├── Modal.tsx                     # 通用弹窗（删除确认、分享等）
+│       ├── Modal.tsx                    # 通用弹窗（删除确认、分享等）
 │       ├── PurpleButton.tsx             # 主按钮
-│       ├── StatusPill.tsx                # 投票状态标签（进行中 / 已结束）+ isPollOpen
+│       ├── StatusPill.tsx               # 投票状态标签（进行中 / 已结束）+ isPollOpen
 │       └── Toast.tsx                     # 轻提示
 ├── features/
 │   ├── home/
@@ -32,31 +32,37 @@ src/
 │   │   │   ├── ResultBubbles.tsx         # 结果气泡占比
 │   │   │   └── StatusPill.tsx            # 遗留重复组件，仅 ManagementPages 引用
 │   │   ├── hooks/
-│   │   │   └── usePolls.ts               # 投票列表状态与增删改，同步 LocalStorage
+│   │   │   └── usePolls.ts               # 投票列表状态与增删改；按字段分流到三表或本地
 │   │   ├── pages/
-│   │   │   ├── CreatePollPage.tsx        # 创建 / 编辑投票页
-│   │   │   ├── ManagementPages.tsx       # 遗留未接线文件，见下文
+│   │   │   ├── CreatePollPage.tsx         # 创建 / 编辑投票页
+│   │   │   ├── ManagementPages.tsx        # 投票管理页 PollManagementPage（结束投票、评论管理）
 │   │   │   ├── MyPollsPage.tsx           # 我的投票概览（含列表区块 MyPollsSection）
 │   │   │   ├── ResultsPage.tsx           # 投票结果页
-│   │   │   └── VotingPage.tsx            # 参与投票页
+│   │   │   └── VotingPage.tsx             # 参与投票页
 │   │   ├── services/
-│   │   │   └── polls.ts                  # 投票数据读写、种子数据
+│   │   │   └── polls.ts                   # 三表读写：polls / poll_options / votes
 │   │   └── utils/
-│   │       └── voting.ts                 # 投票状态、模式、计分、昵称等工具
+│   │       └── voting.ts                  # 投票状态、模式、计分、昵称等工具
 │   └── settings/
 │       ├── components/
 │       │   └── ProfileSettingsSection.tsx # 个人资料编辑区块（头像 / 昵称 / 邮箱）
+│       ├── hooks/
+│       │   └── useUserSettings.ts         # 用户设置状态，读写本地存储
 │       ├── pages/
-│       │   ├── SettingsPage.tsx          # 个人主页：资料摘要 + 我的投票列表
+│       │   ├── SettingsPage.tsx           # 个人主页：资料摘要 + 我的投票列表
 │       │   └── SettingsPreferencesPage.tsx # 设置页：资料编辑 + 相机 / 相册 / 隐私
 │       └── services/
-│           └── settings.ts                # 用户偏好读写与默认值
+│           └── settings.ts                # 用户偏好本地读写与默认值
 ├── lib/
-│   └── storage/
-│       └── localStorage.ts                # 安全 JSON 读写与存储 key
+│   ├── storage/
+│   │   ├── localStorage.ts                # 安全 JSON 读写与存储 key
+│   │   └── pollLocal.ts                   # 评论与评论可见性的本地存储
+│   └── supabase/
+│       └── client.ts                      # Supabase 浏览器客户端（读 VITE_ 环境变量）
 ├── types/
 │   └── poll.ts                           # 投票、选项、投票记录、评论等核心类型
 ├── main.tsx                              # 浏览器入口，挂载 React 应用
+├── vite-env.d.ts                         # import.meta.env 类型声明
 └── styles.css                            # 全局样式
 ```
 
@@ -65,12 +71,20 @@ src/
 | 路径 | 页面组件 | 文件 | 说明 |
 |---|---|---|---|
 | `/` | HomePage | features/home/pages/HomePage.tsx | 首页 |
-| `/my` | MyPollsPage | features/polls/pages/MyPollsPage.tsx | 我的投票概览，含状态筛选标签 |
 | `/settings` | SettingsPage | features/settings/pages/SettingsPage.tsx | 个人主页，资料摘要 + 我的投票 |
 | `/settings/preferences` | SettingsPreferencesPage | features/settings/pages/SettingsPreferencesPage.tsx | 设置页，资料编辑 + 权限 + 隐私 |
 | `/create` | CreatePollPage | features/polls/pages/CreatePollPage.tsx | 创建投票；带 `?id=` 时复用为编辑页 |
 | `/poll/:id` | VotingPage | features/polls/pages/VotingPage.tsx | 参与投票页 |
+| `/poll/:id/manage` | PollManagementPage | features/polls/pages/ManagementPages.tsx | 投票管理页：参与人数、结束投票、评论管理 |
 | `/poll/:id/results` | ResultsPage | features/polls/pages/ResultsPage.tsx | 投票结果页，含评论与分享弹窗 |
+
+## 数据划分
+
+- 落 Supabase 三表：
+  - `polls`：标题、说明、状态、作者标识、截止/关闭时间。
+  - `poll_options`：选项文案、图片、排序位置。
+  - `votes`：投票者标识、排序（单选时只含一个选项 id）、提交时间；`(poll_id, voter_id)` 唯一。
+- 留浏览器本地：评论、评论是否公开、个人资料与偏好；匿名 voter ID 也存本地。
 
 ## 页面规划对照（对照 user flow）
 
@@ -83,6 +97,7 @@ src/
 - 我的投票概览页
 - 个人主页
 - 设置页
+- 投票管理页（结束投票、评论编辑/删除、评论可见性开关）
 
 ### 不单独成页
 
@@ -90,21 +105,13 @@ src/
 
 ### 待定（登录手段与后端 API 确定后再定）
 
-- 个人信息编辑形态：暂不新建独立页面。倾向在设置页内做下拉展开，默认查看态，点击后进入编辑态，可修改头像、昵称、邮箱、密码等信息。具体字段、校验规则和保存方式待登录方案与 API 确定后再细化。
-- 登录 / 注册页：待登录手段确定后补充。
+- 登录 / 注册页：当前无账号体系，参与者用本地生成的匿名标识；待接 Supabase Auth 后补充。
 
-## 遗留未接线文件
+## 遗留与已知缺口
 
-以下文件当前不被任何模块 import，也未在路由表注册，不影响运行，后续确认后可清理：
-
-- `features/polls/pages/ManagementPages.tsx`：内含旧版 `MyPollsPage` 与 `PollManagementPage`。文件内跳转的 `/polls`、`/polls/new`、`/polls/:id/manage`、`/polls/:id/results` 在现行路由表中均不存在。
-- `features/polls/components/StatusPill.tsx`：重复组件，仅被上面的遗留文件引用；现行页面统一使用 `components/ui/StatusPill.tsx`。
-
-## 待补缺口（流程图有、现行原型未落地，供后续排期）
-
-- 投票详情 / 管理独立页：参与人数、关闭时间、评论、选项个数、编辑入口、结束投票、管理评论。现行相关信息分散在 VotingPage 与 ResultsPage。
-- 结束投票二次确认弹窗：现行页面没有结束投票入口。
-- 分享面板已在结果页弹窗内实现（复制链接）；列表卡片分享为复制链接 + Toast。
+- `features/polls/components/StatusPill.tsx` 是重复组件，仅被 ManagementPages 引用；现行其他页面统一使用 `components/ui/StatusPill.tsx`。
+- 评论与个人设置本期未入库，换设备或清浏览器数据后丢失；后续按需补后端表。
+- RLS 当前原型放开匿名读写，正式版应接 Auth 并按作者收窄更新 / 删除权限。
 
 ## 职责划分
 
@@ -113,7 +120,7 @@ src/
 - `features/home/`：首页及其专用内容。
 - `features/polls/`：投票相关页面、组件、hooks、数据操作与投票规则，状态与规则保持在本 feature 内。
 - `features/settings/`：个人主页、设置与个人资料相关内容。
-- `lib/`：跨 feature 的通用基础设施，如浏览器存储工具。
+- `lib/`：跨 feature 的通用基础设施，如 Supabase 客户端与浏览器存储工具。
 - `types/`：跨 feature 共享的类型定义。
 - `styles.css`：全局样式；页面或 feature 专属样式随对应 feature 维护。
 
