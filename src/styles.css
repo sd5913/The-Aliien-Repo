@@ -171,6 +171,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .my-poll-card::after { position: absolute; top: 0; bottom: 0; left: calc(43% - 5px); width: 10px; background: radial-gradient(circle, #eee8f5 0 3px, transparent 3.5px) center / 10px 17px repeat-y; content: ""; pointer-events: none; }
 .settings-my-polls .swipe-card { background: transparent; box-shadow: none; }
 .settings-my-polls .my-poll-card { border-color: #fff; background: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, .07); }
+.home-recent .my-poll-card { background: #fff; }
 .my-poll-thumbnails { display: flex; flex: 0 0 40%; align-items: center; gap: 7px; padding-right: 10px; }
 .my-poll-thumbnails img { width: 54px; height: 66px; flex: 0 1 54px; border-radius: 12px; object-fit: cover; background: linear-gradient(145deg, #fbcfe8, #c4b5fd 55%, #bfdbfe); }
 .my-poll-ticket-copy { position: relative; align-self: stretch; min-width: 0; flex: 1; padding: 4px 25px 3px 13px; }

@@ -125,10 +125,15 @@ export function PollCard({
       suppressClick.current = false;
       return;
     }
-    if (expanded && !(event.target as HTMLElement).closest(".my-poll-share")) {
+    const target = event.target as HTMLElement;
+    if (target.closest(".my-poll-share")) return;
+    if (expanded) {
       event.preventDefault();
       onExpand(false);
+      return;
     }
+    if (target.closest("a")) return;
+    navigate(to, { state: { returnTo } });
   };
 
   return (
