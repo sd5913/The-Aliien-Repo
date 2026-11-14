@@ -3,6 +3,10 @@ site/
 data/cache/
 node_modules/
 dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
 
 # Machinery, not work.
 .venv/

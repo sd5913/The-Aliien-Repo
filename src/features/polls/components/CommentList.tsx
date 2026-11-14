@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { PollComment, PollOption } from "../../../types/poll";
-import { readUserSettings } from "../../settings/services/settings";
+import { useUserSettings } from "../../settings/hooks/useUserSettings";
 
 const colors = ["#8b5cf6", "#ec4899", "#3b82f6", "#f59e0b", "#22c55e"];
 
@@ -16,9 +16,9 @@ interface CommentListProps {
 export function CommentList({ comments, options, currentVoterId, isPollOwner = false, onEdit, onDelete }: CommentListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const { settings } = useUserSettings();
 
   if (!comments.length) return <p className="empty-inline">还没有评论，朋友们的想法会显示在这里。</p>;
-  const showNickname = readUserSettings().showNickname;
 
   const startEdit = (comment: PollComment) => {
     setEditingId(comment.id);
@@ -45,7 +45,7 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
           <article className="comment-row" key={comment.id}>
             <div className="comment-avatar">{comment.voter.nickname.slice(0, 1)}</div>
             <div className="comment-copy">
-              <div className="comment-meta"><strong>{showNickname ? comment.voter.nickname : "匿名朋友"}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time></div>
+              <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : "匿名朋友"}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time></div>
               {editing ? (
                 <div className="comment-editor">
                   <textarea className="text-input textarea" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={200} aria-label="修改评论" autoFocus />

@@ -1,11 +1,43 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
+import { Modal } from "../../../components/ui/Modal";
+import { Toast } from "../../../components/ui/Toast";
 import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
+import type { Poll } from "../../../types/poll";
 
 export function HomePage() {
-  const { polls } = usePolls();
+  const { polls, loading, error, removePoll, updatePoll } = usePolls();
+  const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Poll | null>(null);
+  const [toast, setToast] = useState("");
   const recent = polls.slice(0, 3);
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    try {
+      await removePoll(deleting.id);
+      setExpandedPollId(null);
+      setToast("投票已删除");
+    } catch (error) {
+      console.error("Could not delete poll.", error);
+      setToast("删除失败，请稍后重试");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const endPoll = async (poll: Poll) => {
+    try {
+      await updatePoll(poll.id, (current) => ({ ...current, status: "closed" }));
+      setExpandedPollId(null);
+      setToast("投票已结束");
+    } catch (error) {
+      console.error("Could not end poll.", error);
+      setToast("结束投票失败，请稍后重试");
+    }
+  };
 
   return (
     <PageShell>
@@ -26,10 +58,12 @@ export function HomePage() {
       </section>
       <section className="home-recent">
         <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div><Link className="subtle-link" to="/settings#my-polls">查看全部 →</Link></div>
-        {recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={`/poll/${poll.id}/manage`} returnTo="/" />)}</div> : (
+        {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={`/poll/${poll.id}/manage`} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={endPoll} notify={setToast} />)}</div> : (
           <div className="empty-state"><div className="empty-art" aria-hidden="true"><span>☁</span><i>♡</i></div><h3>还没有投票哦</h3><p>创建一个小问题，邀请朋友帮你选。</p><Link className="purple-button" to="/create">开始创建</Link></div>
         )}
       </section>
+      {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
   );
 }

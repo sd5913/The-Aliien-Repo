@@ -18,7 +18,7 @@ export function CreatePollPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const editingId = params.get("id");
-  const { polls, savePoll } = usePolls();
+  const { polls, loading, error: pollsError, savePoll } = usePolls();
   const [voter] = useState(getVoter);
   const editingPoll = polls.find((poll) => poll.id === editingId);
   const canEdit = !editingPoll || isPollOwner(editingPoll, voter.id);
@@ -26,6 +26,7 @@ export function CreatePollPage() {
   const [description, setDescription] = useState(
     editingPoll?.description ?? "",
   );
+
   const [deadline, setDeadline] = useState("none");
   const [options, setOptions] = useState<PollOption[]>(
     editingPoll?.options ?? [makeOption(1), makeOption(2)],
@@ -41,6 +42,12 @@ export function CreatePollPage() {
       if (editingPoll.endsAt) setDeadline("custom");
     }
   }, [editingId, editingPoll]);
+
+  if (loading)
+    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
+
+  if (pollsError)
+    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
 
   if (!canEdit)
     return (
@@ -69,7 +76,7 @@ export function CreatePollPage() {
         option.id === id ? { ...option, name } : option,
       ),
     );
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canEdit) return;
     const cleanOptions = options.map((option) => ({
@@ -106,13 +113,13 @@ export function CreatePollPage() {
       comments: editingPoll?.comments ?? [],
     };
     try {
-      savePoll(poll);
+      await savePoll(poll);
       navigate("/settings", {
         state: { toast: editingPoll ? "已保存" : "已发布" },
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
-      setError("保存失败，请检查浏览器存储设置后重试。");
+      setError("保存失败，请检查 Supabase 配置后重试。");
     }
   };
 

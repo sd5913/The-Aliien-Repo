@@ -13,7 +13,7 @@ import { getVoter, isPollOwner } from "../utils/voting";
 export function PollManagementPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { polls, updatePoll } = usePolls();
+  const { polls, loading, error, updatePoll } = usePolls();
   const [voter] = useState(getVoter);
   const [toast, setToast] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
@@ -28,6 +28,12 @@ export function PollManagementPage() {
     (location.state.returnTo === "/" || location.state.returnTo === "/settings")
       ? location.state.returnTo
       : "/";
+
+  if (loading)
+    return <PageShell showNavigation={false} backTo={returnTo} title="投票详情" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
+
+  if (error)
+    return <PageShell showNavigation={false} backTo={returnTo} title="投票详情" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
 
   if (!poll)
     return (
@@ -78,9 +84,9 @@ export function PollManagementPage() {
     }
   };
 
-  const closePoll = () => {
+  const closePoll = async () => {
     try {
-      updatePoll(poll.id, (current) => {
+      await updatePoll(poll.id, (current) => {
         if (!isPollOwner(current, voter.id))
           throw new Error("Only the poll owner can close this poll.");
         return { ...current, status: "closed" };
@@ -94,9 +100,9 @@ export function PollManagementPage() {
     }
   };
 
-  const toggleComments = () => {
+  const toggleComments = async () => {
     try {
-      updatePoll(poll.id, (current) => {
+      await updatePoll(poll.id, (current) => {
         if (!isPollOwner(current, voter.id))
           throw new Error("Only the poll owner can change comment visibility.");
         return {
@@ -111,9 +117,9 @@ export function PollManagementPage() {
     }
   };
 
-  const editComment = (comment: PollComment, text: string) => {
+  const editComment = async (comment: PollComment, text: string) => {
     try {
-      updatePoll(poll.id, (current) => {
+      await updatePoll(poll.id, (current) => {
         const target = current.comments.find((item) => item.id === comment.id);
         if (!target || target.voter.id !== voter.id)
           throw new Error("Only the comment author can edit this comment.");
@@ -131,10 +137,10 @@ export function PollManagementPage() {
     }
   };
 
-  const deleteComment = () => {
+  const deleteComment = async () => {
     if (!deletingComment) return;
     try {
-      updatePoll(poll.id, (current) => {
+      await updatePoll(poll.id, (current) => {
         const target = current.comments.find(
           (item) => item.id === deletingComment.id,
         );
@@ -267,7 +273,7 @@ export function PollManagementPage() {
               role="switch"
               aria-checked={commentsPublic}
               aria-label="公开评论区"
-              onClick={toggleComments}
+              onClick={() => void toggleComments()}
             >
               <span />
             </button>
@@ -307,7 +313,7 @@ export function PollManagementPage() {
               >
                 取消
               </button>
-              <button className="danger-button" onClick={closePoll}>
+              <button className="danger-button" onClick={() => void closePoll()}>
                 结束投票
               </button>
             </>
@@ -328,7 +334,7 @@ export function PollManagementPage() {
               >
                 取消
               </button>
-              <button className="danger-button" onClick={deleteComment}>
+              <button className="danger-button" onClick={() => void deleteComment()}>
                 删除评论
               </button>
             </>
