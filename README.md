@@ -123,7 +123,7 @@ For the finalised creator and participant flow charts, see Section 5 of [`docs\P
 | Backend | Supabase (Postgres, accessed through `@supabase/supabase-js`) |
 | Database | Supabase Postgres: `polls`, `poll_options`, `votes` |
 | UI/UX Design | Figma |
-| Deployment | Vercel (static SPA with client-side rewrite) |
+| Deployment | Vercel, or Cloudflare Pages via GitHub Actions (static SPA) |
 | Development Tools | VS Code, GitHub |
 
 Comments, comment visibility and user preferences are stored in the browser LocalStorage at this stage; the poll, options and votes live in Supabase.
@@ -188,6 +188,13 @@ npm run preview   # preview the production build locally
 - **Instructions:** [TODO: Any additional access instructions]
 
 > Setup and execution instructions will be updated to match the final implementation.
+
+### Deployment Options
+
+- [Cloudflare Pages + Supabase](docs/DEPLOYMENT_CLOUDFLARE_PAGES.md): GitHub Actions workflow, one-time Pages setup, and the five required repository secrets. Pull requests build without real credentials; pushes to `main` deploy after setup.
+- [Vercel + Supabase](docs/DEPLOYMENT_VERCEL_SUPABASE.md): existing Vercel deployment instructions. The Vercel configuration remains supported.
+
+Both options keep the existing Supabase backend. No database migration is required.
 
 ## 8. Platforms and Limitations
 
