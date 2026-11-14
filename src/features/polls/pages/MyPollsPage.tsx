@@ -191,7 +191,7 @@ function MyPollCard({
 }
 
 export function MyPollsSection({ showCreateButton = true, personalPageStyle = false }: { showCreateButton?: boolean; personalPageStyle?: boolean }) {
-  const { polls, removePoll, updatePoll } = usePolls();
+  const { polls, loading, error, removePoll, updatePoll } = usePolls();
   const [filter, setFilter] = useState<Filter>("全部");
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
@@ -199,10 +199,10 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
   const [toast, setToast] = useState(typeof location.state?.toast === "string" ? location.state.toast : "");
   const filtered = polls.filter((poll) => filter === "全部" || (filter === "进行中" ? isPollOpen(poll) : !isPollOpen(poll)));
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleting) return;
     try {
-      removePoll(deleting.id);
+      await removePoll(deleting.id);
       setExpandedPollId(null);
       setToast("投票已删除");
     } catch (error) {
@@ -213,9 +213,9 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
     }
   };
 
-  const endPoll = (poll: Poll) => {
+  const endPoll = async (poll: Poll) => {
     try {
-      updatePoll(poll.id, (current) => ({ ...current, status: "closed" }));
+      await updatePoll(poll.id, (current) => ({ ...current, status: "closed" }));
       setExpandedPollId(null);
       setToast("投票已结束");
     } catch (error) {
@@ -228,7 +228,7 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
     <section id={personalPageStyle ? "my-polls" : undefined} className={personalPageStyle ? "settings-my-polls" : undefined}>
       <div className="page-heading my-heading"><div><span className="eyebrow">收集每一个小想法</span><h1>我的投票</h1></div>{showCreateButton && <Link to="/create" className="purple-button create-shortcut">＋ 创建投票</Link>}</div>
       <div className="filter-tabs" role="tablist">{(["全部", "进行中", "已结束"] as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{tab}</button>)}</div>
-      {filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={endPoll} notify={setToast} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{polls.length ? "这里暂时没有这类投票" : "还没有投票哦"}</h3><p>创建一个小问题，邀请朋友帮你选。</p>{showCreateButton && <Link to="/create" className="purple-button">＋ 创建投票</Link>}</div>}
+      {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={endPoll} notify={setToast} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{polls.length ? "这里暂时没有这类投票" : "还没有投票哦"}</h3><p>创建一个小问题，邀请朋友帮你选。</p>{showCreateButton && <Link to="/create" className="purple-button">＋ 创建投票</Link>}</div>}
       {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </section>

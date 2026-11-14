@@ -5,7 +5,7 @@
 | 项 | 现状 | 对上线的含义 |
 |---|---|---|
 | 前端 | React 18 + Vite 7 + React Router 7（`createBrowserRouter`） | 纯静态站点，Vercel 必须配 SPA 回退，否则 `/poll/:id` 刷新 404 |
-| 数据 | 全部在 localStorage，key `bothpls:polls:v1`，读写集中在 `src/features/polls/services/polls.ts` | 直接部署后每人各自一份数据，分享链接投票无效，这是必须接 Supabase 的原因 |
+| 数据 | 投票及个人设置保存在 Supabase；本机 localStorage 只保留匿名 voter ID | 分享投票和用户偏好通过 Supabase 在设备间共享 |
 | 仓库 | `github.com/sd5913/The-Aliien-Repo`，当前分支 `feat/#2` 领先远端 1 个提交 | 先 push，否则 Vercel 构建的是旧代码 |
 | 构建 | 本机 `npm run build` 已验证通过（tsc -b + vite build，dist JS 285 KB / gzip 91 KB） | 构建链路没问题，可以直接部署 |
 
@@ -115,7 +115,7 @@ git push origin feat/#2
 
 SQL Editor → New query → 把 `supabase/schema.sql` 全文粘进去 → Run。
 
-表结构：`polls(id text 主键, doc jsonb, created_at, updated_at)`。
+表结构：`polls(id text 主键, doc jsonb, created_at, updated_at)` 和 `user_settings(id text 主键, doc jsonb, updated_at)`。
 
 为什么用单表 JSONB 而不是规范 4 张表：现在的 `Poll` 是 `options` / `votes` / `comments` 三层嵌套，所有页面都直接读 `poll.votes`、`poll.comments`。拆成 4 张表要把每个页面都改一遍，上线测试阶段没必要。jsonb 让 service 层几乎不动，先把链路跑通。
 
@@ -135,7 +135,7 @@ VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 ```
 
-在 `.gitignore` 末尾追加（当前文件没有忽略 env，不加会把 key 推上 GitHub）：
+仓库已在 `.gitignore` 中忽略 `.env` 和 `.env.*` 文件，确认本地密钥不会提交。
 
 ```
 .env
@@ -175,7 +175,13 @@ interface ImportMeta {
 }
 ```
 
-### B5. 改数据层（3 个文件）
+### B5. 数据层已接入
+
+仓库当前代码已经完成 Supabase 读写，不需要重复手工复制下方历史示例。配置 `VITE_SUPABASE_URL` 与 `VITE_SUPABASE_ANON_KEY` 后，投票由 `src/features/polls/services/polls.ts` 读写 `polls` 表，个人资料和偏好由 `src/features/settings/services/settings.ts` 读写 `user_settings` 表。初次连接且投票表为空时会写入内置 seed polls。
+
+写入成功后页面才更新；远端读写出错会显示错误，不会静默回退到本地数据。浏览器 localStorage 仅保存匿名 voter ID，用于关联设备上的投票及个人设置。
+
+以下代码片段是接入前的迁移草稿，不应按它保留本地存储兜底或覆盖当前实现。
 
 **1. `src/features/polls/services/polls.ts`**
 
@@ -356,12 +362,12 @@ npm run dev
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | 白屏 / `/poll/xxx` 404 | 没配 `vercel.json`，或 Output Directory 不是 `dist` | 补 rewrite、改输出目录后 Redeploy |
-| 首页正常但不共享数据 | service 还在走 localStorage，或页面没 `await` | 按 B5 三处改完，确认 Network 有 `rest/v1/polls` 请求 |
+| 首页正常但不共享数据 | Supabase 环境变量、RLS 或请求配置错误 | 确认 Network 有 `rest/v1/polls` 请求并查看 Supabase API 日志 |
 | 401 / `new row violates row-level security` | `schema.sql` 没执行完，或 policy 没建 | SQL Editor 重跑整段 |
 | 改了环境变量线上仍报缺少变量 | 没有 Redeploy | Deployments → Redeploy |
 | `Invalid API key` | 变量名少了 `VITE_` 前缀，或值里带了引号/空格 | 重新粘贴，不要带引号 |
 | CORS 报错 | Project URL 填成了 dashboard 网址 | 用 `https://xxxx.supabase.co` |
-| 第二台设备打开还是 seed | 请求没发出，走了 localStorage 兜底 | 检查 import 路径与 `fetchPolls` 调用 |
+| 第二台设备打开还是 seed | 数据库里只有初始 seed，或读请求失败 | 检查 `polls` 表及 Network 中的 `rest/v1/polls` 响应 |
 | 项目突然连不上 | 免费版 7 天无请求会 pause | dashboard 点 Restore，测试前先唤醒 |
 | 国内访问 `*.vercel.app` 慢或超时 | 网络线路问题，不是代码问题 | 绑自定义域名，或演示前预热 |
 | 投票票数偶尔少 1 | jsonb 并发覆盖 | 演示前改用附录 A 的 votes 独立表 |

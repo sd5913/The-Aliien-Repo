@@ -1,54 +1,66 @@
--- BothPls 上线测试用最小表结构（单表 + JSONB）
+-- BothPls 线上表结构（规范化三表）
+-- Project: zptfqvufzsvlzmkdcfeb
 -- 在 Supabase Dashboard -> SQL Editor -> New query 中整段执行
 
+-- 投票主表
 create table if not exists public.polls (
-  id          text primary key,
-  doc         jsonb not null,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  status text not null default 'open' check (status in ('open', 'closed')),
+  author_name text default 'Picksy friend',
+  is_public boolean not null default true,
+  emoji text,
+  created_at timestamptz not null default now(),
+  closed_at timestamptz
 );
 
-create index if not exists polls_updated_at_idx on public.polls (updated_at desc);
+-- 投票选项
+create table if not exists public.poll_options (
+  id uuid primary key default gen_random_uuid(),
+  poll_id uuid not null references public.polls(id) on delete cascade,
+  label text not null,
+  image_url text,
+  position int not null default 0,
+  created_at timestamptz not null default now()
+);
 
--- 每次 update 自动刷新 updated_at，前端用它排序
-create or replace function public.touch_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
+-- 投票记录；ranking 为选项 id 的有序数组，单选时只含一个元素
+create table if not exists public.votes (
+  id uuid primary key default gen_random_uuid(),
+  poll_id uuid not null references public.polls(id) on delete cascade,
+  voter_id text not null,
+  ranking jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (poll_id, voter_id)
+);
 
-drop trigger if exists polls_touch on public.polls;
-create trigger polls_touch
-before update on public.polls
-for each row execute function public.touch_updated_at();
+create index if not exists idx_poll_options_poll on public.poll_options(poll_id);
+create index if not exists idx_votes_poll on public.votes(poll_id);
 
--- RLS：测试阶段允许匿名读写（anon key 会出现在前端，必须靠 RLS 兜住）
+-- Row Level Security：原型无登录鉴权，公开读、匿名读写
 alter table public.polls enable row level security;
+alter table public.poll_options enable row level security;
+alter table public.votes enable row level security;
 
-drop policy if exists "polls_select_anon" on public.polls;
-create policy "polls_select_anon" on public.polls
-for select to anon, authenticated using (true);
+-- 读
+create policy "polls public read" on public.polls for select using (true);
+create policy "options public read" on public.poll_options for select using (true);
+create policy "votes public read" on public.votes for select using (true);
 
-drop policy if exists "polls_insert_anon" on public.polls;
-create policy "polls_insert_anon" on public.polls
-for insert to anon, authenticated with check (true);
+-- 写
+create policy "polls anon insert" on public.polls for insert with check (true);
+create policy "options anon insert" on public.poll_options for insert with check (true);
+create policy "votes anon insert" on public.votes for insert with check (true);
 
-drop policy if exists "polls_update_anon" on public.polls;
-create policy "polls_update_anon" on public.polls
-for update to anon, authenticated using (true) with check (true);
-
-drop policy if exists "polls_delete_anon" on public.polls;
-create policy "polls_delete_anon" on public.polls
-for delete to anon, authenticated using (true);
+-- 结束投票 / 编辑 / 改票(upsert) / 删除
+create policy "polls anon update" on public.polls for update using (true) with check (true);
+create policy "polls anon delete" on public.polls for delete using (true);
+create policy "options anon update" on public.poll_options for update using (true) with check (true);
+create policy "options anon delete" on public.poll_options for delete using (true);
+create policy "votes anon update" on public.votes for update using (true) with check (true);
+create policy "votes anon delete" on public.votes for delete using (true);
 
 -- 说明：
--- 1) doc 列存完整的 Poll 对象（options / votes / comments 都在里面），
---    这样前端 service 层改动最小，先把上线链路跑通。
--- 2) 并发投票是「读出整个 doc -> 修改 -> 整体写回」，多人同时投同一投票
---    理论上可能后写覆盖前写。要彻底避免，改用 votes 独立表方案（见 docs/DEPLOYMENT_VERCEL_SUPABASE.md 附录 A）。
--- 3) 这套策略允许任何拿到 anon key 的人删投票，仅限上线测试期使用；
---    正式版应接 Supabase Auth（或匿名登录 + Edge Function）收窄写入权限。
+-- 1) 评论与用户设置本期存在浏览器 localStorage，不建后端表。
+-- 2) 匿名放开 update/delete 仅限测试原型；正式版应接 Supabase Auth 并按作者收窄写入权限。

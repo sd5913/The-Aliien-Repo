@@ -11,7 +11,7 @@ import { getVoter, isPollOwner } from "../utils/voting";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
-  const { polls } = usePolls();
+  const { polls, loading, error } = usePolls();
   const poll = polls.find((item) => item.id === id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -30,6 +30,12 @@ export function ResultsPage() {
       setToast("复制失败，请检查剪贴板权限");
     }
   };
+
+  if (loading)
+    return <PageShell showNavigation={false} backTo="/"><p className="empty-inline">正在加载投票…</p></PageShell>;
+
+  if (error)
+    return <PageShell showNavigation={false} backTo="/"><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
 
   if (!poll)
     return (
