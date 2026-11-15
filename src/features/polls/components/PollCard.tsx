@@ -14,7 +14,6 @@ interface PollCardProps {
   onExpand: (expanded: boolean) => void;
   onDelete: (poll: Poll) => void;
   onEnd: (poll: Poll) => void;
-  notify: (message: string) => void;
 }
 
 export function PollCard({
@@ -26,7 +25,6 @@ export function PollCard({
   onExpand,
   onDelete,
   onEnd,
-  notify,
 }: PollCardProps) {
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
@@ -52,15 +50,7 @@ export function PollCard({
         })
       : "未设置";
 
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/poll/${poll.id}`);
-      notify("链接已复制");
-    } catch (error) {
-      console.error("Could not copy poll link.", error);
-      notify("复制失败，请检查剪贴板权限");
-    }
-  };
+  const share = () => navigate(`/poll/${poll.id}/share`, { state: { returnTo } });
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -172,7 +162,7 @@ export function PollCard({
           </Link>
           <p className="my-poll-ticket-status">{isPollOpen(poll) ? "进行中" : "已结束"} · {poll.votes.length} 票</p>
           <p className="my-poll-deadline">截止时间：{deadline}</p>
-          <button className="my-poll-share" onClick={() => void share()} aria-label="分享投票">
+          <button className="my-poll-share" onClick={share} aria-label="分享投票">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18c0-7 5-12 13-12h1m-5-4 5 4-5 4" /></svg>
           </button>
         </div>

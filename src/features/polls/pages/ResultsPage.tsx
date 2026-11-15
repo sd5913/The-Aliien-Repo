@@ -139,12 +139,8 @@ export function ResultsPage() {
           onClose={() => setMenuOpen(false)}
           actions={
             <>
-              <button
-                className="button-soft"
-                onClick={() => setMenuOpen(false)}
-              >
-                关闭
-              </button>
+              <button className="button-soft" onClick={() => setMenuOpen(false)}>关闭</button>
+              <Link className="button-soft" to={`/poll/${poll.id}/share`} state={{ returnTo: `/poll/${poll.id}/results` }} onClick={() => setMenuOpen(false)}>分享详情页</Link>
               <button className="purple-button" onClick={() => void copyLink()}>
                 复制链接
               </button>

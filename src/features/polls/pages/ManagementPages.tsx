@@ -239,6 +239,13 @@ export function PollManagementPage() {
               复制链接
             </button>
           </div>
+          <Link
+            className="purple-button button-full management-share-page-link"
+            to={`/poll/${poll.id}/share`}
+            state={{ returnTo: `/poll/${poll.id}/manage` }}
+          >
+            打开分享详情页 <span>↗</span>
+          </Link>
         </section>
       )}
 
