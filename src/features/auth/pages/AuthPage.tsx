@@ -1,39 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase/client";
 import { PageShell } from "../../../components/layout/PageShell";
-import {
-  signInWithPassword,
-  signInWithSocialProvider,
-  signUpWithPassword,
-  type SocialProvider,
-} from "../services/auth";
+import { sendEmailOtp, verifyEmailOtp } from "../services/auth";
 
 type AuthMode = "login" | "register";
-
-const providerLabels: Record<SocialProvider, string> = {
-  google: "Google",
-  apple: "Apple",
-  github: "GitHub",
-};
+type AuthStep = "email" | "code";
 
 function getAuthErrorMessage(message: string) {
   const normalized = message.toLowerCase();
-  if (normalized.includes("invalid login credentials")) return "邮箱或密码不正确。";
-  if (normalized.includes("user already registered")) return "这个邮箱已经注册过了，请直接登录。";
-  if (normalized.includes("password should be at least")) return "密码至少需要 6 位。";
+  if (normalized.includes("invalid or expired otp") || normalized.includes("otp_expired")) return "验证码无效或已过期，请重新获取。";
+  if (normalized.includes("email rate limit") || normalized.includes("rate limit")) return "验证码发送太频繁，请稍等一会儿再试。";
   if (normalized.includes("email not confirmed")) return "邮箱还没有完成验证，请先查看收件箱。";
-  if (normalized.includes("provider is not enabled")) return "该登录方式尚未在 Supabase 中启用。";
-  return "操作失败，请检查输入或稍后重试。";
+  return "操作失败，请检查邮箱或稍后重试。";
 }
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mode: AuthMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [nickname, setNickname] = useState("");
-  const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -51,24 +40,27 @@ export function AuthPage() {
     };
   }, [navigate]);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const switchMode = (nextMode: AuthMode) => {
+    setSearchParams(nextMode === "register" ? { mode: "register" } : {});
+    setStep("email");
+    setCode("");
     setFeedback("");
+  };
+
+  const sendCode = async () => {
     const cleanEmail = email.trim();
     const cleanNickname = nickname.trim();
-    if (!cleanEmail || !password || (mode === "register" && !cleanNickname)) {
-      setFeedback(mode === "register" ? "请填写昵称、邮箱和密码。" : "请填写邮箱和密码。");
+    if (!cleanEmail || (mode === "register" && !cleanNickname)) {
+      setFeedback(mode === "register" ? "请填写昵称和邮箱。" : "请填写邮箱。");
       return;
     }
     setLoading(true);
+    setFeedback("");
     try {
-      const result = mode === "login"
-        ? await signInWithPassword(cleanEmail, password)
-        : await signUpWithPassword(cleanEmail, password, cleanNickname);
+      const result = await sendEmailOtp(cleanEmail, mode === "register" ? cleanNickname : undefined);
       if (result.error) throw result.error;
-      if (mode === "register" && !result.data.session) {
-        setFeedback("注册成功！请先查收验证邮件，再回来登录。邮箱验证可在 Supabase Auth 设置中关闭。 ");
-      }
+      setStep("code");
+      setFeedback("验证码已发送，请查看你的邮箱。验证码有效期为一小时。 ");
     } catch (error) {
       setFeedback(getAuthErrorMessage(error instanceof Error ? error.message : ""));
     } finally {
@@ -76,12 +68,25 @@ export function AuthPage() {
     }
   };
 
-  const continueWithProvider = async (provider: SocialProvider) => {
+  const verifyCode = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cleanEmail = email.trim();
+    const cleanCode = code.trim();
+    if (!/^\d{6}$/.test(cleanCode)) {
+      setFeedback("请输入邮件中的六位数字验证码。");
+      return;
+    }
+    setLoading(true);
     setFeedback("");
-    setBusyProvider(provider);
-    const { error } = await signInWithSocialProvider(provider);
-    if (error) setFeedback(getAuthErrorMessage(error.message));
-    setBusyProvider(null);
+    try {
+      const result = await verifyEmailOtp(cleanEmail, cleanCode);
+      if (result.error) throw result.error;
+      navigate("/", { replace: true });
+    } catch (error) {
+      setFeedback(getAuthErrorMessage(error instanceof Error ? error.message : ""));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,28 +95,32 @@ export function AuthPage() {
         <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>
         <h1>{mode === "login" ? "欢迎回来！" : "加入 BothPls"}</h1>
-        <p className="auth-subtitle">{mode === "login" ? "登录后继续和朋友一起做决定。" : "注册一个账号，把每次选择都变得更轻松。"}</p>
+        <p className="auth-subtitle">{step === "email" ? "使用邮箱验证码，快速和朋友一起做决定。" : `验证码已发送到 ${email.trim()}。`}</p>
 
         <div className="auth-tabs" role="tablist" aria-label="登录或注册">
-          <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setFeedback(""); }}>登录</button>
-          <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setFeedback(""); }}>注册</button>
+          <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")}>登录</button>
+          <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => switchMode("register")}>注册</button>
         </div>
 
-        <form className="auth-form" onSubmit={submit}>
-          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">昵称</label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder="朋友们会这样称呼你" autoComplete="nickname" /></>}
-          <label className="field-label" htmlFor="auth-email">邮箱</label>
-          <input id="auth-email" className="text-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" autoComplete="email" />
-          <label className="field-label" htmlFor="auth-password">密码</label>
-          <input id="auth-password" className="text-input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={6} placeholder="至少 6 位字符" autoComplete={mode === "login" ? "current-password" : "new-password"} />
-          <button className="purple-button button-full auth-submit" type="submit" disabled={loading}>{loading ? "处理中…" : mode === "login" ? "登录 BothPls" : "创建账号"}</button>
-        </form>
+        {step === "email" ? (
+          <form className="auth-form" onSubmit={(event) => { event.preventDefault(); void sendCode(); }}>
+            {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">昵称</label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder="朋友们会这样称呼你" autoComplete="nickname" /></>}
+            <label className="field-label" htmlFor="auth-email">邮箱</label>
+            <input id="auth-email" className="text-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" />
+            <button className="purple-button button-full auth-submit" type="submit" disabled={loading}>{loading ? "发送中…" : "发送验证码"}</button>
+          </form>
+        ) : (
+          <form className="auth-form" onSubmit={verifyCode}>
+            <label className="field-label" htmlFor="auth-code">六位验证码</label>
+            <input id="auth-code" className="text-input auth-code-input" type="text" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" autoFocus />
+            <button className="purple-button button-full auth-submit" type="submit" disabled={loading}>{loading ? "验证中…" : "确认登录"}</button>
+            <div className="auth-code-actions"><button type="button" onClick={() => { setStep("email"); setCode(""); setFeedback(""); }}>更换邮箱</button><button type="button" disabled={loading} onClick={() => { void sendCode(); }}>重新发送</button></div>
+          </form>
+        )}
 
-        <div className="auth-divider"><span>或者使用</span></div>
-        <div className="social-login-grid">{(Object.keys(providerLabels) as SocialProvider[]).map((provider) => <button type="button" className="social-login-button" key={provider} disabled={loading || busyProvider !== null} onClick={() => continueWithProvider(provider)}><span className={`social-mark social-${provider}`} aria-hidden="true">{provider === "google" ? "G" : provider === "apple" ? "●" : "⌘"}</span>{busyProvider === provider ? "跳转中…" : providerLabels[provider]}</button>)}</div>
         {feedback && <p className="auth-feedback" role="status">{feedback}</p>}
-        <p className="auth-legal">继续使用即表示你同意 BothPls 的使用规则。参与朋友投票无需登录。</p>
+        <p className="auth-legal">我们会向你的邮箱发送一次性验证码，不需要设置密码。参与朋友投票无需登录。</p>
       </section>
     </PageShell>
   );
 }
-
