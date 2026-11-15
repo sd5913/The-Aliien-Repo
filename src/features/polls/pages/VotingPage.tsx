@@ -82,10 +82,9 @@ export function VotingPage() {
     <PageShell showNavigation={false} backTo="/" title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
-      <OptionCarousel options={poll.options} selectedId={activeId} onSelect={setActiveId} />
+      <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
       <div className="vote-choice-controls">
-        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : `${letter(activeIndex)} 选择此项`}</button>
-        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => { setActiveId(otherOption.id); setSelectedId(otherOption.id); }}>{letter(otherIndex)} 查看另一项</button>}
+        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : `${letter(activeIndex)} 选择此项`}</button>        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => setActiveId(otherOption.id)}>{letter(otherIndex)} 查看另一项</button>}
       </div>
       <section className={`selection-preview${selectedOption ? " is-set" : " is-empty"}`} key={selectedOption?.id ?? "none"} aria-live="polite">
         <div className="selection-thumb">{selectedOption?.imageUrl ? <img src={selectedOption.imageUrl} alt="" /> : <span>✦</span>}</div>
