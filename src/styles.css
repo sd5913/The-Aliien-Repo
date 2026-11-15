@@ -44,10 +44,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   gap: 12px;
   z-index: 3;
 }
-.brand-bubbles { width: 42px; height: 36px; position: relative; display: block; flex: 0 0 auto; }
-.brand-bubbles span { position: absolute; width: 25px; height: 25px; border-radius: 50%; background: linear-gradient(140deg, #a855f7, #7c3aed); box-shadow: 0 4px 10px #7c3aed44; }
-.brand-bubbles span:first-child { left: 1px; top: 0; }
-.brand-bubbles span:last-child { right: 0; bottom: 0; background: linear-gradient(140deg, #f0abfc, #c084fc); border: 2px solid #fff9; }
+.brand-logo { width: 40px; height: 40px; display: block; flex: 0 0 auto; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; }
 .brand-copy { display: flex; flex-direction: column; line-height: 1.15; gap: 4px; }
 .brand-copy strong { color: var(--deep-purple); font-size: 15px; font-weight: 800; letter-spacing: -.3px; }
 .brand-copy small { color: #8b5cf6; font-size: 10px; font-weight: 600; }
@@ -415,10 +413,6 @@ h1, h2, h3 { color: var(--deep-purple); }
 .auth-form { padding: 18px 16px 16px; border: 1px solid #fff9; border-radius: 24px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
 .auth-form .text-input { margin-bottom: 13px; }
 .auth-submit { margin-top: 4px; }
-.auth-code-input { text-align: center; letter-spacing: 8px; font-size: 20px !important; font-weight: 800; }
-.auth-code-actions { display: flex; justify-content: space-between; margin-top: 13px; }
-.auth-code-actions button { padding: 0; border: 0; color: #8b5cf6; background: transparent; font-size: 10px; font-weight: 700; cursor: pointer; }
-.auth-code-actions button:disabled { cursor: wait; opacity: .5; }
 .auth-divider { display: flex; align-items: center; gap: 10px; margin: 19px 0 13px; color: #a085bd; font-size: 10px; }
 .auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: #ffffffc7; content: ""; }
 .auth-feedback { margin: 14px 4px 0; color: #b4233c; font-size: 11px; line-height: 1.6; text-align: center; }

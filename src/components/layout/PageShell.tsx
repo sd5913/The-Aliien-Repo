@@ -1,6 +1,7 @@
 // Shared page frame with optional mobile navigation. / 共用页面框架及可选的移动端导航。
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import logoUrl from "../../../images/logo.png";
 import { BottomNav } from "./BottomNav";
 
 interface PageShellProps {
@@ -22,7 +23,7 @@ export function PageShell({ children, title, showNavigation = true, backTo, show
           <h1 className="page-header-title">{title}</h1>
         ) : (
           <>
-            {!backTo && <Link className="brand-bubbles" to="/" aria-label="BothPls 首页"><span /><span /></Link>}
+            {!backTo && <Link className="brand-logo" to="/" aria-label="BothPls 首页"><img src={logoUrl} alt="" /></Link>}
             <Link className="brand-copy" to="/"><strong>BothPls</strong></Link>
             {title && !backTo && <span className="topbar-title">{title}</span>}
           </>
