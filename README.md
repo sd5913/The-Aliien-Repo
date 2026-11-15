@@ -161,6 +161,8 @@ VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<publishable or anon key>
 ```
 
+认证页面位于 `/auth`，当前仅支持邮箱 Magic Link 注册/登录。用户输入邮箱后会收到一次性登录链接，不需要设置密码。暂时使用 Supabase 默认邮件模板和邮件服务，不需要配置自定义 SMTP。需要在 Authentication → Sign In / Providers 中启用 Email，并把本地开发地址（例如 `http://localhost:5173/auth`）及正式站点地址加入 Authentication → URL Configuration 的 Redirect URLs。
+
 ### Run Locally
 
 Start the development server:

@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
+import { signOut } from "../../auth/services/auth";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { ProfileSettingsSection } from "../components/ProfileSettingsSection";
 
 export function SettingsPreferencesPage() {
   const { settings, loading, error, save } = useUserSettings();
+  const navigate = useNavigate();
   const [feedback, setFeedback] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const toggleSetting = async (key: "cameraEnabled" | "photosEnabled" | "showNickname") => {
     const next = { ...settings, [key]: !settings[key] };
@@ -15,6 +19,21 @@ export function SettingsPreferencesPage() {
     } catch (error) {
       console.error("BothPls: could not save user settings.", error);
       setFeedback("保存失败，请稍后重试。");
+    }
+  };
+
+  const handleSignOut = async () => {
+    setFeedback("");
+    setLoggingOut(true);
+    try {
+      const { error: signOutError } = await signOut();
+      if (signOutError) throw signOutError;
+      navigate("/auth", { replace: true });
+    } catch (cause) {
+      console.error("BothPls: could not sign out.", cause);
+      setFeedback("退出登录失败，请稍后重试。");
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -35,6 +54,9 @@ export function SettingsPreferencesPage() {
       </section>
       {error && <p className="settings-feedback" role="alert">设置加载失败，请检查 Supabase 配置后重试。</p>}
       {feedback && <p className="settings-feedback" role="status">{feedback}</p>}
+      <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>
+        {loggingOut ? "正在退出…" : "退出登录"}
+      </button>
     </PageShell>
   );
 }

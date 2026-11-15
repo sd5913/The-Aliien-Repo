@@ -7,8 +7,10 @@ import { PollManagementPage } from "../features/polls/pages/ManagementPages";
 import { VotingPage } from "../features/polls/pages/VotingPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPreferencesPage";
+import { AuthPage } from "../features/auth/pages/AuthPage";
 
 export const router = createBrowserRouter([
+  { path: "/auth", element: <AuthPage /> },
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },

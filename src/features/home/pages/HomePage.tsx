@@ -54,6 +54,7 @@ export function HomePage() {
         <h1>一个人难选？<br />我们一起选。</h1>
         <p>把纠结交给朋友，让每个小决定都变得好玩。</p>
         <Link to="/create" className="purple-button">发起一个投票 <span>↗</span></Link>
+        <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>
         <div className="welcome-sticker" aria-hidden="true">✦</div>
       </section>
       <section className="home-steps">
