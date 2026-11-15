@@ -43,7 +43,11 @@ export function VotingPage() {
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
-  const otherOption = poll.options[(activeIndex + 1) % poll.options.length];
+  const otherIndex = (activeIndex + 1) % poll.options.length;
+  const otherOption = poll.options[otherIndex];
+  const letter = (index: number) => String.fromCharCode(65 + index);
+  const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
+  const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
   const saveVote = async () => {
     if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
     const now = new Date().toISOString();
@@ -80,9 +84,17 @@ export function VotingPage() {
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       <OptionCarousel options={poll.options} selectedId={activeId} onSelect={setActiveId} />
       <div className="vote-choice-controls">
-        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : "选择此项"}</button>
-        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => { setActiveId(otherOption.id); setSelectedId(otherOption.id); }}>{String.fromCharCode(65 + (activeIndex + 1) % poll.options.length)} 查看另一项</button>}
+        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : `${letter(activeIndex)} 选择此项`}</button>
+        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => { setActiveId(otherOption.id); setSelectedId(otherOption.id); }}>{letter(otherIndex)} 查看另一项</button>}
       </div>
+      <section className={`selection-preview${selectedOption ? " is-set" : " is-empty"}`} key={selectedOption?.id ?? "none"} aria-live="polite">
+        <div className="selection-thumb">{selectedOption?.imageUrl ? <img src={selectedOption.imageUrl} alt="" /> : <span>✦</span>}</div>
+        <div className="selection-copy">
+          <span className="selection-eyebrow">{selectedOption ? "已选" : "还没选择"}</span>
+          <strong>{selectedOption ? `${letter(selectedIndex)} · ${selectedOption.name}` : "点上面的按钮选择一项"}</strong>
+        </div>
+        {selectedOption && <span className="selection-check" aria-hidden="true">✓</span>}
+      </section>
       <div className="vote-progress"><div className="vote-progress-top"><span>朋友们已经参与</span><strong>已选 {poll.votes.length}</strong></div><div className="progress-track"><span style={{ width: `${Math.min(100, poll.votes.length * 12)}%` }} /></div></div>
       <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
       <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
