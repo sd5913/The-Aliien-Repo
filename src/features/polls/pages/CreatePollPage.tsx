@@ -104,7 +104,13 @@ export function CreatePollPage() {
       title: title.trim(),
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
-      creatorId: editingPoll?.creatorId ?? voter.id,
+      // Editing claims an older poll that only stored a display name, so the next
+      // reload can still recognise the creator by voter id.
+      // 编辑旧投票时把发起者认领为当前投票者，刷新后才能继续识别发起者。
+      creatorId:
+        editingPoll && editingPoll.creatorId === voter.id
+          ? editingPoll.creatorId
+          : voter.id,
       commentsPublic: editingPoll?.commentsPublic ?? true,
       ...(endsAt ? { endsAt } : {}),
       status: editingPoll?.status ?? "open",
