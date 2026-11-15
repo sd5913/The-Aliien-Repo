@@ -5,6 +5,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
+import { getVoter, isPollOwner } from "../../polls/utils/voting";
 import type { Poll } from "../../../types/poll";
 
 export function HomePage() {
@@ -12,7 +13,14 @@ export function HomePage() {
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
-  const recent = polls.slice(0, 3);
+  const [voter] = useState(getVoter);
+  // Keep the polls this device created at the top so their owner can always reach
+  // the manage/edit entry from the home list.
+  // 本机发起的投票排在前面，保证发起者能直接从首页进入管理与编辑。
+  const recent = [
+    ...polls.filter((poll) => isPollOwner(poll, voter.id)),
+    ...polls.filter((poll) => !isPollOwner(poll, voter.id)),
+  ].slice(0, 3);
 
   const confirmDelete = async () => {
     if (!deleting) return;

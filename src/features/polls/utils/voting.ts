@@ -26,8 +26,20 @@ export function getVoter(): VoterIdentity {
   return voter;
 }
 
+// polls.author_name doubles as the creator id: new polls store the voter UUID,
+// older rows store a display name such as "bothpls friend". A non-UUID value can
+// never match the local voter id, so it is treated as an unclaimed creator and the
+// first successful edit writes the current voter UUID back into that column.
+// polls.author_name 兼作发起者标识：新投票写入投票者 UUID，旧数据写入昵称，
+// 非 UUID 的旧值永远无法匹配本机 voter id，因此视为「未认领」，允许编辑并在保存时写回 UUID。
+const VOTER_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function isPollOwner(poll: Poll, voterId: string): boolean {
-  return !poll.creatorId || poll.creatorId === voterId;
+  const creatorId = poll.creatorId?.trim();
+  if (!creatorId) return true;
+  if (!VOTER_ID_PATTERN.test(creatorId)) return true;
+  return creatorId === voterId;
 }
 
 export function getBordaResults(poll: Poll): RankedOptionResult[] {
