@@ -161,6 +161,8 @@ VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<publishable or anon key>
 ```
 
+认证页面位于 `/auth`，支持邮箱密码注册/登录，以及 Google、Apple、GitHub 登录。使用社交登录前，需要在 Supabase Dashboard 的 Authentication → Providers 中启用对应 Provider，并把本地开发地址（例如 `http://localhost:5173/auth`）及正式站点回调地址加入 Authentication → URL Configuration 的 Redirect URLs。
+
 ### Run Locally
 
 Start the development server:
