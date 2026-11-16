@@ -14,6 +14,7 @@ import { ParticipantGate, ParticipantLoginPage } from "../features/auth/pages/Pa
 
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
+  { path: "/login", element: <AuthPage /> },
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
