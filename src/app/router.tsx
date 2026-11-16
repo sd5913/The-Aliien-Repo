@@ -1,4 +1,4 @@
-// Application route definitions. / 应用页面的路由定义。
+// Application route definitions.
 import { createBrowserRouter } from "react-router-dom";
 import { HomePage } from "../features/home/pages/HomePage";
 import { CreatePollPage } from "../features/polls/pages/CreatePollPage";
@@ -10,13 +10,17 @@ import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPref
 import { AuthPage } from "../features/auth/pages/AuthPage";
 import { SharePage } from "../features/polls/pages/SharePage";
 
+import { ParticipantGate, ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
+
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
   { path: "/create", element: <CreatePollPage /> },
-  { path: "/poll/:id", element: <VotingPage /> },
+  { path: "/join", element: <ParticipantLoginPage /> },
+  { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
+  { path: "/poll/:id", element: <ParticipantGate><VotingPage /></ParticipantGate> },
   { path: "/poll/:id/manage", element: <PollManagementPage /> },
   { path: "/poll/:id/results", element: <ResultsPage /> },
   { path: "/poll/:id/share", element: <SharePage /> },
