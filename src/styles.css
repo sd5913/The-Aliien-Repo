@@ -282,6 +282,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 
 .results-topline { display: flex; align-items: center; justify-content: space-between; }
 .more-button { width: 35px; height: 32px; border: 0; border-radius: 50%; background: #ffffffad; color: #7c3aed; font-size: 23px; line-height: 12px; cursor: pointer; }
+.results-close-button { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--deep-purple); background: #ffffff9c; font-size: 25px; line-height: 1; }
 .results-heading { margin: 7px 0 14px; }
 .results-heading h1 { margin: 8px 0 5px; font-size: 22px; line-height: 1.35; }
 .results-card { padding: 15px 15px 13px; border-radius: 25px; background: #ffffffb5; border: 1px solid #fff; box-shadow: var(--soft-shadow); }

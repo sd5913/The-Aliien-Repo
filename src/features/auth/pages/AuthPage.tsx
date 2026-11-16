@@ -17,6 +17,10 @@ export function AuthPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const mode: AuthMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const requestedReturnTo = searchParams.get("returnTo");
+  const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+    ? requestedReturnTo
+    : "/";
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,19 +29,22 @@ export function AuthPage() {
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate("/", { replace: true });
+      if (active && data.session) navigate(returnTo, { replace: true });
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) navigate("/", { replace: true });
+      if (session) navigate(returnTo, { replace: true });
     });
     return () => {
       active = false;
       listener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, returnTo]);
 
   const switchMode = (nextMode: AuthMode) => {
-    setSearchParams(nextMode === "register" ? { mode: "register" } : {});
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextMode === "register") nextParams.set("mode", "register");
+    else nextParams.delete("mode");
+    setSearchParams(nextParams);
     setFeedback("");
   };
 
@@ -63,7 +70,7 @@ export function AuthPage() {
   };
 
   return (
-    <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">先逛逛</Link>}>
+    <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to={returnTo}>先逛逛</Link>}>
       <section className="auth-page">
         <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>

@@ -16,6 +16,12 @@ export function ResultsPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [voter] = useState(getVoter);
+  const returnToAuth = `/auth?returnTo=${encodeURIComponent(`/poll/${id}/results`)}`;
+  const closeButton = (
+    <Link className="results-close-button" to={returnToAuth} aria-label="关闭结果并返回登录注册">
+      ×
+    </Link>
+  );
 
   const copyLink = async () => {
     if (!poll) return;
@@ -32,14 +38,14 @@ export function ResultsPage() {
   };
 
   if (loading)
-    return <PageShell showNavigation={false} backTo="/"><p className="empty-inline">正在加载投票…</p></PageShell>;
+    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="empty-inline">正在加载投票…</p></PageShell>;
 
   if (error)
-    return <PageShell showNavigation={false} backTo="/"><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
 
   if (!poll)
     return (
-      <PageShell showNavigation={false} backTo="/">
+      <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
         <div className="empty-state">
           <h2>没有找到这次投票</h2>
           <Link to="/" className="purple-button">
@@ -61,7 +67,7 @@ export function ResultsPage() {
   const colorList = ["#8b5cf6", "#ec4899", "#3b82f6", "#f59e0b", "#22c55e"];
 
   return (
-    <PageShell showNavigation={false} backTo="/" title="投票结果">
+    <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
       <div className="results-topline">
         <span className="eyebrow">大家的心意</span>
         <button
