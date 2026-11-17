@@ -7,7 +7,7 @@ import { VotingPage } from "../features/polls/pages/VotingPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPreferencesPage";
 import { AuthPage } from "../features/auth/pages/AuthPage";
-import { SharePage } from "../features/polls/pages/SharePage";
+
 
 import { ParticipantGate, ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
 
@@ -23,5 +23,5 @@ export const router = createBrowserRouter([
   { path: "/poll/:id", element: <ParticipantGate><VotingPage /></ParticipantGate> },
   { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
   { path: "/poll/:id/results", element: <ResultsPage /> },
-  { path: "/poll/:id/share", element: <SharePage /> },
+  { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },
 ]);
