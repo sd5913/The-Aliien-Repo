@@ -30,7 +30,7 @@ export function SharePage() {
     location.state && typeof location.state === "object" && "returnTo" in location.state &&
     typeof location.state.returnTo === "string"
       ? location.state.returnTo
-      : `/poll/${id}/manage`;
+      : `/poll/${id}/results`;
   const publicUrl = `${window.location.origin}/poll/${id}`;
 
   const copyLink = async () => {

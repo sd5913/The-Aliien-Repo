@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
@@ -10,12 +10,15 @@ import { getVoter, isPollOwner } from "../utils/voting";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
+  const location = useLocation();
   const { polls, loading, error } = usePolls();
   const poll = polls.find((item) => item.id === id);
   const [voter] = useState(getVoter);
   const returnToAuth = `/auth?returnTo=${encodeURIComponent(`/poll/${id}/results`)}`;
+  const returnTo = location.state?.returnTo === "/" || location.state?.returnTo === "/settings"
+    ? location.state.returnTo : returnToAuth;
   const closeButton = (
-    <Link className="results-close-button" to={returnToAuth} aria-label="关闭结果并返回登录注册">
+    <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
       ×
     </Link>
   );

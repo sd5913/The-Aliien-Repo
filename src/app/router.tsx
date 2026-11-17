@@ -1,9 +1,8 @@
 // Application route definitions.
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, redirect } from "react-router-dom";
 import { HomePage } from "../features/home/pages/HomePage";
 import { CreatePollPage } from "../features/polls/pages/CreatePollPage";
 import { ResultsPage } from "../features/polls/pages/ResultsPage";
-import { PollManagementPage } from "../features/polls/pages/ManagementPages";
 import { VotingPage } from "../features/polls/pages/VotingPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPreferencesPage";
@@ -22,7 +21,7 @@ export const router = createBrowserRouter([
   { path: "/join", element: <ParticipantLoginPage /> },
   { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
   { path: "/poll/:id", element: <ParticipantGate><VotingPage /></ParticipantGate> },
-  { path: "/poll/:id/manage", element: <PollManagementPage /> },
+  { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
   { path: "/poll/:id/results", element: <ResultsPage /> },
   { path: "/poll/:id/share", element: <SharePage /> },
 ]);

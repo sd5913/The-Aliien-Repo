@@ -114,7 +114,7 @@ function MyPollCard({
       return;
     }
     if (target.closest("a")) return;
-    navigate(`/poll/${poll.id}/manage`, { state: { returnTo: "/settings" } });
+    navigate(`/poll/${poll.id}/results`, { state: { returnTo: "/settings" } });
   };
 
   const deadlineDate = poll.endsAt ? new Date(poll.endsAt) : null;
@@ -166,7 +166,7 @@ function MyPollCard({
           ))}
         </div>
         <div className="my-poll-ticket-copy">
-          <Link className="my-poll-ticket-main" to={`/poll/${poll.id}/manage`} state={{ returnTo: "/settings" }}>
+          <Link className="my-poll-ticket-main" to={`/poll/${poll.id}/results`} state={{ returnTo: "/settings" }}>
             <h3>{poll.title}</h3>
           </Link>
           <p className="my-poll-ticket-status">

@@ -63,9 +63,9 @@ export function CreatePollPage() {
           <p>只有发起者可以修改投票内容。</p>
           <Link
             className="purple-button"
-            to={`/poll/${editingPoll?.id}/manage`}
+            to={`/poll/${editingPoll?.id}/results`}
           >
-            返回投票详情
+            返回投票结果
           </Link>
         </div>
       </PageShell>
