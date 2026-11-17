@@ -293,8 +293,46 @@ h1, h2, h3 { color: var(--deep-purple); }
 .vote-cup-submit:disabled { opacity: .5; cursor: not-allowed; }
 .vote-cup-choice:disabled { cursor: not-allowed; }
 .vote-cup-note { margin: 12px 0 18px; text-align: center; color: #9978ae; font-size: 11px; }
-.vote-cup-liquid { animation: selection-pop .3s ease-out; transform-origin: center bottom; }
-@media (prefers-reduced-motion: reduce) { .vote-cup-liquid { animation: none; } }
+.vote-cup-liquid { transform-origin: 130px 227px; }
+.vote-cup-pouring .vote-cup-liquid { animation: cup-fill .8s cubic-bezier(.22, .7, .3, 1) both; }
+.vote-cup-stream { opacity: 0; stroke-dasharray: 177; stroke-dashoffset: 177; animation: cup-stream .65s ease-in-out both; }
+.vote-cup-splash, .vote-cup-ripple { opacity: 0; }
+.vote-cup-splash-left { animation: cup-splash-left .4s .35s ease-out both; }
+.vote-cup-splash-right { animation: cup-splash-right .4s .4s ease-out both; }
+.vote-cup-ripple { transform-origin: 130px 130px; animation: cup-ripple .45s .4s ease-out both; }
+.vote-cup-choice:active:not(:disabled) { transform: scale(.98); }
+@keyframes cup-fill {
+  0%, 12% { transform: scaleY(.04); }
+  78% { transform: scaleY(1.025); }
+  90% { transform: scaleY(.985); }
+  100% { transform: scaleY(1); }
+}
+@keyframes cup-stream {
+  0% { opacity: 0; stroke-dashoffset: 177; }
+  12% { opacity: .9; }
+  42% { opacity: .9; stroke-dashoffset: 0; }
+  70% { opacity: .9; stroke-dashoffset: 0; }
+  100% { opacity: 0; stroke-dashoffset: -177; }
+}
+@keyframes cup-splash-left {
+  0% { opacity: 0; transform: translate(0, 8px); }
+  25% { opacity: .85; }
+  100% { opacity: 0; transform: translate(-18px, -18px); }
+}
+@keyframes cup-splash-right {
+  0% { opacity: 0; transform: translate(0, 8px); }
+  25% { opacity: .85; }
+  100% { opacity: 0; transform: translate(16px, -14px); }
+}
+@keyframes cup-ripple {
+  0% { opacity: 0; transform: scale(.3); }
+  30% { opacity: .8; }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vote-cup-pouring .vote-cup-liquid, .vote-cup-stream, .vote-cup-splash, .vote-cup-ripple { animation: none; }
+  .vote-cup-choice:active:not(:disabled) { transform: none; }
+}
 .notice-banner { margin: 9px 0; padding: 10px 13px; border-radius: 14px; background: #fef3c7; color: #92400e; font-size: 11px; }
 
 .results-topline { display: flex; align-items: center; justify-content: space-between; }

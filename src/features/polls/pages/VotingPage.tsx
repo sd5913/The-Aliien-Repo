@@ -21,6 +21,7 @@ export function VotingPage() {
   const existingComment = poll?.comments.find((item) => item.voter.id === voter.id);
   const [activeId, setActiveId] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [pourSequence, setPourSequence] = useState(0);
   const [comment, setComment] = useState("");
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState("");
@@ -85,11 +86,22 @@ export function VotingPage() {
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
       <section className="vote-cup-card">
         <div className="vote-cup-handle" aria-hidden="true" />
-        <button className="vote-cup-choice" disabled={!open || !activeOption} onClick={() => setSelectedId(activeOption?.id ?? "")} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
+        <button className="vote-cup-choice" disabled={!open || !activeOption} onClick={() => {
+          setSelectedId(activeOption?.id ?? "");
+          setPourSequence((sequence) => sequence + 1);
+        }} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
           <svg className="vote-cup-art" viewBox="0 0 260 245" aria-hidden="true">
             <path className="vote-cup-drop" fill={selectedOption ? selectionColor : "#d8c7ed"} d="M130 5c-2 9-8 14-8 20a8 8 0 0 0 16 0c0-6-6-11-8-20Zm0 31c-4 15-13 23-13 32a13 13 0 0 0 26 0c0-9-9-17-13-32Z" />
             <path d="M28 80Q22 80 23 94l5 61c5 54 43 81 102 81s97-27 102-81l5-61q1-14-5-14Z" fill="#ffffff35" stroke="#ffffffdd" strokeWidth="5" />
-            {selectedOption && <path key={selectedId} className="vote-cup-liquid" d="M34 129c36-18 65-16 96-3s60 17 96-5l-3 35c-5 47-37 71-93 71s-88-24-93-71Z" fill={selectionColor} />}
+            {selectedOption && <g key={pourSequence} className={pourSequence > 0 ? "vote-cup-pouring" : undefined}>
+              <path className="vote-cup-liquid" d="M34 129c36-18 65-16 96-3s60 17 96-5l-3 35c-5 47-37 71-93 71s-88-24-93-71Z" fill={selectionColor} />
+              {pourSequence > 0 && <g fill={selectionColor}>
+                <path className="vote-cup-stream" d="M130 34V211" fill="none" stroke={selectionColor} strokeWidth="9" strokeLinecap="round" />
+                <circle className="vote-cup-splash vote-cup-splash-left" cx="124" cy="130" r="4" />
+                <circle className="vote-cup-splash vote-cup-splash-right" cx="136" cy="130" r="3" />
+                <ellipse className="vote-cup-ripple" cx="130" cy="130" rx="22" ry="5" fill="none" stroke="#ffffffb3" strokeWidth="2" />
+              </g>}
+            </g>}
           </svg>
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
         </button>
