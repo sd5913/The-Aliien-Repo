@@ -21,6 +21,7 @@ export function VotingPage() {
   const existingComment = poll?.comments.find((item) => item.voter.id === voter.id);
   const [activeId, setActiveId] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [pourSequence, setPourSequence] = useState(0);
   const [comment, setComment] = useState("");
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState("");
@@ -43,11 +44,11 @@ export function VotingPage() {
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
-  const otherIndex = (activeIndex + 1) % poll.options.length;
-  const otherOption = poll.options[otherIndex];
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
+  const selectionColors = ["#e6b477", "#9eacf0", "#e9a2be", "#8bc9af", "#be9be6"];
+  const selectionColor = selectionColors[Math.max(0, selectedIndex) % selectionColors.length];
   const saveVote = async () => {
     if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
     const now = new Date().toISOString();
@@ -82,23 +83,46 @@ export function VotingPage() {
     <PageShell showNavigation={false} backTo="/" title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
-      <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
-      <div className="vote-choice-controls">
-        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : `${letter(activeIndex)} 选择此项`}</button>        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => setActiveId(otherOption.id)}>{letter(otherIndex)} 查看另一项</button>}
-      </div>
-      <section className={`selection-preview${selectedOption ? " is-set" : " is-empty"}`} key={selectedOption?.id ?? "none"} aria-live="polite">
-        <div className="selection-thumb">{selectedOption?.imageUrl ? <img src={selectedOption.imageUrl} alt="" /> : <span>✦</span>}</div>
-        <div className="selection-copy">
-          <span className="selection-eyebrow">{selectedOption ? "已选" : "还没选择"}</span>
-          <strong>{selectedOption ? `${letter(selectedIndex)} · ${selectedOption.name}` : "点上面的按钮选择一项"}</strong>
+      <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
+        setActiveId(nextId);
+        if (nextId !== activeOption?.id) {
+          setSelectedId("");
+          setPourSequence(0);
+        }
+      }} />
+      <section className="vote-cup-card">
+        <button className="vote-cup-confirm" disabled={!open || !activeOption} onClick={() => {
+          setSelectedId(activeOption?.id ?? "");
+          setPourSequence((sequence) => sequence + 1);
+        }} aria-pressed={selectedId === activeOption?.id} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
+          {selectedId === activeOption?.id ? `✓ 已选择 ${letter(activeIndex)}` : `${letter(activeIndex)} 选择此项`}
+        </button>
+        <div className="vote-cup-choice">
+          <svg className="vote-cup-art" viewBox="0 0 260 245" aria-hidden="true">
+            <rect x="91" y="8" width="78" height="12" rx="6" fill="#cdb5e6a6" />
+            <rect x="112" y="19" width="36" height="19" rx="6" fill="#b59bd5" />
+            <rect x="121" y="33" width="18" height="11" rx="4" fill="#cdb5e6" />
+            <rect x="49" y="62" width="162" height="174" rx="26" fill="#ffffff35" stroke="#ffffffdd" strokeWidth="5" />
+            <rect x="42" y="56" width="176" height="12" rx="6" fill="#ffffffb3" stroke="#ffffffdd" strokeWidth="2" />
+            {selectedOption && <g key={pourSequence} className={pourSequence > 0 ? "vote-cup-pouring" : undefined}>
+              <path className="vote-cup-liquid" d="M58 143Q58 133 68 133H192Q202 133 202 143V208Q202 227 183 227H77Q58 227 58 208Z" fill={selectionColor} />
+              {pourSequence > 0 && <g fill={selectionColor}>
+                <path className="vote-cup-drop" d="M130 43c-2 7-6 11-6 15a6 6 0 0 0 12 0c0-4-4-8-6-15Z" />
+                <path className="vote-cup-stream" d="M130 34V211" fill="none" stroke={selectionColor} strokeWidth="9" strokeLinecap="round" />
+                <circle className="vote-cup-splash vote-cup-splash-left" cx="124" cy="130" r="4" />
+                <circle className="vote-cup-splash vote-cup-splash-right" cx="136" cy="130" r="3" />
+                <ellipse className="vote-cup-ripple" cx="130" cy="130" rx="22" ry="5" fill="none" stroke="#ffffffb3" strokeWidth="2" />
+              </g>}
+            </g>}
+          </svg>
+          <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
         </div>
-        {selectedOption && <span className="selection-check" aria-hidden="true">✓</span>}
+        <button className="purple-button button-full vote-cup-submit" disabled={!open || !selectedId} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"}</button>
       </section>
-      <div className="vote-progress"><div className="vote-progress-top"><span>朋友们已经参与</span><strong>已选 {poll.votes.length}</strong></div><div className="progress-track"><span style={{ width: `${Math.min(100, poll.votes.length * 12)}%` }} /></div></div>
+      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
       <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
       <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
-      <button className="purple-button button-full submit-vote" disabled={!open} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"} <span>↗</span></button>
       {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
