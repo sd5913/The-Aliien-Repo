@@ -83,13 +83,19 @@ export function VotingPage() {
     <PageShell showNavigation={false} backTo="/" title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
-      <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
+      <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
+        setActiveId(nextId);
+        if (nextId !== activeOption?.id) {
+          setSelectedId("");
+          setPourSequence(0);
+        }
+      }} />
       <section className="vote-cup-card">
         <button className="vote-cup-confirm" disabled={!open || !activeOption} onClick={() => {
           setSelectedId(activeOption?.id ?? "");
           setPourSequence((sequence) => sequence + 1);
-        }} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
-          {letter(activeIndex)} 选择此项
+        }} aria-pressed={selectedId === activeOption?.id} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
+          {selectedId === activeOption?.id ? `✓ 已选择 ${letter(activeIndex)}` : `${letter(activeIndex)} 选择此项`}
         </button>
         <div className="vote-cup-choice">
           <svg className="vote-cup-art" viewBox="0 0 260 245" aria-hidden="true">
@@ -111,7 +117,6 @@ export function VotingPage() {
           </svg>
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
         </div>
-        <p className="vote-cup-caption" aria-live="polite">{selectedOption ? `杯中色彩代表已选项 · ${letter(selectedIndex)} ${selectedOption.name}` : "点击上方按钮选择当前选项"}</p>
         <button className="purple-button button-full vote-cup-submit" disabled={!open || !selectedId} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"}</button>
       </section>
       <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
