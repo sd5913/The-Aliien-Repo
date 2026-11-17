@@ -59,11 +59,11 @@ export function HomePage() {
         <div className="welcome-sticker" aria-hidden="true">✦</div>
       </section>
       <section className="home-steps">
-        <div className="section-title-row"><div><span className="eyebrow">HOW IT WORKS</span><h2>三步轻松做决定</h2></div><span className="steps-sparkle" aria-hidden="true">✦</span></div>
+        <div className="section-title-row"><div><span className="eyebrow">简单三步</span><h2>把选择交给大家</h2></div><span className="steps-sparkle" aria-hidden="true">✦</span></div>
         <div className="steps-grid">
           <article className="step-card"><span className="step-number">01</span><span className="step-icon"><AppIcon name="edit" size={24} /></span><h3>添加选项</h3><p>把你正在纠结的选择放进来。</p></article>
           <article className="step-card"><span className="step-number">02</span><span className="step-icon"><AppIcon name="share" size={24} /></span><h3>分享给朋友</h3><p>发出链接，听听大家怎么想。</p></article>
-          <article className="step-card"><span className="step-number">03</span><span className="step-icon"><AppIcon name="heart" size={26} /></span><h3>看看结果</h3><p>投票和评论，帮你理清思路。</p></article>
+          <article className="step-card"><span className="step-number">03</span><span className="step-icon"><AppIcon name="heart" size={26} /></span><h3>查看结果</h3><p>投票和评论，帮你理清思路。</p></article>
         </div>
       </section>
       <section className="home-recent">
