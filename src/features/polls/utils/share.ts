@@ -1,4 +1,5 @@
 import type { Poll } from "../../../types/poll";
+import QRCode from "qrcode";
 
 export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
 
@@ -48,7 +49,7 @@ export async function renderShareTicket(poll: Poll) {
   const contentWidth = width - margin * 2;
   const cellWidth = (contentWidth - gap) / 2;
   const gridTop = 214;
-  const gridBottom = height - 180;
+  const gridBottom = height - 260;
   const cellHeight = (gridBottom - gridTop - Math.max(0, rows - 1) * gap) / Math.max(1, rows);
   // Continuous perforated silhouette, including the four quarter-circle corners.
   const ticketPath = (inset: number) => {
@@ -139,18 +140,38 @@ export async function renderShareTicket(poll: Poll) {
   });
   ctx.strokeStyle = "#c4a0ef";
   ctx.setLineDash([12, 10]);
-  ctx.beginPath(); ctx.moveTo(margin, height - 136); ctx.lineTo(width - margin, height - 136); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(margin, height - 220); ctx.lineTo(width - margin, height - 220); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = "#5b21b6";
   const url = pollUrl(poll.id);
+  // Draw modules directly into the exported PNG: no external QR service or image request.
+  const qr = QRCode.create(url, { errorCorrectionLevel: "M" });
+  const quietZone = 4;
+  const moduleSize = Math.max(1, Math.floor(180 / (qr.modules.size + quietZone * 2)));
+  const qrSize = (qr.modules.size + quietZone * 2) * moduleSize;
+  const qrX = width - margin - qrSize;
+  const qrY = height - 36 - qrSize;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(qrX, qrY, qrSize, qrSize);
+  ctx.fillStyle = "#241039";
+  for (let row = 0; row < qr.modules.size; row++) {
+    for (let col = 0; col < qr.modules.size; col++) {
+      if (qr.modules.get(row, col)) {
+        ctx.fillRect(qrX + (col + quietZone) * moduleSize, qrY + (row + quietZone) * moduleSize, moduleSize, moduleSize);
+      }
+    }
+  }
+  const linkWidth = contentWidth - qrSize - 24;
+  ctx.fillStyle = "#5b21b6";
+  text("扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;
   do {
     ctx.font = `${urlSize}px "DM Sans", "Noto Sans SC", sans-serif`;
-    if (ctx.measureText(url).width <= contentWidth) break;
+    if (ctx.measureText(url).width <= linkWidth) break;
     urlSize--;
   } while (urlSize > 8);
-  text(url, margin, height - 88, contentWidth, urlSize);
+  text(url, margin, height - 114, linkWidth, urlSize);
   ctx.fillStyle = "#8969a6";
-  text(`${poll.options.length} 个选项 · 打开链接，帮我选一选`, margin, height - 50, contentWidth, 18);
+  text(`${poll.options.length} 个选项 · 首次参与只需昵称和头像`, margin, height - 68, linkWidth, 16);
   return canvas.toDataURL("image/png");
 }
