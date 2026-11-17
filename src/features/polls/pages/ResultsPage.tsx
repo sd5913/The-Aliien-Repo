@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useSharePoll } from "../components/ShareProvider";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
@@ -13,6 +14,14 @@ export function ResultsPage() {
   const location = useLocation();
   const { polls, loading, error } = usePolls();
   const poll = polls.find((item) => item.id === id);
+  const openShare = useSharePoll();
+  const [openedShare, setOpenedShare] = useState(false);
+  useEffect(() => {
+    if (poll && new URLSearchParams(location.search).get("share") === "1" && !openedShare) {
+      setOpenedShare(true);
+      openShare(poll);
+    }
+  }, [poll, location.search, openedShare, openShare]);
   const [voter] = useState(getVoter);
   const returnToAuth = `/auth?returnTo=${encodeURIComponent(`/poll/${id}/results`)}`;
   const returnTo = location.state?.returnTo === "/" || location.state?.returnTo === "/settings"

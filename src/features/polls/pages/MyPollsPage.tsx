@@ -1,3 +1,4 @@
+import { useSharePoll } from "../components/ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -36,7 +37,8 @@ function MyPollCard({
   const navigate = useNavigate();
   const offset = dragOffset ?? (expanded ? -ACTION_WIDTH : 0);
 
-  const share = () => navigate(`/poll/${poll.id}/share`, { state: { returnTo: "/settings" } });
+  const openShare = useSharePoll();
+  const share = () => openShare(poll);
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;

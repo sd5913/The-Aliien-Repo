@@ -1,3 +1,4 @@
+import { useSharePoll } from "./ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -51,7 +52,8 @@ export function PollCard({
         })
       : "未设置";
 
-  const share = () => navigate(`/poll/${poll.id}/share`, { state: { returnTo } });
+  const openShare = useSharePoll();
+  const share = () => openShare(poll);
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
