@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
-import { Modal } from "../../../components/ui/Modal";
-import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { SandResults } from "../components/SandResults";
 import { sandColors } from "../utils/sandGeometry";
@@ -14,8 +12,6 @@ export function ResultsPage() {
   const { id = "" } = useParams();
   const { polls, loading, error } = usePolls();
   const poll = polls.find((item) => item.id === id);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [toast, setToast] = useState("");
   const [voter] = useState(getVoter);
   const returnToAuth = `/auth?returnTo=${encodeURIComponent(`/poll/${id}/results`)}`;
   const closeButton = (
@@ -23,20 +19,6 @@ export function ResultsPage() {
       ×
     </Link>
   );
-
-  const copyLink = async () => {
-    if (!poll) return;
-    try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}/poll/${poll.id}`,
-      );
-      setMenuOpen(false);
-      setToast("链接已复制");
-    } catch (error) {
-      console.error("Could not copy poll link.", error);
-      setToast("复制失败，请检查剪贴板权限");
-    }
-  };
 
   if (loading)
     return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="empty-inline">正在加载投票…</p></PageShell>;
@@ -70,16 +52,6 @@ export function ResultsPage() {
   return (
     <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
       <div className="results-redesign">
-      <div className="results-topline">
-        <span className="eyebrow">大家的心意</span>
-        <button
-          className="more-button"
-          aria-label="更多操作"
-          onClick={() => setMenuOpen(true)}
-        >
-          ···
-        </button>
-      </div>
       <div className="results-heading">
         <StatusPill poll={poll} />
         <h1>{poll.title}</h1>
@@ -138,24 +110,6 @@ export function ResultsPage() {
         </Link>
       )}
       </div>
-      {menuOpen && (
-        <Modal
-          title="分享这次投票"
-          onClose={() => setMenuOpen(false)}
-          actions={
-            <>
-              <button className="button-soft" onClick={() => setMenuOpen(false)}>关闭</button>
-              <Link className="button-soft" to={`/poll/${poll.id}/share`} state={{ returnTo: `/poll/${poll.id}/results` }} onClick={() => setMenuOpen(false)}>分享详情页</Link>
-              <button className="purple-button" onClick={() => void copyLink()}>
-                复制链接
-              </button>
-            </>
-          }
-        >
-          <p>邀请朋友一起看看结果，也可以继续帮忙投票。</p>
-        </Modal>
-      )}
-      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
   );
 }

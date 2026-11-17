@@ -6,4 +6,4 @@ export function sandBoundary(fraction: number, x: number, tilt: number, phase: n
   );
 }
 
-export const sandColors = ["#ae87ed", "#ffb77c", "#89b9e7", "#e69cbd", "#8fcbb0"];
+export const sandColors = ["#bca2e8", "#efc29b", "#a4c8df", "#deacc8", "#acd1bd"];
