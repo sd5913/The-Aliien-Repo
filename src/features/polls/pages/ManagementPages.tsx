@@ -1,3 +1,4 @@
+import { AppIcon } from "../../../components/ui/AppIcon";
 // Poll list and management pages for the local prototype. / 本地原型的投票列表与管理页面。
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -178,7 +179,7 @@ export function PollManagementPage() {
             to={`/create?id=${poll.id}`}
             aria-label="编辑投票"
           >
-            ✎ <span>编辑</span>
+            <AppIcon name="edit" /> <span>编辑</span>
           </Link>
         ) : undefined
       }

@@ -1,3 +1,4 @@
+import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "../../../components/ui/Modal";
@@ -132,20 +133,21 @@ function MyPollCard({
     <div className={`swipe-card${expanded ? " swipe-card-expanded" : ""}`}>
       <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
         <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.9L19 8.3a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z" /></svg>
+          <AppIcon name="edit" size={20} />
           <span>编辑</span>
         </button>
         <button className="swipe-action swipe-delete" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onDelete(poll); }}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" /></svg>
+          <AppIcon name="bin" size={20} />
           <span>删除</span>
         </button>
         <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }} disabled={!isPollOpen(poll)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" /></svg>
+          <AppIcon name="finished" size={20} />
           <span>结束</span>
         </button>
       </div>
       <article
         className="my-poll-card"
+        data-ticket-tone={(parseInt(poll.id.slice(-1), 16) || 0) % 3}
         style={{ transform: `translateX(${offset}px)`, transition: dragOffset === null ? undefined : "none" }}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}
@@ -172,7 +174,7 @@ function MyPollCard({
           </p>
           <p className="my-poll-deadline">截止时间：{deadline}</p>
           <button className="my-poll-share" onClick={share} aria-label="分享投票">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18c0-7 5-12 13-12h1m-5-4 5 4-5 4" /></svg>
+            <AppIcon name="share" size={20} />
           </button>
         </div>
       </article>

@@ -19,6 +19,11 @@ body { min-height: 100dvh; background: #f3f4f6; }
 button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
+.app-icon { display: inline-block; flex: 0 0 auto; object-fit: contain; vertical-align: middle; pointer-events: none; user-select: none; }
+.bottom-nav .nav-create { background: transparent; box-shadow: none; }
+.step-icon .app-icon, .settings-nav-button .app-icon, .my-poll-share .app-icon { display: block; }
+.add-option-button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.comment-management-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
 a { color: inherit; text-decoration: none; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(124, 58, 237, .3); outline-offset: 3px; }
 
@@ -180,7 +185,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; padding: 5px; border-radius: 999px; background: #ffffff86; }
 .filter-tabs button { flex: 1; height: 34px; border: 0; border-radius: 999px; background: transparent; color: #8e6ab3; font-size: 11px; font-weight: 700; cursor: pointer; }
 .filter-tabs button.active { color: #fff; background: linear-gradient(100deg, #7c3aed, #a855f7); box-shadow: 0 4px 10px #7c3aed33; }
-.swipe-card { position: relative; border-radius: 23px; overflow: hidden; background: transparent; touch-action: pan-y; }
+.swipe-card { position: relative; border-radius: 10px; overflow: hidden; background: transparent; touch-action: pan-y; }
 .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; width: 192px; }
 .swipe-action { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 8px 3px; border: 0; color: #5b21b6; font-size: 11px; font-weight: 800; cursor: pointer; }
 .swipe-action svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -188,12 +193,13 @@ h1, h2, h3 { color: var(--deep-purple); }
 .swipe-delete { color: #b4233c; background: #ffe1e5; }
 .swipe-end { color: #5b21b6; background: #d9ccff; }
 .swipe-action:disabled { color: #8f7cab; cursor: default; opacity: .7; }
-.my-poll-card { position: relative; z-index: 1; display: flex; align-items: center; min-height: 116px; padding: 13px 12px; border: 1px solid #fff; border-radius: 23px; background: #ffffffeb; box-shadow: var(--soft-shadow); transition: transform .24s ease-out; touch-action: pan-y; user-select: none; }
-.my-poll-card::before { position: absolute; top: 11px; bottom: 11px; left: 43%; border-left: 1px dashed #cdb9e1; content: ""; pointer-events: none; }
-.my-poll-card::after { position: absolute; top: 0; bottom: 0; left: calc(43% - 5px); width: 10px; background: radial-gradient(circle, #eee8f5 0 3px, transparent 3.5px) center / 10px 17px repeat-y; content: ""; pointer-events: none; }
+.my-poll-card { --ticket-background: linear-gradient(115deg, #eee3fc, #f4eafb 55%, #e6dafa); --ticket-line: #cbb5ed; position: relative; z-index: 1; display: flex; align-items: center; min-height: 116px; padding: 13px 12px; border: 1px solid #ffffffed; border-radius: 10px; background: var(--ticket-background); box-shadow: inset 0 0 10px #ffffff70; transition: transform .24s ease-out; touch-action: pan-y; user-select: none; -webkit-mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y; mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y; -webkit-mask-composite: source-in; mask-composite: intersect; }
+.my-poll-card[data-ticket-tone="1"] { --ticket-background: linear-gradient(115deg, #fbe0ee, #fceaf3 55%, #eee2fb); --ticket-line: #edbad8; }
+.my-poll-card[data-ticket-tone="2"] { --ticket-background: linear-gradient(115deg, #e9e0fc, #e7eafa 55%, #d6ebfc); --ticket-line: #c3c1f1; }
+.my-poll-card::before { position: absolute; top: 5px; bottom: 5px; left: 43%; width: 1px; background: repeating-linear-gradient(to bottom, var(--ticket-line) 0 7px, transparent 7px 12px); content: ""; pointer-events: none; }
+.my-poll-card::after { position: absolute; inset: 4px 6px; border: 1px solid var(--ticket-line); border-radius: 8px; box-shadow: 0 0 0 2px #ffffff38; opacity: .65; content: ""; pointer-events: none; }
 .settings-my-polls .swipe-card { background: transparent; box-shadow: none; }
-.settings-my-polls .my-poll-card { border-color: #fff; background: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, .07); }
-.home-recent .my-poll-card { background: #fff; }
+.settings-my-polls .my-poll-card, .home-recent .my-poll-card { background: var(--ticket-background); }
 .my-poll-thumbnails { display: flex; flex: 0 0 40%; align-items: center; gap: 7px; padding-right: 10px; }
 .my-poll-thumbnails img { width: 54px; height: 66px; flex: 0 1 54px; border-radius: 12px; object-fit: cover; background: linear-gradient(145deg, #fbcfe8, #c4b5fd 55%, #bfdbfe); }
 .my-poll-ticket-copy { position: relative; align-self: stretch; min-width: 0; flex: 1; padding: 4px 25px 3px 13px; }
@@ -201,7 +207,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .my-poll-ticket-main h3 { display: -webkit-box; overflow: hidden; margin: 0 0 7px; font-size: 13px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .my-poll-ticket-status, .my-poll-deadline { margin: 0 0 5px; color: #7952a5; font-size: 10px; line-height: 1.35; }
 .my-poll-deadline { overflow: hidden; color: #9673b7; text-overflow: ellipsis; white-space: nowrap; }
-.my-poll-share { position: absolute; z-index: 2; right: 0; bottom: -1px; display: grid; width: 25px; height: 25px; place-items: center; padding: 3px; border: 0; border-radius: 50%; color: #7c3aed; background: #f2eaff; cursor: pointer; }
+.my-poll-share { position: absolute; z-index: 2; right: -4px; top: 50%; transform: translateY(-50%); display: grid; width: 32px; height: 44px; place-items: center; padding: 5px; border: 0; border-radius: 12px; color: #7c3aed; background: transparent; cursor: pointer; }
+.my-poll-share:hover { background: #ffffff60; }
 .my-poll-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .page-heading.create-heading { display: block; margin-bottom: 18px; }

@@ -1,3 +1,4 @@
+import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -89,7 +90,7 @@ export function SharePage() {
       </section>
 
       <div className="share-page-actions">
-        <button className="purple-button button-full" onClick={() => void nativeShare()}>分享给朋友 <span>↗</span></button>
+        <button className="purple-button button-full" onClick={() => void nativeShare()}>分享给朋友 <AppIcon name="share" /></button>
         <button className="button-soft button-full" onClick={() => void copyLink()}>复制公开链接</button>
       </div>
       <p className="share-page-footnote">分享后，朋友可查看选项并提交自己的选择。</p>

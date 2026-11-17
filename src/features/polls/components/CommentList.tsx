@@ -1,3 +1,4 @@
+import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import type { PollComment, PollOption } from "../../../types/poll";
 import { useUserSettings } from "../../settings/hooks/useUserSettings";
@@ -55,8 +56,8 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
             </div>
             {!editing && optionIndex >= 0 && <span className="comment-color-dot" style={{ background: colors[optionIndex % colors.length] }} title={options[optionIndex].name} />}
             {!editing && (canEdit || canDelete) && <div className="comment-management-actions">
-              {canEdit && <button aria-label={`修改${comment.voter.nickname}的评论`} onClick={() => startEdit(comment)}>修改</button>}
-              {canDelete && <button className="comment-delete-button" aria-label={`删除${comment.voter.nickname}的评论`} onClick={() => onDelete?.(comment)}>删除</button>}
+              {canEdit && <button aria-label={`修改${comment.voter.nickname}的评论`} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />修改</button>}
+              {canDelete && <button className="comment-delete-button" aria-label={`删除${comment.voter.nickname}的评论`} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />删除</button>}
             </div>}
           </article>
         );

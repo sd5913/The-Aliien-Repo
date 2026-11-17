@@ -1,3 +1,4 @@
+import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -229,7 +230,7 @@ export function CreatePollPage() {
               ])
             }
           >
-            ＋ 添加选项
+            <AppIcon name="plus" /> 添加选项
           </button>
         )}
         <div className="deadline-row">
