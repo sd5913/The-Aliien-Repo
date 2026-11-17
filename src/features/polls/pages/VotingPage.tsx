@@ -85,17 +85,23 @@ export function VotingPage() {
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
       <section className="vote-cup-card">
-        <div className="vote-cup-handle" aria-hidden="true" />
-        <button className="vote-cup-choice" disabled={!open || !activeOption} onClick={() => {
+        <button className="vote-cup-confirm" disabled={!open || !activeOption} onClick={() => {
           setSelectedId(activeOption?.id ?? "");
           setPourSequence((sequence) => sequence + 1);
         }} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
+          {letter(activeIndex)} 选择此项
+        </button>
+        <div className="vote-cup-choice">
           <svg className="vote-cup-art" viewBox="0 0 260 245" aria-hidden="true">
-            <path className="vote-cup-drop" fill={selectedOption ? selectionColor : "#d8c7ed"} d="M130 5c-2 9-8 14-8 20a8 8 0 0 0 16 0c0-6-6-11-8-20Zm0 31c-4 15-13 23-13 32a13 13 0 0 0 26 0c0-9-9-17-13-32Z" />
-            <path d="M28 80Q22 80 23 94l5 61c5 54 43 81 102 81s97-27 102-81l5-61q1-14-5-14Z" fill="#ffffff35" stroke="#ffffffdd" strokeWidth="5" />
+            <rect x="91" y="8" width="78" height="12" rx="6" fill="#cdb5e6a6" />
+            <rect x="112" y="19" width="36" height="19" rx="6" fill="#b59bd5" />
+            <rect x="121" y="33" width="18" height="11" rx="4" fill="#cdb5e6" />
+            <rect x="49" y="62" width="162" height="174" rx="26" fill="#ffffff35" stroke="#ffffffdd" strokeWidth="5" />
+            <rect x="42" y="56" width="176" height="12" rx="6" fill="#ffffffb3" stroke="#ffffffdd" strokeWidth="2" />
             {selectedOption && <g key={pourSequence} className={pourSequence > 0 ? "vote-cup-pouring" : undefined}>
-              <path className="vote-cup-liquid" d="M34 129c36-18 65-16 96-3s60 17 96-5l-3 35c-5 47-37 71-93 71s-88-24-93-71Z" fill={selectionColor} />
+              <path className="vote-cup-liquid" d="M58 143Q58 133 68 133H192Q202 133 202 143V208Q202 227 183 227H77Q58 227 58 208Z" fill={selectionColor} />
               {pourSequence > 0 && <g fill={selectionColor}>
+                <path className="vote-cup-drop" d="M130 43c-2 7-6 11-6 15a6 6 0 0 0 12 0c0-4-4-8-6-15Z" />
                 <path className="vote-cup-stream" d="M130 34V211" fill="none" stroke={selectionColor} strokeWidth="9" strokeLinecap="round" />
                 <circle className="vote-cup-splash vote-cup-splash-left" cx="124" cy="130" r="4" />
                 <circle className="vote-cup-splash vote-cup-splash-right" cx="136" cy="130" r="3" />
@@ -104,8 +110,8 @@ export function VotingPage() {
             </g>}
           </svg>
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
-        </button>
-        <p className="vote-cup-caption" aria-live="polite">{selectedOption ? `杯中色彩代表已选项 · ${letter(selectedIndex)} ${selectedOption.name}` : "点击杯子选择当前选项"}</p>
+        </div>
+        <p className="vote-cup-caption" aria-live="polite">{selectedOption ? `杯中色彩代表已选项 · ${letter(selectedIndex)} ${selectedOption.name}` : "点击上方按钮选择当前选项"}</p>
         <button className="purple-button button-full vote-cup-submit" disabled={!open || !selectedId} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"}</button>
       </section>
       <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
