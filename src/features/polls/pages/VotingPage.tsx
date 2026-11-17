@@ -43,11 +43,11 @@ export function VotingPage() {
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
-  const otherIndex = (activeIndex + 1) % poll.options.length;
-  const otherOption = poll.options[otherIndex];
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
+  const selectionColors = ["#e6b477", "#9eacf0", "#e9a2be", "#8bc9af", "#be9be6"];
+  const selectionColor = selectionColors[Math.max(0, selectedIndex) % selectionColors.length];
   const saveVote = async () => {
     if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
     const now = new Date().toISOString();
@@ -83,22 +83,23 @@ export function VotingPage() {
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={setActiveId} />
-      <div className="vote-choice-controls">
-        <button className={`vote-choice-primary${selectedId === activeOption?.id ? " selected" : ""}`} disabled={!open} onClick={() => setSelectedId(activeOption?.id ?? "")}>{selectedId === activeOption?.id ? "✓ 已选择此项" : `${letter(activeIndex)} 选择此项`}</button>        {otherOption && <button className="vote-choice-secondary" disabled={!open} onClick={() => setActiveId(otherOption.id)}>{letter(otherIndex)} 查看另一项</button>}
-      </div>
-      <section className={`selection-preview${selectedOption ? " is-set" : " is-empty"}`} key={selectedOption?.id ?? "none"} aria-live="polite">
-        <div className="selection-thumb">{selectedOption?.imageUrl ? <img src={selectedOption.imageUrl} alt="" /> : <span>✦</span>}</div>
-        <div className="selection-copy">
-          <span className="selection-eyebrow">{selectedOption ? "已选" : "还没选择"}</span>
-          <strong>{selectedOption ? `${letter(selectedIndex)} · ${selectedOption.name}` : "点上面的按钮选择一项"}</strong>
-        </div>
-        {selectedOption && <span className="selection-check" aria-hidden="true">✓</span>}
+      <section className="vote-cup-card">
+        <div className="vote-cup-handle" aria-hidden="true" />
+        <button className="vote-cup-choice" disabled={!open || !activeOption} onClick={() => setSelectedId(activeOption?.id ?? "")} aria-label={`选择当前选项 ${letter(activeIndex)} · ${activeOption?.name ?? ""}`}>
+          <svg className="vote-cup-art" viewBox="0 0 260 245" aria-hidden="true">
+            <path className="vote-cup-drop" fill={selectedOption ? selectionColor : "#d8c7ed"} d="M130 5c-2 9-8 14-8 20a8 8 0 0 0 16 0c0-6-6-11-8-20Zm0 31c-4 15-13 23-13 32a13 13 0 0 0 26 0c0-9-9-17-13-32Z" />
+            <path d="M28 80Q22 80 23 94l5 61c5 54 43 81 102 81s97-27 102-81l5-61q1-14-5-14Z" fill="#ffffff35" stroke="#ffffffdd" strokeWidth="5" />
+            {selectedOption && <path key={selectedId} className="vote-cup-liquid" d="M34 129c36-18 65-16 96-3s60 17 96-5l-3 35c-5 47-37 71-93 71s-88-24-93-71Z" fill={selectionColor} />}
+          </svg>
+          <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
+        </button>
+        <p className="vote-cup-caption" aria-live="polite">{selectedOption ? `杯中色彩代表已选项 · ${letter(selectedIndex)} ${selectedOption.name}` : "点击杯子选择当前选项"}</p>
+        <button className="purple-button button-full vote-cup-submit" disabled={!open || !selectedId} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"}</button>
       </section>
-      <div className="vote-progress"><div className="vote-progress-top"><span>朋友们已经参与</span><strong>已选 {poll.votes.length}</strong></div><div className="progress-track"><span style={{ width: `${Math.min(100, poll.votes.length * 12)}%` }} /></div></div>
+      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
       <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
       <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
-      <button className="purple-button button-full submit-vote" disabled={!open} onClick={() => void submitVote()}>{existingVote ? "提交修改" : "提交我的选择"} <span>↗</span></button>
       {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
