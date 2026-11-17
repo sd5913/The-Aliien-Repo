@@ -5,7 +5,8 @@ import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
-import { ResultBubbles } from "../components/ResultBubbles";
+import { SandResults } from "../components/SandResults";
+import { sandColors } from "../utils/sandGeometry";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
 
@@ -64,10 +65,11 @@ export function ResultsPage() {
   const open = isPollOpen(poll);
   const owner = isPollOwner(poll, voter.id);
   const commentsVisible = poll.commentsPublic !== false || owner;
-  const colorList = ["#8b5cf6", "#ec4899", "#3b82f6", "#f59e0b", "#22c55e"];
+  const validTotal = [...counts.values()].reduce((sum, count) => sum + count, 0);
 
   return (
     <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
+      <div className="results-redesign">
       <div className="results-topline">
         <span className="eyebrow">大家的心意</span>
         <button
@@ -83,25 +85,21 @@ export function ResultsPage() {
         <h1>{poll.title}</h1>
         <p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p>
       </div>
-      <section className="results-card">
-        <ResultBubbles
-          options={poll.options}
-          counts={counts}
-          total={poll.votes.length}
-        />
+      <SandResults options={poll.options} counts={counts} />
+      <section className="results-card" aria-label="各选项票数">
         <div className="result-option-list">
           {poll.options.map((option, index) => {
             const count = counts.get(option.id) ?? 0;
-            const percent = poll.votes.length
-              ? Math.round((count / poll.votes.length) * 100)
+            const percent = validTotal
+              ? Math.round((count / validTotal) * 100)
               : 0;
             return (
               <div className="result-option-row" key={option.id}>
                 <span
                   className="result-color"
-                  style={{ background: colorList[index % colorList.length] }}
+                  style={{ background: sandColors[index % sandColors.length] }}
                 />
-                <strong>{option.name}</strong>
+                <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>
                   {count} 票 · {percent}%
                 </span>
@@ -139,6 +137,7 @@ export function ResultsPage() {
           改票 <span>↗</span>
         </Link>
       )}
+      </div>
       {menuOpen && (
         <Modal
           title="分享这次投票"
