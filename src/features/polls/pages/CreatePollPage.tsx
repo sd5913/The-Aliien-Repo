@@ -1,3 +1,4 @@
+import { readDraft, saveDraft, clearDraft, isCreateDraft } from "../utils/drafts";
 import { OptionImageInput } from "../components/OptionImageInput";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
@@ -22,11 +23,14 @@ export function CreatePollPage() {
   const editingId = params.get("id");
   const copyId = params.get("copy");
   const initialized = useRef("");
-  const [newPollId] = useState(() => crypto.randomUUID());
+  const [newPollId, setNewPollId] = useState<string>(() => crypto.randomUUID());
   const [uploadCount, setUploadCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const { polls, loading, error: pollsError, savePoll } = usePolls();
   const { user } = useAccount();
+  const draftKey = `bothpls:draft:create:${user?.id ?? "none"}:${editingId || copyId || "new"}`;
+  const [draftReady, setDraftReady] = useState("");
+  const [draftNotice, setDraftNotice] = useState("");
   const editingPoll = polls.find((poll) => poll.id === editingId);
   const copySource = polls.find((poll) => poll.id === copyId);
   const canCopy = !copyId || Boolean(copySource && isPollOwner(copySource, user?.id ?? ""));
@@ -43,17 +47,27 @@ export function CreatePollPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const key = editingId || copyId || "new";
+    const key = draftKey;
     if (initialized.current === key) return;
     const source = editingId ? editingPoll : copySource;
     if ((editingId || copyId) && !source) return;
     initialized.current = key;
-    if (source) {
+    const saved = readDraft(draftKey, isCreateDraft);
+    if (saved) {
+      setTitle(saved.title); setDescription(saved.description); setOptions(saved.options);
+      setDeadline(saved.deadline); setNewPollId(saved.pollId); setDraftNotice("已恢复上次未提交的草稿");
+    } else if (source) {
       setTitle(source.title); setDescription(source.description);
       setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
       setDeadline(editingId && source.endsAt ? "custom" : "none");
     }
-  }, [editingId, copyId, editingPoll, copySource]);
+    setDraftReady(draftKey);
+  }, [editingId, copyId, editingPoll, copySource, draftKey]);
+
+  useEffect(() => {
+    if (draftReady !== draftKey || loading || !user) return;
+    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, options })) setDraftNotice("当前浏览器无法保存草稿，请勿关闭页面");
+  }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, options]);
 
   if (loading)
     return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
@@ -127,6 +141,7 @@ export function CreatePollPage() {
     try {
       setSaving(true);
       await savePoll(poll);
+      clearDraft(draftKey);
       navigate(`/poll/${poll.id}/results${editingPoll ? "" : "?share=1"}`, {
         state: { returnTo: "/settings", published: !editingPoll, saved: Boolean(editingPoll) },
       });
@@ -144,13 +159,14 @@ export function CreatePollPage() {
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
-          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
+          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={draftReady !== draftKey || saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
             {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
           </PurpleButton>
         </div>
       }
     >
       <form id="create-poll-form" className="create-form" onSubmit={submit}>
+        {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
         <label className="field-label" htmlFor="poll-title">
           投票标题 <span className="required">*</span>
         </label>

@@ -44,6 +44,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       return reply(name === 'own_comments' ? [] : null);
     }
     if (url.pathname === '/rest/v1/polls') return reply(state.polls);
+    if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
     return reply([]);
   });
   return state;

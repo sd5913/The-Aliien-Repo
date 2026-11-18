@@ -595,3 +595,5 @@ h1, h2, h3 { color: var(--deep-purple); }
 .option-photo-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .option-photo-actions button { padding: 3px; border: 0; border-radius: 5px; background: #ede9fe; color: #7654a3; font-size: 9px; cursor: pointer; }
 .option-photo-actions button:disabled { opacity: .45; }
+
+.result-leader-summary { margin: -6px 0 14px; text-align: center; color: #8256b0; font-size: 12px; font-weight: 700; }

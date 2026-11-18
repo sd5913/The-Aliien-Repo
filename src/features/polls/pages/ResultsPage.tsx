@@ -18,7 +18,7 @@ import type { PollComment } from "../../../types/poll";
 export function ResultsPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { polls, loading, error, editComment, deleteComment, updatePoll, removePoll } = usePolls();
+  const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls();
   const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
   const openShare = useSharePoll();
@@ -91,6 +91,10 @@ export function ResultsPage() {
   const commentsVisible = !open || owner;
   const validTotal = [...counts.values()].reduce((sum, count) => sum + count, 0);
 
+  const highest = Math.max(0, ...counts.values());
+  const leaders = poll.options.filter((option) => highest > 0 && counts.get(option.id) === highest);
+  const leaderText = leaders.map((option) => String.fromCharCode(65 + poll.options.indexOf(option))).join("、");
+
   return (
     <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
       <div className="results-redesign">
@@ -99,6 +103,8 @@ export function ResultsPage() {
         <h1>{poll.title}</h1>
         <p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p>
       </div>
+      {syncError && <p className="field-hint" role="status">结果更新暂时失败，已保留上次数据；网络恢复后会重试。</p>}
+      {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? `平票 · ${leaderText} 并列领先` : `${leaderText} ${open ? "当前领先" : "获得最多选择"}`}</p>}
       <SandResults options={poll.options} counts={counts} />
       <section className="results-card" aria-label="各选项票数">
         <div className="result-option-list">
