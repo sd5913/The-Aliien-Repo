@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "../../../lib/supabase/client";
+import { useAccount } from "../components/AccountProvider";
+import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
 import { sendMagicLink } from "../services/auth";
 
@@ -18,27 +19,16 @@ export function AuthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const mode: AuthMode = searchParams.get("mode") === "register" ? "register" : "login";
   const requestedReturnTo = searchParams.get("returnTo");
-  const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
-    ? requestedReturnTo
-    : "/";
+  const returnTo = accountReturnTo(requestedReturnTo);
+  const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate(returnTo, { replace: true });
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) navigate(returnTo, { replace: true });
-    });
-    return () => {
-      active = false;
-      listener.subscription.unsubscribe();
-    };
-  }, [navigate, returnTo]);
+    if (!accountLoading && user) navigate(returnTo, { replace: true });
+  }, [accountLoading, user, navigate, returnTo]);
 
   const switchMode = (nextMode: AuthMode) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -59,7 +49,7 @@ export function AuthPage() {
     setLoading(true);
     setFeedback("");
     try {
-      const result = await sendMagicLink(cleanEmail, mode === "register" ? cleanNickname : undefined);
+      const result = await sendMagicLink(cleanEmail, mode === "register" ? cleanNickname : undefined, returnTo);
       if (result.error) throw result.error;
       setFeedback("登录链接已发送，请打开邮箱并点击邮件中的链接。链接只能使用一次，有效期为一小时。 ");
     } catch (error) {
@@ -70,7 +60,7 @@ export function AuthPage() {
   };
 
   return (
-    <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to={returnTo}>先逛逛</Link>}>
+    <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">先逛逛</Link>}>
       <section className="auth-page">
         <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>

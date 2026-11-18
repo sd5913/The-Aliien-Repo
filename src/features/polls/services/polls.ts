@@ -1,13 +1,8 @@
+import { readParticipant } from "../../auth/utils/participant";
 // Supabase persistence for polls, aligned with the normalized three-table schema.
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
-import {
-  readComments,
-  readCommentsPublic,
-  writeComments,
-  writeCommentsPublic,
-} from "../../../lib/storage/pollLocal";
 
 interface PollRow {
   id: string;
@@ -15,6 +10,7 @@ interface PollRow {
   description: string | null;
   status: PollStatus;
   author_name: string | null;
+  owner_id: string | null;
   is_public: boolean | null;
   emoji: string | null;
   created_at: string;
@@ -50,7 +46,17 @@ function toVoteView(row: VoteRow): Vote {
   };
 }
 
-function toPollView(row: PollRow, votes: VoteRow[]): Poll {
+interface CommentRow {
+  id: string; poll_id: string; voter_id: string; nickname: string; avatar: string;
+  body: string; option_id: string | null; created_at: string;
+}
+
+function toCommentView(row: CommentRow): PollComment {
+  return { id: row.id, voter: { id: row.voter_id, nickname: row.nickname, avatar: row.avatar },
+    text: row.body, optionId: row.option_id ?? undefined, createdAt: row.created_at };
+}
+
+function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Poll {
   const options = [...(row.poll_options ?? [])]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((option) => ({
@@ -59,26 +65,23 @@ function toPollView(row: PollRow, votes: VoteRow[]): Poll {
       imageUrl: option.image_url ?? undefined,
     }));
 
-  const comments = readComments(row.id);
-  const commentsPublic = readCommentsPublic(row.id);
 
   return {
     id: row.id,
     title: row.title,
     description: row.description ?? "",
     createdAt: row.created_at,
-    creatorId: row.author_name ?? undefined,
-    commentsPublic,
+    creatorId: row.owner_id ?? undefined,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
     options,
     votes: votes.map(toVoteView),
-    comments,
+    comments: comments.map(toCommentView),
   };
 }
 
 const POLL_SELECT =
-  "id,title,description,status,author_name,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
 
 export async function fetchPolls(): Promise<Poll[]> {
   const { data, error } = await supabase
@@ -92,117 +95,76 @@ export async function fetchPolls(): Promise<Poll[]> {
   const pollIds = pollRows.map((row) => row.id);
 
   let voteRows: VoteRow[] = [];
+  let commentRows: CommentRow[] = [];
   if (pollIds.length > 0) {
-    const votesResult = await supabase
-      .from("votes")
-      .select("id,poll_id,voter_id,ranking,created_at")
-      .in("poll_id", pollIds);
+    const participant = readParticipant();
+    const [votesResult, commentsResult, ownResult] = await Promise.all([
+      supabase.from("votes").select("id,poll_id,voter_id,ranking,created_at").in("poll_id", pollIds),
+      supabase.from("poll_comments").select("id,poll_id,voter_id,nickname,avatar,body,option_id,created_at").in("poll_id", pollIds).order("created_at"),
+      participant ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
+    ]);
     if (votesResult.error) throw votesResult.error;
-    voteRows = (votesResult.data ?? []) as unknown as VoteRow[];
+    if (commentsResult.error) throw commentsResult.error;
+    if (ownResult.error) throw ownResult.error;
+    voteRows = (votesResult.data ?? []) as VoteRow[];
+    const merged = new Map<string, CommentRow>();
+    for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) merged.set(comment.id, comment);
+    commentRows = [...merged.values()].sort((a,b) => a.created_at.localeCompare(b.created_at));
   }
 
   return pollRows.map((row) =>
-    toPollView(row, voteRows.filter((vote) => vote.poll_id === row.id)),
+    toPollView(row, voteRows.filter((vote) => vote.poll_id === row.id), commentRows.filter((comment) => comment.poll_id === row.id)),
   );
 }
 
+// Atomic RPCs set ownership from auth.uid() and enforce permissions server-side.
 export async function createPoll(poll: Poll): Promise<void> {
-  const { error: pollError } = await supabase.from("polls").insert({
-    id: poll.id,
-    title: poll.title,
-    description: poll.description,
-    status: poll.status,
-    author_name: poll.creatorId ?? null,
-    is_public: true,
-    closed_at: poll.endsAt ?? null,
-  });
-  if (pollError) throw pollError;
-
-  const optionRows = poll.options.map((option, index) => ({
-    id: option.id,
-    poll_id: poll.id,
-    label: option.name,
-    image_url: option.imageUrl ?? null,
-    position: index,
-  }));
-  if (optionRows.length > 0) {
-    const { error: optionError } = await supabase
-      .from("poll_options")
-      .insert(optionRows);
-    if (optionError) throw optionError;
-  }
-}
-
-export async function updatePollMeta(poll: Poll): Promise<void> {
-  const { error: pollError } = await supabase
-    .from("polls")
-    .update({
-      title: poll.title,
-      description: poll.description,
-      status: poll.status,
-      author_name: poll.creatorId ?? null,
-      closed_at: poll.endsAt ?? null,
-    })
-    .eq("id", poll.id);
-  if (pollError) throw pollError;
-
-  const { error: deleteError } = await supabase
-    .from("poll_options")
-    .delete()
-    .eq("poll_id", poll.id);
-  if (deleteError) throw deleteError;
-
-  const optionRows = poll.options.map((option, index) => ({
-    id: option.id,
-    poll_id: poll.id,
-    label: option.name,
-    image_url: option.imageUrl ?? null,
-    position: index,
-  }));
-  if (optionRows.length > 0) {
-    const { error: optionError } = await supabase
-      .from("poll_options")
-      .insert(optionRows);
-    if (optionError) throw optionError;
-  }
-}
-
-export async function submitVote(
-  pollId: string,
-  voterId: string,
-  ranking: string[],
-): Promise<void> {
-  const { error } = await supabase
-    .from("votes")
-    .upsert(
-      { poll_id: pollId, voter_id: voterId, ranking },
-      { onConflict: "poll_id,voter_id" },
-    );
+  const { error } = await supabase.rpc("save_poll", { p_poll: poll });
   if (error) throw error;
 }
 
-export async function setPollStatus(
-  pollId: string,
-  status: PollStatus,
-  closedAt: string | null,
-): Promise<void> {
-  const { error } = await supabase
-    .from("polls")
-    .update({ status, closed_at: closedAt })
-    .eq("id", pollId);
+export async function updatePollMeta(poll: Poll): Promise<void> {
+  if (poll.status === "closed") {
+    await setPollStatus(poll.id, "closed", poll.endsAt ?? null);
+    return;
+  }
+  const { error } = await supabase.rpc("save_poll", { p_poll: poll });
+  if (error) throw error;
+}
+
+export async function submitVote(pollId: string, voterId: string, ranking: string[], comment = ""): Promise<void> {
+  const participant = readParticipant();
+  if (!participant || participant.id !== voterId) throw new Error("请先完成软登录。");
+  const { error } = await supabase.rpc("submit_ballot", {
+    p_poll_id: pollId, p_voter_id: participant.id,
+    p_token: participant.participantToken, p_ranking: ranking,
+    p_comment: comment, p_nickname: participant.nickname, p_avatar: participant.avatar,
+  });
+  if (error) throw error;
+}
+
+export async function setPollStatus(pollId: string, status: PollStatus, _closedAt: string | null): Promise<void> {
+  if (status !== "closed") throw new Error("已结束投票不能重新开放。");
+  const { error } = await supabase.rpc("close_poll", { p_poll_id: pollId });
   if (error) throw error;
 }
 
 export async function deletePollRemote(pollId: string): Promise<void> {
-  const { error } = await supabase.from("polls").delete().eq("id", pollId);
+  const { error } = await supabase.rpc("delete_poll", { p_poll_id: pollId });
   if (error) throw error;
 }
 
-// Local-only helpers used by the hook for comments and visibility.
-export function persistLocalComments(pollId: string, comments: PollComment[]): void {
-  writeComments(pollId, comments);
+export async function updateCommentRemote(commentId: string, text: string): Promise<void> {
+  const participant = readParticipant();
+  if (!participant) throw new Error("请先完成软登录。");
+  const { error } = await supabase.rpc("update_comment", { p_comment_id: commentId,
+    p_voter_id: participant.id, p_token: participant.participantToken, p_body: text });
+  if (error) throw error;
 }
 
-export function persistLocalCommentsPublic(pollId: string, visible: boolean): void {
-  writeCommentsPublic(pollId, visible);
+export async function deleteCommentRemote(commentId: string): Promise<void> {
+  const participant = readParticipant();
+  const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId,
+    p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null });
+  if (error) throw error;
 }

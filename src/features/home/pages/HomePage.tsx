@@ -1,3 +1,4 @@
+import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -6,21 +7,24 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
-import { getVoter, isPollOwner } from "../../polls/utils/voting";
+import { isPollOwner } from "../../polls/utils/voting";
 import type { Poll } from "../../../types/poll";
+import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function HomePage() {
   const { polls, loading, error, removePoll, updatePoll } = usePolls();
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
+  const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
-  const [voter] = useState(getVoter);
+  const { user: accountUser } = useAccount();
+  const participant = useParticipant();
   // Keep the polls this device created at the top so their owner can always reach
   // the manage/edit entry from the home list.
   // 本机发起的投票排在前面，保证发起者能直接从首页进入管理与编辑。
   const recent = [
-    ...polls.filter((poll) => isPollOwner(poll, voter.id)),
-    ...polls.filter((poll) => !isPollOwner(poll, voter.id)),
+    ...polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? "")),
+    ...polls.filter((poll) => !isPollOwner(poll, accountUser?.id ?? "")),
   ].slice(0, 3);
 
   const confirmDelete = async () => {
@@ -55,7 +59,7 @@ export function HomePage() {
         <h1>一个人难选？<br />我们一起选。</h1>
         <p>把纠结交给朋友，让每个小决定都变得好玩。</p>
         <Link to="/create" className="purple-button">发起一个投票 <span>↗</span></Link>
-        <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>
+        {accountUser ? <Link to="/settings" className="auth-quick-link">个人中心 →</Link> : participant ? <Link to="/settings" className="auth-quick-link"><span aria-hidden="true">{participant.avatar}</span> {participant.nickname} · 投票者</Link> : <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>}
         <div className="welcome-sticker" aria-hidden="true">✦</div>
       </section>
       <section className="home-steps">
@@ -68,10 +72,11 @@ export function HomePage() {
       </section>
       <section className="home-recent">
         <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div><Link className="subtle-link" to="/settings#my-polls">查看全部 →</Link></div>
-        {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={`/poll/${poll.id}/results`} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={endPoll} />)}</div> : (
+        {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={`/poll/${poll.id}/results`} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : (
           <div className="empty-state"><div className="empty-art" aria-hidden="true"><span>☁</span><i>♡</i></div><h3>还没有投票哦</h3><p>创建一个小问题，邀请朋友帮你选。</p><Link className="purple-button" to="/create">开始创建</Link></div>
         )}
       </section>
+      {ending && <Modal title="确定结束这次投票吗？" onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>取消</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>确认结束</button></>}><p>结束后不能继续投票或修改选择，结果和评论将公开。</p></Modal>}
       {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>

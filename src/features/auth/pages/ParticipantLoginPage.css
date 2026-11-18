@@ -1,7 +1,7 @@
 .participant-page {
-  position: relative; isolation: isolate; width: min(100%, 430px); min-height: 100dvh;
-  overflow: hidden; padding: max(52px, env(safe-area-inset-top)) 23px max(145px, env(safe-area-inset-bottom));
-  color: #310c40; background: radial-gradient(ellipse at 95% 5%, #ffdce9 0, transparent 58%), radial-gradient(ellipse at 5% 75%, #ffe1f1 0, transparent 65%), linear-gradient(135deg, #efdfff, #f8e9ff 60%, #cfe2ff);
+  position: relative; isolation: isolate; width: min(100%, 390px); height: min(844px, 100dvh); min-height: 0; flex: 0 1 390px;
+  overflow-x: hidden; overflow-y: auto; padding: max(52px, env(safe-area-inset-top)) 23px max(145px, env(safe-area-inset-bottom));
+  color: #310c40; background: var(--app-background);
 }
 .participant-page::before { content: ""; position: absolute; z-index: -1; width: 230px; height: 260px; top: 115px; left: -110px; border-radius: 43% 57% 64% 36%; background: linear-gradient(140deg, #d6baff88, #ffd4ef55); transform: rotate(-35deg); }
 .participant-brand { text-align: center; margin: 18px 0 48px; }
@@ -47,3 +47,5 @@
 @media (max-width: 359px) { .participant-page { padding-left: 15px; padding-right: 15px; } .participant-ticket { padding-left: 14px; padding-right: 14px; } .participant-avatar-row { gap: 14px; } .participant-avatar { width: 110px; height: 110px; margin-left: 25px; } .participant-avatar > span { font-size: 65px; } .participant-brand { margin-bottom: 34px; } }
 @media (prefers-reduced-motion: reduce) { .participant-page *, .participant-page *::before, .participant-page *::after { animation: none; transition: none; } }
 .participant-page { margin-inline: auto; }
+
+@media (max-width: 599px) { .participant-page { width: 100%; height: 100dvh; flex-basis: 100%; border-radius: 0; } }
