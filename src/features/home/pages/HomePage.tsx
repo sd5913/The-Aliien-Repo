@@ -12,7 +12,7 @@ import type { Poll } from "../../../types/poll";
 import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function HomePage() {
-  const { polls, loading, error, removePoll, updatePoll } = usePolls();
+  const { polls, loading, error, removePoll, updatePoll } = usePolls({ recent: true });
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);

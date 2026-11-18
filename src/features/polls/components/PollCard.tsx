@@ -169,7 +169,7 @@ export function PollCard({
           <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
             <h3>{poll.title}</h3>
           </Link>
-          <p className="my-poll-ticket-status">{isPollOpen(poll) ? "进行中" : "已结束"} · {poll.votes.length} 票</p>
+          <p className="my-poll-ticket-status">{isPollOpen(poll) ? "进行中" : "已结束"} · {poll.voteCount ?? poll.votes.length} 票</p>
           <p className="my-poll-deadline">截止时间：{deadline}</p>
           <button className="my-poll-share" onClick={share} aria-label="分享投票">
             <AppIcon name="share" size={20} />

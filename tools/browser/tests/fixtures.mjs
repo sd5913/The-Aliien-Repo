@@ -8,7 +8,7 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 export async function mockApp(page, { accountId = owner, closed = false } = {}) {
   const user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
     user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
-  const state = { calls: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
+  const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
     author_name: owner, status: closed ? 'closed' : 'open', is_public: true, closed_at: null, created_at: '2026-01-01T00:00:00Z',
     poll_options: [{ id: optionA, poll_id: pollId, label: '选项甲', position: 0 }, { id: optionB, poll_id: pollId, label: '选项乙', position: 1 }] }] };
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -47,6 +47,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       if (name === 'register_participant') return reply('70000000-0000-4000-8000-000000000001');
       return reply(name === 'own_comments' ? [] : null);
     }
+    if (url.pathname.startsWith('/rest/v1/')) state.requests.push({ path: url.pathname, search: url.search, prefer: request.headers().prefer });
     if (url.pathname === '/rest/v1/polls') return reply(state.polls);
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
     return reply([]);

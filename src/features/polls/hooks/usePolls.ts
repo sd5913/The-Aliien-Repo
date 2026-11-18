@@ -11,6 +11,7 @@ import {
   updateCommentRemote,
   deleteCommentRemote,
   fetchPolls,
+  fetchRecentPolls,
   submitVote,
   updatePollMeta,
 } from "../services/polls";
@@ -27,7 +28,7 @@ function metaChanged(current: Poll, updated: Poll): boolean {
   );
 }
 
-export function usePolls() {
+export function usePolls({ recent = false }: { recent?: boolean } = {}) {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -45,7 +46,7 @@ export function usePolls() {
     const sequence = ++requestSequence.current;
     const revision = version.current;
     try {
-      const data = await fetchPolls();
+      const data = recent ? await fetchRecentPolls(user?.id) : await fetchPolls();
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
       pollsRef.current = data; setPolls(data); setError(null); setSyncError(false); initialized.current = true;
     } catch (cause) {
@@ -55,18 +56,18 @@ export function usePolls() {
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, recent]);
 
   useEffect(() => {
     mounted.current = true; initialized.current = false; setLoading(true);
     pollsRef.current = []; setPolls([]);
     void refresh();
     const check = () => { if (!document.hidden && navigator.onLine) void refresh(); };
-    const timer = window.setInterval(check, 10000);
+    const timer = recent ? undefined : window.setInterval(check, 10000);
     window.addEventListener("focus", check); window.addEventListener("online", check);
     document.addEventListener("visibilitychange", check);
     return () => {
-      mounted.current = false; ++requestSequence.current; window.clearInterval(timer);
+      mounted.current = false; ++requestSequence.current; if (timer !== undefined) window.clearInterval(timer);
       window.removeEventListener("focus", check); window.removeEventListener("online", check);
       document.removeEventListener("visibilitychange", check);
     };

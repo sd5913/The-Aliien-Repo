@@ -83,6 +83,30 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
 const POLL_SELECT =
   "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
 
+export async function fetchRecentPolls(ownerId?: string): Promise<Poll[]> {
+  const latestQuery = supabase.from("polls").select(POLL_SELECT)
+    .order("created_at", { ascending: false }).limit(3);
+  const [latestResult, ownedResult] = await Promise.all([
+    latestQuery,
+    ownerId ? supabase.from("polls").select(POLL_SELECT).eq("owner_id", ownerId)
+      .order("created_at", { ascending: false }).limit(3) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (latestResult.error) throw latestResult.error;
+  if (ownedResult.error) throw ownedResult.error;
+
+  const rows = [...(ownedResult.data ?? []), ...(latestResult.data ?? [])] as unknown as PollRow[];
+  const unique = [...new Map(rows.map((row) => [row.id, row])).values()];
+  const owned = unique.filter((row) => row.owner_id === ownerId);
+  const others = unique.filter((row) => row.owner_id !== ownerId);
+  const selected = [...owned, ...others].slice(0, 3);
+  const counts = await Promise.all(selected.map(async (row) => {
+    const { count, error } = await supabase.from("votes").select("id", { count: "exact", head: true }).eq("poll_id", row.id);
+    if (error) throw error;
+    return count ?? 0;
+  }));
+  return selected.map((row, index) => ({ ...toPollView(row, [], []), voteCount: counts[index] }));
+}
+
 export async function fetchPolls(): Promise<Poll[]> {
   const { data, error } = await supabase
     .from("polls")
