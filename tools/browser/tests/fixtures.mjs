@@ -25,6 +25,11 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
     const headers = { 'access-control-allow-origin': '*', 'content-type': 'application/json' };
     const reply = (data) => route.fulfill({ status: 200, headers, body: JSON.stringify(data) });
+    if (url.pathname.startsWith('/storage/v1/object/') && request.method() === 'POST') {
+      state.calls.push({ name: 'image_upload', path: url.pathname });
+      return reply({ Key: url.pathname.split('/object/')[1] });
+    }
+    if (url.pathname.startsWith('/storage/v1/object/public/')) return route.fulfill({ status: 200, body: state.image ?? Buffer.alloc(0), contentType: 'image/png' });
     if (url.pathname === '/auth/v1/user') return reply(user);
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON();

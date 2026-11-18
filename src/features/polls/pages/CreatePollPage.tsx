@@ -1,3 +1,4 @@
+import { OptionImageInput } from "../components/OptionImageInput";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
@@ -8,11 +9,10 @@ import { usePolls } from "../hooks/usePolls";
 import { isPollOwner, isPollOpen } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
-function makeOption(index: number): PollOption {
+function makeOption(): PollOption {
   return {
     id: crypto.randomUUID(),
     name: "",
-    imageUrl: `https://picsum.photos/seed/bothpls-option-${index}/240/240`,
   };
 }
 
@@ -23,6 +23,7 @@ export function CreatePollPage() {
   const copyId = params.get("copy");
   const initialized = useRef("");
   const [newPollId] = useState(() => crypto.randomUUID());
+  const [uploadCount, setUploadCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const { polls, loading, error: pollsError, savePoll } = usePolls();
   const { user } = useAccount();
@@ -37,7 +38,7 @@ export function CreatePollPage() {
 
   const [deadline, setDeadline] = useState("none");
   const [options, setOptions] = useState<PollOption[]>(
-    editingPoll?.options ?? [makeOption(1), makeOption(2)],
+    editingPoll?.options ?? [makeOption(), makeOption()],
   );
   const [error, setError] = useState("");
 
@@ -89,7 +90,7 @@ export function CreatePollPage() {
     );
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canEdit || !canCopy || !user || saving) return;
+    if (!canEdit || !canCopy || !user || saving || uploadCount > 0) return;
     const cleanOptions = options.map((option) => ({
       ...option,
       name: option.name.trim(),
@@ -143,7 +144,7 @@ export function CreatePollPage() {
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
-          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={saving || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
+          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
             {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
           </PurpleButton>
         </div>
@@ -184,14 +185,9 @@ export function CreatePollPage() {
         <div className="option-editor-list">
           {options.map((option, index) => (
             <div className="option-editor" key={option.id}>
-              <img
-                className="option-editor-image"
-                src={
-                  option.imageUrl ||
-                  `https://picsum.photos/seed/bothpls-option-${index}/240/240`
-                }
-                alt=""
-              />
+              <OptionImageInput url={option.imageUrl} index={index}
+                onChange={(imageUrl) => setOptions((current) => current.map((item) => item.id === option.id ? { ...item, imageUrl } : item))}
+                onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">
                 <span className="option-letter">
                   {String.fromCharCode(65 + index)} · 选项名称
@@ -210,6 +206,7 @@ export function CreatePollPage() {
               {options.length > 2 && (
                 <button
                   className="remove-option-button"
+                  disabled={uploadCount > 0}
                   type="button"
                   aria-label={`删除选项 ${index + 1}`}
                   onClick={() =>
@@ -231,7 +228,7 @@ export function CreatePollPage() {
             onClick={() =>
               setOptions((current) => [
                 ...current,
-                makeOption(current.length + 1),
+                makeOption(),
               ])
             }
           >
