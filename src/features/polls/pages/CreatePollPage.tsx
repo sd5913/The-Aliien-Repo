@@ -1,6 +1,6 @@
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
@@ -20,9 +20,15 @@ export function CreatePollPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const editingId = params.get("id");
+  const copyId = params.get("copy");
+  const initialized = useRef("");
+  const [newPollId] = useState(() => crypto.randomUUID());
+  const [saving, setSaving] = useState(false);
   const { polls, loading, error: pollsError, savePoll } = usePolls();
   const { user } = useAccount();
   const editingPoll = polls.find((poll) => poll.id === editingId);
+  const copySource = polls.find((poll) => poll.id === copyId);
+  const canCopy = !copyId || Boolean(copySource && isPollOwner(copySource, user?.id ?? ""));
   const canEdit = !editingId || Boolean(editingPoll && isPollOwner(editingPoll, user?.id ?? "") && isPollOpen(editingPoll));
   const [title, setTitle] = useState(editingPoll?.title ?? "");
   const [description, setDescription] = useState(
@@ -36,14 +42,17 @@ export function CreatePollPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!editingId) return;
-    if (editingPoll) {
-      setTitle(editingPoll.title);
-      setDescription(editingPoll.description);
-      setOptions(editingPoll.options);
-      if (editingPoll.endsAt) setDeadline("custom");
+    const key = editingId || copyId || "new";
+    if (initialized.current === key) return;
+    const source = editingId ? editingPoll : copySource;
+    if ((editingId || copyId) && !source) return;
+    initialized.current = key;
+    if (source) {
+      setTitle(source.title); setDescription(source.description);
+      setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
+      setDeadline(editingId && source.endsAt ? "custom" : "none");
     }
-  }, [editingId, editingPoll]);
+  }, [editingId, copyId, editingPoll, copySource]);
 
   if (loading)
     return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
@@ -51,7 +60,7 @@ export function CreatePollPage() {
   if (pollsError)
     return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
 
-  if (!canEdit)
+  if (!canEdit || !canCopy)
     return (
       <PageShell
         showNavigation={false}
@@ -80,7 +89,7 @@ export function CreatePollPage() {
     );
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canEdit || !user) return;
+    if (!canEdit || !canCopy || !user || saving) return;
     const cleanOptions = options.map((option) => ({
       ...option,
       name: option.name.trim(),
@@ -102,7 +111,7 @@ export function CreatePollPage() {
               Date.now() + Number(deadline) * 60 * 60 * 1000,
             ).toISOString();
     const poll: Poll = {
-      id: editingPoll?.id ?? crypto.randomUUID(),
+      id: editingPoll?.id ?? newPollId,
       title: title.trim(),
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
@@ -115,26 +124,27 @@ export function CreatePollPage() {
       comments: editingPoll?.comments ?? [],
     };
     try {
+      setSaving(true);
       await savePoll(poll);
-      navigate("/settings", {
-        state: { toast: editingPoll ? "已保存" : "已发布" },
+      navigate(`/poll/${poll.id}/results${editingPoll ? "" : "?share=1"}`, {
+        state: { returnTo: "/settings", published: !editingPoll, saved: Boolean(editingPoll) },
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
-      setError("保存失败，请检查 Supabase 配置后重试。");
-    }
+      setError("保存失败，请检查网络后重试，填写内容已保留。");
+    } finally { setSaving(false); }
   };
 
   return (
     <PageShell
       showNavigation={false}
       backTo="/"
-      title={editingPoll ? "编辑投票" : "创建投票"}
+      title={editingPoll ? "编辑投票" : copyId ? "复制投票" : "创建投票"}
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
-          <PurpleButton type="submit" form="create-poll-form" fullWidth>
-            {editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
+          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={saving || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
+            {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
           </PurpleButton>
         </div>
       }

@@ -3,6 +3,8 @@ site/
 data/cache/
 node_modules/
 supabase/.temp/
+tools/browser/test-results/
+tools/browser/playwright-report/
 dist/
 *.tsbuildinfo
 .env

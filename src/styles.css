@@ -586,3 +586,6 @@ h1, h2, h3 { color: var(--deep-purple); }
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
+
+.owner-action-menu { display: grid; gap: 10px; }
+.owner-action-menu button:disabled { opacity: .45; cursor: not-allowed; }

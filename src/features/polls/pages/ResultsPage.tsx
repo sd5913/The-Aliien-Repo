@@ -2,7 +2,8 @@ import { useAccount } from "../../auth/components/AccountProvider";
 import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
+import { OwnerPollActions } from "../components/OwnerPollActions";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
@@ -17,7 +18,8 @@ import type { PollComment } from "../../../types/poll";
 export function ResultsPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { polls, loading, error, editComment, deleteComment } = usePolls();
+  const { polls, loading, error, editComment, deleteComment, updatePoll, removePoll } = usePolls();
+  const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
@@ -33,7 +35,7 @@ export function ResultsPage() {
   const [closeHint, setCloseHint] = useState(false);
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
-  const [commentFeedback, setCommentFeedback] = useState("");
+  const [commentFeedback, setCommentFeedback] = useState(location.state?.published ? "发布成功，分享给朋友来投票吧" : location.state?.saved ? "修改已保存" : "");
   const confirmCommentDelete = async () => {
     if (!deletingComment || commentBusy) return;
     setCommentBusy(true);
@@ -49,9 +51,15 @@ export function ResultsPage() {
   };
   const returnTo = pollReturnTo(location);
   const closeButton = (
+    <>
+    {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll}
+      onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
+      onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
+    {
     poll && isPollOwner(poll, accountUser?.id ?? "") ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
       ×
     </Link> : <button className="results-close-button" type="button" onClick={() => { setCloseHint(false); setExitOpen(true); }} aria-label="关闭结果">×</button>
+    }</>
   );
 
   if (loading)
