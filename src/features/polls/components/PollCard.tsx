@@ -1,4 +1,5 @@
-import { getVoter, isPollOwner } from "../utils/voting";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { isPollOwner } from "../utils/voting";
 import { useSharePoll } from "./ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
@@ -29,8 +30,8 @@ export function PollCard({
   onDelete,
   onEnd,
 }: PollCardProps) {
-  const [voter] = useState(getVoter);
-  const owner = isPollOwner(poll, voter.id);
+  const { user: accountUser } = useAccount();
+  const owner = isPollOwner(poll, accountUser?.id ?? "");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;

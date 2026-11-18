@@ -1,10 +1,11 @@
+import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
 import { usePolls } from "../hooks/usePolls";
-import { getVoter, isPollOwner } from "../utils/voting";
+import { isPollOwner, isPollOpen } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
 function makeOption(index: number): PollOption {
@@ -20,9 +21,9 @@ export function CreatePollPage() {
   const [params] = useSearchParams();
   const editingId = params.get("id");
   const { polls, loading, error: pollsError, savePoll } = usePolls();
-  const [voter] = useState(getVoter);
+  const { user } = useAccount();
   const editingPoll = polls.find((poll) => poll.id === editingId);
-  const canEdit = !editingId || Boolean(editingPoll && isPollOwner(editingPoll, voter.id));
+  const canEdit = !editingId || Boolean(editingPoll && isPollOwner(editingPoll, user?.id ?? "") && isPollOpen(editingPoll));
   const [title, setTitle] = useState(editingPoll?.title ?? "");
   const [description, setDescription] = useState(
     editingPoll?.description ?? "",
@@ -60,7 +61,7 @@ export function CreatePollPage() {
       >
         <div className="empty-state">
           <h2>无法编辑这次投票</h2>
-          <p>只有发起者可以修改投票内容。</p>
+          <p>{editingPoll && !isPollOpen(editingPoll) ? "投票已结束，不能再修改内容。" : "只有发起者可以修改投票内容。"}</p>
           <Link
             className="purple-button"
             to={editingPoll ? `/poll/${editingPoll.id}` : "/"}
@@ -79,7 +80,7 @@ export function CreatePollPage() {
     );
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canEdit) return;
+    if (!canEdit || !user) return;
     const cleanOptions = options.map((option) => ({
       ...option,
       name: option.name.trim(),
@@ -105,13 +106,7 @@ export function CreatePollPage() {
       title: title.trim(),
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
-      // Editing claims an older poll that only stored a display name, so the next
-      // reload can still recognise the creator by voter id.
-      // 编辑旧投票时把发起者认领为当前投票者，刷新后才能继续识别发起者。
-      creatorId:
-        editingPoll && editingPoll.creatorId === voter.id
-          ? editingPoll.creatorId
-          : voter.id,
+      creatorId: user.id,
       commentsPublic: editingPoll?.commentsPublic ?? true,
       ...(endsAt ? { endsAt } : {}),
       status: editingPoll?.status ?? "open",

@@ -58,15 +58,9 @@ npm run preview  # 预览 dist 产物，默认 http://localhost:4173
 
 ### 2.2 RLS 策略
 
-原型无登录鉴权，策略放开匿名读与匿名写（与线上测试定位一致）：
+三表只保留 RLS 过滤的读取；客户端不能直接增删改。创建、编辑、结束、删除通过校验账号所有权的 RPC；软登录投票通过校验浏览器凭证的 RPC。
 
-- 三表 `select using (true)`。
-- 三表 `insert with check (true)`。
-- 三表 `update using (true) with check (true)`、`delete using (true)`，用于结束投票、编辑、改票（upsert 冲突走 update）、删除投票。
-
-正式版应接 Supabase Auth，按作者收窄更新 / 删除权限。
-
-> 如果线上库只执行过早期的 select/insert 脚本，需要补跑 `supabase/schema.sql` 中 update/delete 策略段，否则结束、编辑、改票、删除会被 RLS 拒绝。
+现有数据库执行 `supabase/migrations/20261118035831_enforce_poll_permissions.sql`，并同步发布使用 RPC 的前端。不要恢复旧的匿名增删改策略。详见 [后端权限与验证](BACKEND_PERMISSIONS.md)。
 
 ---
 
@@ -151,7 +145,7 @@ Project → Settings → Environment Variables，新增两条，Production / Pre
 |---|---|---|
 | 白屏 / `/poll/xxx` 404 | 没配 `vercel.json`，或 Output Directory 不是 `dist` | 补 rewrite、改输出目录后 Redeploy |
 | 首页正常但不共享数据 | Supabase 环境变量、RLS 或请求配置错误 | 确认 Network 有 `rest/v1/polls` 请求并查看 Supabase API 日志 |
-| 401 / `new row violates row-level security` | 策略没建全或 SQL 没跑完 | SQL Editor 重跑 `supabase/schema.sql` |
+| 401 / `new row violates row-level security` | 未登录、越权或旧前端仍直接写表 | 检查账号与 RPC 调用，发布匹配迁移的前端；不要恢复匿名写权限 |
 | 改了环境变量线上仍报缺少变量 | 没有 Redeploy | Deployments → Redeploy |
 | `Invalid API key` | 变量名少了 `VITE_` 前缀，或值带引号 / 空格 | 重新粘贴，不要带引号 |
 | CORS 报错 | Project URL 填成了 dashboard 网址 | 用 `https://<ref>.supabase.co` |

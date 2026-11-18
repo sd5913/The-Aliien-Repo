@@ -1,4 +1,5 @@
-import { getVoter, isPollOwner } from "../utils/voting";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
@@ -192,8 +193,8 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const location = useLocation();
   const [toast, setToast] = useState(typeof location.state?.toast === "string" ? location.state.toast : "");
-  const [voter] = useState(getVoter);
-  const ownedPolls = polls.filter((poll) => isPollOwner(poll, voter.id));
+  const { user: accountUser } = useAccount();
+  const ownedPolls = polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? ""));
   const filtered = ownedPolls.filter((poll) => filter === "全部" || (filter === "进行中" ? isPollOpen(poll) : !isPollOpen(poll)));
 
   const confirmDelete = async () => {

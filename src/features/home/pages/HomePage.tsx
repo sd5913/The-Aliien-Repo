@@ -1,3 +1,4 @@
+import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -6,21 +7,23 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
-import { getVoter, isPollOwner } from "../../polls/utils/voting";
+import { isPollOwner } from "../../polls/utils/voting";
 import type { Poll } from "../../../types/poll";
+import { readParticipant } from "../../auth/utils/participant";
 
 export function HomePage() {
   const { polls, loading, error, removePoll, updatePoll } = usePolls();
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
-  const [voter] = useState(getVoter);
+  const { user: accountUser } = useAccount();
+  const [participant] = useState(readParticipant);
   // Keep the polls this device created at the top so their owner can always reach
   // the manage/edit entry from the home list.
   // 本机发起的投票排在前面，保证发起者能直接从首页进入管理与编辑。
   const recent = [
-    ...polls.filter((poll) => isPollOwner(poll, voter.id)),
-    ...polls.filter((poll) => !isPollOwner(poll, voter.id)),
+    ...polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? "")),
+    ...polls.filter((poll) => !isPollOwner(poll, accountUser?.id ?? "")),
   ].slice(0, 3);
 
   const confirmDelete = async () => {
@@ -55,7 +58,7 @@ export function HomePage() {
         <h1>一个人难选？<br />我们一起选。</h1>
         <p>把纠结交给朋友，让每个小决定都变得好玩。</p>
         <Link to="/create" className="purple-button">发起一个投票 <span>↗</span></Link>
-        <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>
+        {accountUser ? <Link to="/settings" className="auth-quick-link">个人中心 →</Link> : participant ? <Link to="/settings" className="auth-quick-link"><span aria-hidden="true">{participant.avatar}</span> {participant.nickname} · 投票者</Link> : <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>}
         <div className="welcome-sticker" aria-hidden="true">✦</div>
       </section>
       <section className="home-steps">

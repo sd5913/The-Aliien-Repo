@@ -25,6 +25,7 @@ export function ParticipantLoginPage() {
   const [nickname, setNickname] = useState(saved?.nickname ?? "");
   const [avatarIndex, setAvatarIndex] = useState(() => Math.max(0, PARTICIPANT_AVATARS.findIndex(item => item === saved?.avatar)));
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const avatar = PARTICIPANT_AVATARS[avatarIndex];
   const target = id ? `/poll/${encodeURIComponent(id)}${location.search}${location.hash}` : "/";
@@ -36,18 +37,22 @@ export function ParticipantLoginPage() {
     setError("");
     setAnnouncement(`已生成昵称：${next}`);
   };
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (saving) return;
     const length = Array.from(nickname.trim()).length;
     if (length < 2 || length > 12) {
       setError("请输入 2–12 个字符的昵称，也可以点击骰子随机生成。");
       return;
     }
     try {
-      saveParticipant(nickname, avatar);
+      setSaving(true);
+      await saveParticipant(nickname, avatar);
       navigate(target, { replace: true, state: location.state });
     } catch {
-      setError("暂时无法保存身份，请允许浏览器存储后重试。");
+      setError("暂时无法建立身份，请检查网络并允许浏览器存储后重试。");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -73,7 +78,7 @@ export function ParticipantLoginPage() {
           </div>
           {error && <p id="participant-error" className="participant-error" role="alert">{error}</p>}
         </section>
-        <button className="participant-submit" type="submit">登录并参与</button>
+        <button className="participant-submit" type="submit" disabled={saving}>{saving ? "正在建立身份…" : "登录并参与"}</button>
         <p className="participant-hint" id="participant-hint">无需注册 · 昵称和头像会保存在当前浏览器</p>
         <span className="participant-sr-only" role="status" aria-live="polite">{announcement}</span>
       </form>

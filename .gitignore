@@ -2,6 +2,7 @@
 site/
 data/cache/
 node_modules/
+supabase/.temp/
 dist/
 *.tsbuildinfo
 .env

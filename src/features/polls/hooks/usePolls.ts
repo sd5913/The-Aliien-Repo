@@ -1,3 +1,4 @@
+import { requireAccountId } from "../../auth/services/auth";
 // React state and updates for Supabase-backed polls.
 // 投票主链路落三表；评论与评论可见性留本地。
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -56,7 +57,8 @@ export function usePolls() {
   const savePoll = useCallback(async (poll: Poll) => {
     const existing = pollsRef.current.find((item) => item.id === poll.id);
     const exists = Boolean(existing);
-    if (!isPollOwner(existing ?? poll, getVoter().id)) throw new Error("只有发起者可以保存投票内容。");
+    const accountId = await requireAccountId();
+    if (!isPollOwner(existing ?? poll, accountId) || !isPollOwner(poll, accountId)) throw new Error("只有发起者可以保存投票内容。");
     if (exists) {
       await updatePollMeta(poll);
     } else {
@@ -72,9 +74,9 @@ export function usePolls() {
       const current = pollsRef.current.find((poll) => poll.id === pollId);
       if (!current) throw new Error(`Poll "${pollId}" was not found.`);
       const updated = update(current);
-      const owner = isPollOwner(current, getVoter().id);
-      if ((metaChanged(current, updated) || updated.commentsPublic !== current.commentsPublic) && !owner) {
-        throw new Error("只有发起者可以管理投票。");
+      if (metaChanged(current, updated) || updated.commentsPublic !== current.commentsPublic) {
+        const accountId = await requireAccountId();
+        if (!isPollOwner(current, accountId) || !isPollOwner(updated, accountId)) throw new Error("只有发起者可以管理投票。");
       }
 
       if (metaChanged(current, updated)) {
@@ -108,7 +110,8 @@ export function usePolls() {
 
   const removePoll = useCallback(async (pollId: string) => {
     const poll = pollsRef.current.find((item) => item.id === pollId);
-    if (!poll || !isPollOwner(poll, getVoter().id)) throw new Error("只有发起者可以删除投票。");
+    const accountId = await requireAccountId();
+    if (!poll || !isPollOwner(poll, accountId)) throw new Error("只有发起者可以删除投票。");
     await deletePollRemote(pollId);
     clearComments(pollId);
     const next = pollsRef.current.filter((poll) => poll.id !== pollId);

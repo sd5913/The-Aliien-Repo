@@ -1,3 +1,4 @@
+import { useAccount } from "../../auth/components/AccountProvider";
 import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ import { SandResults } from "../components/SandResults";
 import { sandColors } from "../utils/sandGeometry";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
+import { Modal } from "../../../components/ui/Modal";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
@@ -24,11 +26,14 @@ export function ResultsPage() {
     }
   }, [poll, location.search, openedShare, openShare]);
   const [voter] = useState(getVoter);
+  const { user: accountUser } = useAccount();
+  const [exitOpen, setExitOpen] = useState(false);
+  const [closeHint, setCloseHint] = useState(false);
   const returnTo = pollReturnTo(location);
   const closeButton = (
-    <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
+    poll && isPollOwner(poll, accountUser?.id ?? "") ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
       ×
-    </Link>
+    </Link> : <button className="results-close-button" type="button" onClick={() => { setCloseHint(false); setExitOpen(true); }} aria-label="关闭结果">×</button>
   );
 
   if (loading)
@@ -56,7 +61,7 @@ export function ResultsPage() {
       counts.set(optionId, (counts.get(optionId) ?? 0) + 1);
   });
   const open = isPollOpen(poll);
-  const owner = isPollOwner(poll, voter.id);
+  const owner = isPollOwner(poll, accountUser?.id ?? "");
   const commentsVisible = poll.commentsPublic !== false || owner;
   const validTotal = [...counts.values()].reduce((sum, count) => sum + count, 0);
 
@@ -121,6 +126,10 @@ export function ResultsPage() {
         </Link>
       )}
       </div>
+      {exitOpen && <Modal title="本次投票已查看完毕" onClose={() => setExitOpen(false)} actions={<>
+        <button className="button-soft" type="button" onClick={() => { setCloseHint(true); window.close(); }}>关闭页面</button>
+        <Link className="purple-button" to="/">前往首页</Link>
+      </>}><p>你可以关闭本页，或保留当前身份前往首页。</p>{closeHint && <p role="status">如果页面未关闭，请使用浏览器关闭当前标签页，或点击“前往首页”。</p>}</Modal>}
     </PageShell>
   );
 }

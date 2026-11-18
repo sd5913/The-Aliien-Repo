@@ -20,7 +20,8 @@ export function isPollOpen(poll: Poll, now = Date.now()): boolean {
 export function getVoter(): VoterIdentity {
   const isIdentity = (value: unknown): value is VoterIdentity => Boolean(value && typeof value === "object" && "id" in value && "nickname" in value && typeof value.id === "string" && typeof value.nickname === "string");
   const stored = readLocalJson(VOTER_STORAGE_KEY, null, isIdentity);
-  if (stored) return stored;
+  // Never copy the private participant capability into votes, comments, or UI data.
+  if (stored) return { id: stored.id, nickname: stored.nickname };
   const voter = { id: crypto.randomUUID(), nickname: "朋友" };
   writeLocalJson(VOTER_STORAGE_KEY, voter);
   return voter;
