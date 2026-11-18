@@ -1,5 +1,7 @@
 :root {
-  font-family: "DM Sans", "Noto Sans SC", sans-serif;
+  --font-cjk-display: "Noto Sans SC";
+  --font-cjk-body: "Noto Sans SC";
+  font-family: var(--font-body);
   color: #5b21b6;
   background: #f3f4f6;
   font-synthesis: none;
@@ -12,11 +14,42 @@
   --bottom-nav-height: 64px;
 }
 
+/* Language changes only families; the type scale and pairing stay shared.
+   Latin faces come first, so CJK fonts never replace Latin letters/digits.
+   Explicit lang scopes also support mixed-language content within a page. */
+:where([lang]):lang(en), :where([lang]):lang(zh) {
+  --font-cjk-display: "Noto Sans SC";
+  --font-cjk-body: "Noto Sans SC";
+}
+:where([lang]):lang(ko) {
+  --font-cjk-display: "Pretendard";
+  --font-cjk-body: "Pretendard";
+}
+:where([lang]):lang(ja) {
+  --font-cjk-display: "M PLUS Rounded 1c";
+  --font-cjk-body: "Noto Sans JP";
+}
+:root, [lang] {
+  --font-display: "Nunito", var(--font-cjk-display), "Noto Sans SC", "Pretendard", "Noto Sans JP", sans-serif;
+  --font-body: "Nunito Sans", var(--font-cjk-body), "Noto Sans SC", "Pretendard", "Noto Sans JP", sans-serif;
+  --font-numeric: "DM Mono", var(--font-cjk-body), "Noto Sans SC", "Pretendard", "Noto Sans JP", monospace;
+}
+:where([lang]) { font-family: var(--font-body); }
+
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-width: 320px; min-height: 100%; margin: 0; }
 body { min-height: 100dvh; background: #f3f4f6; }
 #root { min-height: 100dvh; display: flex; align-items: center; justify-content: center; }
 button, input, textarea, select { font: inherit; }
+/* Display: headings, button labels, and brand names. */
+h1, h2, h3, h4, h5, h6, button, [role="button"],
+.purple-button, .auth-quick-link, .subtle-link, .nav-item,
+.brand-copy strong, .participant-brand strong, .topbar-title,
+.eyebrow, .carousel-option-label > span, .vote-cup-label {
+  font-family: var(--font-display);
+}
+/* Body: form fields retain the body family even inside buttons or headings. */
+input, textarea, select { font-family: var(--font-body); }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 .app-icon { display: inline-block; flex: 0 0 auto; object-fit: contain; vertical-align: middle; pointer-events: none; user-select: none; }
@@ -118,7 +151,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .step-card { position: relative; min-height: 153px; padding: 18px 11px 16px; overflow: hidden; border: 1px solid #ffffffe0; border-radius: 21px; background: linear-gradient(145deg, #ffffff50, #f4e4fc45); box-shadow: inset 0 1px 0 #ffffff66, 0 6px 16px #b089d00a; }
 .step-card:nth-child(2) { background: linear-gradient(145deg, #fff0f642, #fbdcea50); }
 .step-card:nth-child(3) { background: linear-gradient(145deg, #f6edff50, #dce2fc75); }
-.step-number { display: block; margin-bottom: 16px; color: #8851b8; font-size: 11px; font-weight: 800; }
+.step-number { display: block; margin-bottom: 16px; color: #8851b8; font-size: 11px; font-weight: 500; }
 .step-icon { width: 26px; height: 26px; display: grid; place-items: center; margin-bottom: 9px; color: #7c3aed; background: transparent; }
 .step-card h3 { margin: 0 0 7px; color: #351544; font-size: 12px; line-height: 1.5; white-space: nowrap; }
 .step-card p { margin: 0; color: #73617f; font-size: 10px; line-height: 1.8; overflow-wrap: anywhere; }
@@ -210,7 +243,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .field-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 1px 0 10px; }
 .field-row .field-label { margin: 0 0 4px; }
 .field-hint { margin: 0; color: #a085bd; font-size: 10px; line-height: 1.5; }
-.count-pill { padding: 5px 9px; border-radius: 999px; background: #f3e8ff; color: #7c3aed; font-size: 10px; font-weight: 700; }
+.count-pill { padding: 5px 9px; border-radius: 999px; background: #f3e8ff; color: #7c3aed; font-size: 10px; font-weight: 500; }
 .option-editor-list { display: flex; flex-direction: column; gap: 9px; }
 .option-editor { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 17px; background: #ffffffb8; border: 1px solid #f4eafe; }
 .option-editor-image { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 14px; object-fit: cover; background: linear-gradient(140deg, #fbcfe8, #c4b5fd); }
@@ -356,7 +389,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .heading-count { margin-left: 4px; color: #ad8ac8; font-size: 11px; font-weight: 600; }
 .comments-list { display: flex; flex-direction: column; gap: 9px; }
 .comment-row { display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; border: 1px solid #fff; border-radius: 18px; background: #ffffffa6; }
-.comment-avatar { width: 31px; height: 31px; flex: 0 0 31px; display: grid; place-items: center; border-radius: 50%; color: #7c3aed; background: linear-gradient(140deg, #fbcfe8, #ddd6fe); font-size: 12px; font-weight: 800; }
+.comment-avatar { width: 31px; height: 31px; flex: 0 0 31px; display: grid; place-items: center; border-radius: 50%; color: #7c3aed; background: linear-gradient(140deg, #fbcfe8, #ddd6fe); font-size: 12px; font-weight: 700; }
 .comment-copy { flex: 1; min-width: 0; }
 .comment-meta { display: flex; align-items: center; justify-content: space-between; color: #8057a2; font-size: 10px; }
 .comment-meta strong { color: #5b21b6; }
@@ -538,3 +571,14 @@ h1, h2, h3 { color: var(--deep-purple); }
 .share-dialog-note { margin: 7px 0 0; text-align: center; color: #9673b7; font-size: 11px; }
 .share-dialog .toast-message { z-index: 10; position: fixed; }
 @media (max-width: 380px) { .share-dialog-content { padding: 20px 24px; } }
+
+/* Numeric: counts, percentages, dates, times, and identifiers. Only 400/500. */
+.font-numeric, time, code, input[type="number"], input[type="datetime-local"],
+.step-number, .count-pill, .carousel-count, .heading-count,
+.my-poll-ticket-status, .my-poll-deadline, .voting-meta > span,
+.result-option-row > span:last-child, .result-bubble > span,
+.management-stat strong {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}

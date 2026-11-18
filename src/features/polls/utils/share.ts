@@ -39,6 +39,22 @@ function loadImage(url?: string): Promise<HTMLImageElement | null> {
 // Render once for both the preview and the downloaded PNG, including transparent perforations.
 export async function renderShareTicket(poll: Poll) {
   const images = await Promise.all(poll.options.map((option) => loadImage(option.imageUrl)));
+  const styles = getComputedStyle(document.documentElement);
+  const displayFont = styles.getPropertyValue("--font-display").trim();
+  const bodyFont = styles.getPropertyValue("--font-body").trim();
+  // Resolve nested CSS variables before passing families to Canvas.
+  const fontProbe = document.createElement("span");
+  document.body.append(fontProbe);
+  fontProbe.style.fontFamily = displayFont;
+  const displayFamily = getComputedStyle(fontProbe).fontFamily;
+  fontProbe.style.fontFamily = bodyFont;
+  const bodyFamily = getComputedStyle(fontProbe).fontFamily;
+  fontProbe.remove();
+  const sample = `BothPls ${poll.title} ${poll.options.map((option) => option.name).join(" ")} 扫码，帮我选一选`;
+  await Promise.allSettled([
+    document.fonts.load(`700 38px ${displayFamily}`, sample),
+    document.fonts.load(`400 21px ${bodyFamily}`, sample),
+  ]);
   await document.fonts.ready;
   const width = 720;
   const rows = Math.ceil(poll.options.length / 2);
@@ -102,7 +118,7 @@ export async function renderShareTicket(poll: Poll) {
   ctx.lineWidth = 1.5;
   ctx.stroke(ticketPath(9));
   const text = (value: string, x: number, y: number, maxWidth: number, size: number, bold = false) => {
-    ctx.font = `${bold ? 700 : 400} ${size}px "DM Sans", "Noto Sans SC", sans-serif`;
+    ctx.font = `${bold ? 700 : 400} ${size}px ${bold ? displayFamily : bodyFamily}`;
     let fitted = value;
     while (ctx.measureText(fitted).width > maxWidth && fitted.length > 1) fitted = fitted.slice(0, -1);
     if (fitted !== value) fitted = `${fitted.slice(0, -1)}…`;
@@ -112,7 +128,7 @@ export async function renderShareTicket(poll: Poll) {
   text("BothPls  /  把选择交给大家", margin, 76, contentWidth, 19, true);
   ctx.fillStyle = "#4c1d95";
   // Two lines keep longer questions readable without compressing the type.
-  ctx.font = '700 38px "DM Sans", "Noto Sans SC", sans-serif';
+  ctx.font = `700 38px ${displayFamily}`;
   let split = 0;
   while (split < poll.title.length && ctx.measureText(poll.title.slice(0, split + 1)).width <= contentWidth) split++;
   text(poll.title.slice(0, split), margin, 137, contentWidth, 38, true);
@@ -166,7 +182,7 @@ export async function renderShareTicket(poll: Poll) {
   text("扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;
   do {
-    ctx.font = `${urlSize}px "DM Sans", "Noto Sans SC", sans-serif`;
+    ctx.font = `${urlSize}px ${bodyFamily}`;
     if (ctx.measureText(url).width <= linkWidth) break;
     urlSize--;
   } while (urlSize > 8);
