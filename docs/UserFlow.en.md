@@ -1,155 +1,79 @@
-# BothPls User Flows (English)
+# BothPls User Flows
 
 [中文版](UserFlow.md) · [PRD](PRD.md)
 
-All polls are single-choice. Participants open a shared link and complete soft login with a random nickname and avatar before voting; no account registration is required. Closing disables votes and vote changes and makes comments public. Create and Profile are bottom navigation destinations.
+Based on the current implementation. Repeated entry points and login checks are merged. Profile is public; creating and managing own polls share account authentication.
 
-Keep both language versions and the PRD synchronized when rules change.
-
-## 1. Overall User Flow
+## 1. Main flow
 
 ```mermaid
 flowchart TD
-    A[Open BothPls] --> B[Home]
-    A -->|Shared link| SL[Soft login: nickname and avatar]
-    SL --> C[Voting page]
-    B --> C
-    B --> D[Create: login required]
-    D --> E[Publish poll]
-    E --> E1[Share public link]
-    B --> F[Profile: login required]
-    F --> G[My Polls]
-    G --> G1[View results and manage]
-    C --> H{Poll open?}
-    H -->|No| I[Final results and public comments]
-    H -->|Yes| J[Select one option]
-    J --> K[Submit vote with optional comment]
-    K --> L{Still open?}
-    L -->|No| I
-    L -->|Yes| M[Save latest vote and show results]
-    M -->|Change while open| J
-    M --> N[Optional comment / Share]
+    H[Home] -->|Create| A{Creator account signed in?}
+    H -->|Profile| P[Profile: identity / My polls]
+    P -->|Create or manage| A
+    A -->|No| L[Email login / registration]
+    L --> T{Resume original action}
+    A -->|Yes| T
+    T -->|Create| C[Complete and publish poll]
+    T -->|Manage| M[Select own poll]
+    C --> S[Results: open sharing]
+    S -->|Shared link| E[Open poll]
+    M --> R[Results]
+    H -->|Browse polls| E
+    LINK[Receive shared link] --> E
+    E --> O{Poll open?}
+    O -->|No| R
+    O -->|Yes| I{Soft identity available?}
+    I -->|No| J[Soft login: nickname and avatar]
+    J --> V[Voting: browse and confirm option]
+    I -->|Yes| V
+    V --> B[Optional comment and submit]
+    B --> R
+    R -->|Change vote while open| V
+    R -->|Participant closes| X[Close tab / keep identity and go Home]
+    X -->|Go Home| H
+    R -->|Creator closes| BACK[Return to Home / Profile]
 ```
 
-Creation form: Disable Publish while required fields are incomplete; show validation errors inline.
+Profile shows account details, soft identity, or an unsigned empty state without forcing login. Creator accounts and soft identities are separate.
 
-## 2. Creator Flow
+## 2. Management flow
 
 ```mermaid
 flowchart TD
-    A[Tap Create on Home] --> B{Logged in?}
-    B -->|No| C[Log in / Sign up]
-    B -->|Yes| D[Creation form]
-    C --> D
-    D --> E[Title and 2–5 product options]
-    E --> F[Optional images, description and deadline]
-    F --> G[Publish]
-    G --> I[Published: generate public link]
-    I --> J[Share with friends]
+    R[Own poll results] --> M[Management menu]
+    M -->|Edit / deadline while open| E[Edit and save in creation form]
+    E --> R
+    M -->|Duplicate| C[Prefill creation form and publish new poll]
+    C --> N[New results and sharing]
+    M -->|Share| S[Share dialog]
+    S --> R
+    M -->|End / delete| Q{Confirm action}
+    Q -->|Cancel| R
+    Q -->|End| F[Final results and public comments]
+    Q -->|Delete| B[Return to Home / Profile]
 ```
 
-## 3. Participant Flow
+Reaching the deadline also produces final results. Duplication excludes original votes, comments, and deadline.
 
-```mermaid
-flowchart TD
-    A[Receive and open shared link] --> B[Soft login: enter random nickname and avatar]
-    B --> C[Voting page]
-    C --> D[Select one option and optionally comment]
-    D --> E[Submit]
-    E --> F[Results page]
-```
+## 3. State and permissions
 
-## 4. Poll Management
+| Situation | Rule |
+| --- | --- |
+| Browsing | Home, Profile, and Results allow unsigned access; open voting requires soft login |
+| Create / manage | Registered accounts create polls; only owners edit, end, or delete their polls |
+| Select / submit | Single choice; confirmation triggers pouring, followed by separate submission; optional comment is submitted with the vote |
+| Vote changes | Allowed while open; only the current identity's latest valid selection counts |
+| Comment visibility | Hidden from ordinary participants while open, visible to creators; public after closing |
+| Comment management | Authors edit or delete their own comments; creators may delete; management remains available after closing without changing votes |
+| Closed | Final results and comments remain available; new or changed selections are prohibited |
+| Deleted | Original links show a missing-poll state with a return action |
+| Leaving results | Participants close the tab or keep their identity and go Home; blocked tab closure shows manual instructions |
 
-```mermaid
-flowchart TD
-    A[Profile] --> B[My Polls]
-    B --> C[View results and manage]
-    C --> D[Creator menu]
-    D --> E[Copy public link]
-    D --> F[Duplicate into creation form]
-    F --> G[Review and publish new poll]
-    D --> H{Edit: poll open?}
-    H -->|Yes| I[Edit and save]
-    H -->|No| J[Editing disabled]
-    D --> K[Set deadline]
-    K --> L[Close automatically at deadline]
-    D --> M[Close manually: confirm]
-    M -->|Cancel| C
-    M -->|Confirm| N[Final results and public comments]
-    L --> N
-    D --> O[Delete: confirm]
-    O -->|Cancel| C
-    O -->|Confirm| P[Delete and return to My Polls]
-```
+## 4. Recovery and errors
 
-## 5. Pages and Permissions
-
-```mermaid
-flowchart LR
-    A[Guest] --> B[Open shared link]
-    A --> C[View closed poll results]
-    B --> D[Soft login: random nickname and avatar]
-    D --> E[Participant with soft-login identity]
-    E --> F[Submit single-choice vote]
-    E --> G[Change own vote while open]
-    E --> H[Manage own comments]
-    E --> I[Profile]
-    J[Creator] --> I
-    I --> K[My Polls and creator menu]
-    K --> L[Edit / Duplicate / Close / Delete]
-    K --> M[Manage all comments]
-```
-
-## 6. Poll Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> Draft
-    Draft --> Open: Publish
-    Open --> Open: Submit or change single-choice vote
-    Open --> Closed: Deadline reached
-    Open --> Closed: Creator confirms closing
-    Open --> Deleted: Creator confirms deletion
-    Closed --> Deleted: Creator confirms deletion
-    note right of Open
-        Voting and changes allowed
-        Current results visible
-        Comments hidden
-    end note
-    note right of Closed
-        Voting and changes disabled
-        Final results visible
-        All comments public
-    end note
-    note right of Deleted
-        Public link unavailable
-    end note
-```
-
-## 7. Business Sequence
-
-```mermaid
-sequenceDiagram
-    participant O as Creator
-    participant S as System
-    participant V as Participant
-    O->>S: Log in and create poll
-    S-->>O: Generate public link and show sharing actions
-    O->>V: Share link
-    V->>S: Open link and enter random nickname and avatar
-    V->>S: Select one option and optionally comment
-    V->>S: Submit vote and optional comment
-    alt Poll still open
-        S-->>V: Save choice and show current results
-        V->>S: Optionally comment or change choice
-    else Poll closed
-        S-->>V: Reject vote and show final results
-    end
-    O->>S: Confirm closing or reach deadline
-    S-->>V: Show final results and all comments
-    O->>S: Optionally duplicate or confirm deletion
-```
-
-Participant identity: Soft login does not require an account. Nickname and avatar identify the participant; repeat-vote protection must also rely on a persistent participant identity. Comments are optional on the voting page and submitted with the vote. Closed polls show final results and reject votes. Creator account login is unchanged.
-
+- Reloads retain browser identities. Clearing browser storage loses the soft identity; automatic cross-device synchronization is unavailable. Account login does not replace soft login.
+- Creation and voting drafts are scoped by identity, cleared after successful submission, and retained for retries after failure.
+- Submission uses server state and time; expired or closed polls reject submissions.
+- Results refresh about every 10 seconds and on visibility or network recovery.
+- Permission errors, loading failures, and missing links provide feedback and safe exits without forcing participants into creator login.
