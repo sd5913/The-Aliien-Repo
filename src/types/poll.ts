@@ -10,6 +10,7 @@ export interface PollOption {
 export interface VoterIdentity {
   id: string;
   nickname: string;
+  avatar?: string;
 }
 
 export interface Vote {

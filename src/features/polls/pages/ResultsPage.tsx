@@ -62,7 +62,7 @@ export function ResultsPage() {
   });
   const open = isPollOpen(poll);
   const owner = isPollOwner(poll, accountUser?.id ?? "");
-  const commentsVisible = poll.commentsPublic !== false || owner;
+  const commentsVisible = !open || owner;
   const validTotal = [...counts.values()].reduce((sum, count) => sum + count, 0);
 
   return (
@@ -101,11 +101,12 @@ export function ResultsPage() {
           </p>
         )}
       </section>
+      {!commentsVisible && <p className="empty-inline">评论将在投票结束后公开</p>}
       {commentsVisible && (
         <section className="comments-section">
           <div className="section-title-row">
             <div>
-              <span className="eyebrow">听听大家的理由</span>
+              <span className="eyebrow">{open && owner ? "仅发起者可见 · 结束后公开" : "听听大家的理由"}</span>
               <h2>
                 评论{" "}
                 <span className="heading-count">{poll.comments.length} 条</span>

@@ -44,7 +44,7 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
         const canDelete = Boolean(onDelete && (isPollOwner || isAuthor));
         return (
           <article className="comment-row" key={comment.id}>
-            <div className="comment-avatar">{comment.voter.nickname.slice(0, 1)}</div>
+            <div className="comment-avatar">{comment.voter.avatar || comment.voter.nickname.slice(0, 1)}</div>
             <div className="comment-copy">
               <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : "匿名朋友"}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time></div>
               {editing ? (

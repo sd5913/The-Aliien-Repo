@@ -46,4 +46,6 @@
 - 运行 `node src/features/auth/utils/account.test.mjs`、`node src/features/auth/utils/participant.test.mjs`、`node src/features/polls/utils/navigation.test.mjs` 和 `npm run build`。
 - 迁移后的 advisors 无新增安全警告；凭证表默认拒绝产生一条 INFO。项目原有的泄露密码保护警告未在本次调整。
 
-评论仍存浏览器本地，本次没有把评论同步到后端，也未修改其可见性产品规则。
+评论现已通过 `20261118040645_persist_poll_comments.sql` 保存到后端。`submit_ballot` 原子保存选票与可选评论，公开评论由 RLS 在结束/到期后开放；发起者可在进行中查看以便管理。`own_comments` 只向持有对应凭证的本人返回表单回填数据，不开放其他人的评论。旧本地评论不会自动上传。
+
+验证：`supabase/tests/comments.sql` 覆盖隐藏、本人回填、越权拒绝、跨浏览器公开读取、单条更新/清空评论不影响票数，以及关闭后拒绝提交；测试最后回滚。

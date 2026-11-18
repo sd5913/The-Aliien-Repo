@@ -1,18 +1,15 @@
 import { requireAccountId } from "../../auth/services/auth";
 // React state and updates for Supabase-backed polls.
-// 投票主链路落三表；评论与评论可见性留本地。
+// Votes and comments are saved together by the server; visibility is enforced by RLS.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Poll } from "../../../types/poll";
 import {
   createPoll,
   deletePollRemote,
   fetchPolls,
-  persistLocalComments,
-  persistLocalCommentsPublic,
   submitVote,
   updatePollMeta,
 } from "../services/polls";
-import { clearComments } from "../../../lib/storage/pollLocal";
 import { getVoter, isPollOwner, isPollOpen } from "../utils/voting";
 
 function metaChanged(current: Poll, updated: Poll): boolean {
@@ -88,15 +85,8 @@ export function usePolls() {
         const voter = getVoter();
         const ownVote = updated.votes.find((vote) => vote.voter.id === voter.id);
         if (ownVote) {
-          await submitVote(pollId, voter.id, ownVote.ranking);
+          await submitVote(pollId, voter.id, ownVote.ranking, updated.comments.find((comment) => comment.voter.id === voter.id)?.text ?? "");
         }
-      }
-
-      if (updated.comments !== current.comments) {
-        persistLocalComments(pollId, updated.comments);
-      }
-      if (updated.commentsPublic !== current.commentsPublic) {
-        persistLocalCommentsPublic(pollId, updated.commentsPublic !== false);
       }
 
       const next = pollsRef.current.map((poll) =>
@@ -113,7 +103,6 @@ export function usePolls() {
     const accountId = await requireAccountId();
     if (!poll || !isPollOwner(poll, accountId)) throw new Error("只有发起者可以删除投票。");
     await deletePollRemote(pollId);
-    clearComments(pollId);
     const next = pollsRef.current.filter((poll) => poll.id !== pollId);
     pollsRef.current = next;
     setPolls(next);

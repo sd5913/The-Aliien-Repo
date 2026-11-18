@@ -50,7 +50,7 @@ npm run preview  # 预览 dist 产物，默认 http://localhost:4173
 
 ### 2.1 表结构
 
-在 Supabase Dashboard → SQL Editor → New query，把仓库 `supabase/schema.sql` 全文粘进去运行。三表：
+在 Supabase Dashboard → SQL Editor → New query，把仓库 `supabase/schema.sql` 全文粘进去运行。四张业务表：
 
 - `polls`：标题、说明、状态、作者标识、是否公开、表情、创建时间、关闭时间。
 - `poll_options`：所属投票、选项文案、图片、排序位置，随投票级联删除。
@@ -157,5 +157,5 @@ Project → Settings → Environment Variables，新增两条，Production / Pre
 ## 8. 数据模型备注
 
 - 投票是固定单选：`votes.ranking` 存单元素选项 id 数组；结果按 `ranking[0]` 统计。
-- 评论挂在投票下，本期存本地；个人昵称随本地 voter 标识保存，不落 `votes` 表。
+- 评论存在 `poll_comments`，含昵称、头像、内容、时间与选项；投票进行期间对其他参与者隐藏，结束后公开。票数与评论一起由 `submit_ballot` 原子提交。
 - 多人并发投票是各写各的 `votes` 行，`(poll_id, voter_id)` 唯一约束保证同一人重复投票只保留最新一条，不存在单文档整体覆盖问题。
