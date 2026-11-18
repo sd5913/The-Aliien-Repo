@@ -1,3 +1,4 @@
+import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -23,9 +24,7 @@ export function ResultsPage() {
     }
   }, [poll, location.search, openedShare, openShare]);
   const [voter] = useState(getVoter);
-  const returnToAuth = `/auth?returnTo=${encodeURIComponent(`/poll/${id}/results`)}`;
-  const returnTo = location.state?.returnTo === "/" || location.state?.returnTo === "/settings"
-    ? location.state.returnTo : returnToAuth;
+  const returnTo = pollReturnTo(location);
   const closeButton = (
     <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
       ×
@@ -116,9 +115,9 @@ export function ResultsPage() {
       ) : (
         <Link
           className="purple-button button-full result-vote-button"
-          to={`/poll/${poll.id}`}
+          to={pollPath(poll.id, "vote", returnTo)}
         >
-          改票 <span>↗</span>
+          {poll.votes.some((vote) => vote.voter.id === voter.id) ? "修改我的投票" : "参与投票"} <span>↗</span>
         </Link>
       )}
       </div>

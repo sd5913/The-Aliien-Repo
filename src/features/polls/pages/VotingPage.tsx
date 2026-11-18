@@ -1,5 +1,7 @@
+import { pollPath, pollReturnTo } from "../utils/navigation";
+import { readParticipant } from "../../auth/utils/participant";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { Modal } from "../../../components/ui/Modal";
@@ -11,6 +13,8 @@ import { getVoter } from "../utils/voting";
 export function VotingPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = pollReturnTo(location);
   const { polls, loading, error, updatePoll } = usePolls();
   const poll = polls.find((item) => item.id === id);
   const [voter] = useState(getVoter);
@@ -38,9 +42,12 @@ export function VotingPage() {
     setComment(existingComment?.text ?? "");
   }, [poll, existingVote, existingComment]);
 
-  if (loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline">正在加载投票…</p></PageShell>;
-  if (error) return <PageShell backTo="/" showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
-  if (!poll) return <PageShell backTo="/" showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
+  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在加载投票…</p></PageShell>;
+  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+  if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
+
+  if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
+  if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
@@ -50,6 +57,7 @@ export function VotingPage() {
   const selectionColors = ["#e6b477", "#9eacf0", "#e9a2be", "#8bc9af", "#be9be6"];
   const selectionColor = selectionColors[Math.max(0, selectedIndex) % selectionColors.length];
   const saveVote = async () => {
+    if (!isPollOpen(poll)) { navigate(pollPath(poll.id, "results", returnTo), { replace: true }); return; }
     if (!selectedId) { setToast("先选择一个喜欢的选项吧"); return; }
     const now = new Date().toISOString();
     const voteId = existingVote?.id ?? crypto.randomUUID();
@@ -63,7 +71,7 @@ export function VotingPage() {
         if (comment.trim()) comments.push({ id: crypto.randomUUID(), voter, text: comment.trim(), createdAt: now, optionId: selectedId });
         return { ...current, votes: [...current.votes.filter((item) => item.voter.id !== voter.id), vote], comments };
       });
-      navigate(`/poll/${poll.id}/results`);
+      navigate(pollPath(poll.id, "results", returnTo));
     } catch (error) {
       console.error("Could not save vote.", error);
       setToast("投票保存失败，请稍后重试");
@@ -80,7 +88,7 @@ export function VotingPage() {
   };
 
   return (
-    <PageShell showNavigation={false} backTo="/" title="帮朋友做选择">
+    <PageShell showNavigation={false} backTo={returnTo} title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {

@@ -1,3 +1,4 @@
+import { getVoter, isPollOwner } from "../utils/voting";
 import { useSharePoll } from "./ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
@@ -28,6 +29,8 @@ export function PollCard({
   onDelete,
   onEnd,
 }: PollCardProps) {
+  const [voter] = useState(getVoter);
+  const owner = isPollOwner(poll, voter.id);
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;
@@ -39,7 +42,7 @@ export function PollCard({
   } | null>(null);
   const suppressClick = useRef(false);
   const navigate = useNavigate();
-  const offset = dragOffset ?? (expanded ? -ACTION_WIDTH : 0);
+  const offset = owner ? dragOffset ?? (expanded ? -ACTION_WIDTH : 0) : 0;
   const deadlineDate = poll.endsAt ? new Date(poll.endsAt) : null;
   const deadline =
     deadlineDate && !Number.isNaN(deadlineDate.getTime())
@@ -56,6 +59,7 @@ export function PollCard({
   const share = () => openShare(poll);
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (!owner) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     gesture.current = {
       startX: event.clientX,
@@ -131,7 +135,7 @@ export function PollCard({
 
   return (
     <div className={`swipe-card${expanded ? " swipe-card-expanded" : ""}`}>
-      <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
+      {owner && <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
         <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
           <AppIcon name="edit" size={20} />
           <span>编辑</span>
@@ -144,7 +148,7 @@ export function PollCard({
           <AppIcon name="finished" size={20} />
           <span>结束</span>
         </button>
-      </div>
+      </div>}
       <article
         className={`my-poll-card poll-card${compact ? " poll-card-compact" : ""}`}
         data-ticket-tone={(parseInt(poll.id.slice(-1), 16) || 0) % 3}

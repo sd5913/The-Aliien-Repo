@@ -22,7 +22,7 @@ export function CreatePollPage() {
   const { polls, loading, error: pollsError, savePoll } = usePolls();
   const [voter] = useState(getVoter);
   const editingPoll = polls.find((poll) => poll.id === editingId);
-  const canEdit = !editingPoll || isPollOwner(editingPoll, voter.id);
+  const canEdit = !editingId || Boolean(editingPoll && isPollOwner(editingPoll, voter.id));
   const [title, setTitle] = useState(editingPoll?.title ?? "");
   const [description, setDescription] = useState(
     editingPoll?.description ?? "",
@@ -54,7 +54,7 @@ export function CreatePollPage() {
     return (
       <PageShell
         showNavigation={false}
-        backTo="/"
+        backTo={editingPoll ? `/poll/${editingPoll.id}` : "/"}
         title="编辑投票"
         showHeaderTitle
       >
@@ -63,9 +63,9 @@ export function CreatePollPage() {
           <p>只有发起者可以修改投票内容。</p>
           <Link
             className="purple-button"
-            to={`/poll/${editingPoll?.id}/results`}
+            to={editingPoll ? `/poll/${editingPoll.id}` : "/"}
           >
-            返回投票结果
+            返回投票
           </Link>
         </div>
       </PageShell>

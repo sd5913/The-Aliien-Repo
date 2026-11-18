@@ -12,7 +12,7 @@ import {
   updatePollMeta,
 } from "../services/polls";
 import { clearComments } from "../../../lib/storage/pollLocal";
-import { getVoter } from "../utils/voting";
+import { getVoter, isPollOwner, isPollOpen } from "../utils/voting";
 
 function metaChanged(current: Poll, updated: Poll): boolean {
   return (
@@ -54,7 +54,9 @@ export function usePolls() {
   }, []);
 
   const savePoll = useCallback(async (poll: Poll) => {
-    const exists = pollsRef.current.some((item) => item.id === poll.id);
+    const existing = pollsRef.current.find((item) => item.id === poll.id);
+    const exists = Boolean(existing);
+    if (!isPollOwner(existing ?? poll, getVoter().id)) throw new Error("只有发起者可以保存投票内容。");
     if (exists) {
       await updatePollMeta(poll);
     } else {
@@ -70,12 +72,17 @@ export function usePolls() {
       const current = pollsRef.current.find((poll) => poll.id === pollId);
       if (!current) throw new Error(`Poll "${pollId}" was not found.`);
       const updated = update(current);
+      const owner = isPollOwner(current, getVoter().id);
+      if ((metaChanged(current, updated) || updated.commentsPublic !== current.commentsPublic) && !owner) {
+        throw new Error("只有发起者可以管理投票。");
+      }
 
       if (metaChanged(current, updated)) {
         await updatePollMeta(updated);
       }
 
       if (updated.votes !== current.votes) {
+        if (!isPollOpen(current)) throw new Error("投票已结束，不能提交或修改。");
         const voter = getVoter();
         const ownVote = updated.votes.find((vote) => vote.voter.id === voter.id);
         if (ownVote) {
@@ -100,6 +107,8 @@ export function usePolls() {
   );
 
   const removePoll = useCallback(async (pollId: string) => {
+    const poll = pollsRef.current.find((item) => item.id === pollId);
+    if (!poll || !isPollOwner(poll, getVoter().id)) throw new Error("只有发起者可以删除投票。");
     await deletePollRemote(pollId);
     clearComments(pollId);
     const next = pollsRef.current.filter((poll) => poll.id !== pollId);

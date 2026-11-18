@@ -45,7 +45,7 @@ export function ParticipantLoginPage() {
     }
     try {
       saveParticipant(nickname, avatar);
-      navigate(target, { replace: true });
+      navigate(target, { replace: true, state: location.state });
     } catch {
       setError("暂时无法保存身份，请允许浏览器存储后重试。");
     }

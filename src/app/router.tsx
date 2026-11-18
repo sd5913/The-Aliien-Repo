@@ -9,7 +9,7 @@ import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPref
 import { AuthPage } from "../features/auth/pages/AuthPage";
 
 
-import { ParticipantGate, ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
+import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
 
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
   { path: "/create", element: <CreatePollPage /> },
   { path: "/join", element: <ParticipantLoginPage /> },
   { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
-  { path: "/poll/:id", element: <ParticipantGate><VotingPage /></ParticipantGate> },
+  { path: "/poll/:id", element: <VotingPage /> },
   { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
   { path: "/poll/:id/results", element: <ResultsPage /> },
   { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },
