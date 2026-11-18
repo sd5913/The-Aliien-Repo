@@ -12,6 +12,7 @@
   --ink: #5b21b6;
   --soft-shadow: 0 8px 24px rgba(124, 58, 237, .12);
   --bottom-nav-height: 64px;
+  --app-background: radial-gradient(ellipse at 0% 3%, #ddd3fa 0%, #ddd3fa00 58%), radial-gradient(ellipse at 105% 100%, #a9d9fc 0%, #a9d9fc00 58%), radial-gradient(ellipse at 100% 0%, #ffcee8 0%, #ffcee800 62%), linear-gradient(145deg, #f7ddf5 0%, #fce0ee 45%, #f9ddf5 72%, #e0e2fb 100%);
 }
 
 /* Language changes only families; the type scale and pairing stay shared.
@@ -37,9 +38,9 @@
 :where([lang]) { font-family: var(--font-body); }
 
 * { box-sizing: border-box; }
-html, body, #root { width: 100%; min-width: 320px; min-height: 100%; margin: 0; }
-body { min-height: 100dvh; background: #f3f4f6; }
-#root { min-height: 100dvh; display: flex; align-items: center; justify-content: center; }
+html, body, #root { width: 100%; min-width: 0; height: 100%; margin: 0; }
+body { height: 100dvh; overflow: hidden; background: #f3f4f6; }
+#root { height: 100dvh; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 button, input, textarea, select { font: inherit; }
 /* Display: headings, button labels, and brand names. */
 h1, h2, h3, h4, h5, h6, button, [role="button"],
@@ -62,27 +63,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .app-shell {
   position: relative;
-  width: 390px;
-  min-width: 390px;
+  width: min(390px, 100%);
+  min-width: 0;
   height: min(844px, 100dvh);
   min-height: 0;
-  flex: 0 0 390px;
+  flex: 0 1 390px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 0% 3%, #ddd3fa 0%, #ddd3fa00 58%),
-    radial-gradient(ellipse at 105% 100%, #a9d9fc 0%, #a9d9fc00 58%),
-    radial-gradient(ellipse at 100% 0%, #ffcee8 0%, #ffcee800 62%),
-    linear-gradient(145deg, #f7ddf5 0%, #fce0ee 45%, #f9ddf5 72%, #e0e2fb 100%);
+  background: var(--app-background);
   box-shadow: 0 12px 50px rgba(72, 43, 107, .14);
   display: flex;
   flex-direction: column;
 }
 .topbar {
-  height: 76px;
-  flex: 0 0 76px;
+  min-height: 76px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding: 14px 22px 10px;
+  padding: max(14px, env(safe-area-inset-top)) 22px 10px;
   gap: 12px;
   z-index: 3;
 }
@@ -97,18 +94,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .settings-nav-button { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ffffffa8; box-shadow: 0 4px 12px #7c3aed18; }
 .settings-nav-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .topbar-spacer { flex: 1; }
-.page-content { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 22px calc(var(--bottom-nav-height) + 20px); scrollbar-width: none; }
+.page-content { min-height: 0; min-width: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 22px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 20px); scrollbar-width: none; }
 .page-content::-webkit-scrollbar { display: none; }
 .management-share-page-link { margin-top: 12px; }
-.create-submit-footer { position: relative; z-index: 4; flex: 0 0 auto; padding: 10px 22px 14px; background: linear-gradient(180deg, #f3edfbdd, #f3edfb); }
+.create-submit-footer { position: relative; z-index: 4; flex: 0 0 auto; padding: 10px 22px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, #f3edfbdd, #f3edfb); }
 .bottom-nav {
   position: absolute;
   z-index: 5;
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
-  padding: 4px 36px;
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  padding: 4px 36px calc(4px + env(safe-area-inset-bottom));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -449,12 +446,14 @@ h1, h2, h3 { color: var(--deep-purple); }
 .toast-message { position: absolute; z-index: 30; bottom: 93px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 34px); padding: 12px 18px; border: 1px solid #ffffffc9; border-radius: 999px; background: #4c1d95eF; box-shadow: 0 8px 24px #32115433; color: #fff; font-size: 11px; font-weight: 700; text-align: center; }
 
 @media (min-width: 600px) {
-  .app-shell { border-radius: 30px; }
+  .app-shell, .participant-page { border-radius: 30px; }
 }
-@media (max-height: 843px) {
-  #root { height: 100vh; min-height: 0; align-items: flex-start; overflow: clip; }
-  .bottom-nav { position: fixed; left: 50%; width: 390px; transform: translateX(-50%); }
+@media (max-width: 599px) {
+  .app-shell { width: 100%; height: 100dvh; flex-basis: 100%; border-radius: 0; box-shadow: none; }
 }
+.app-shell:not(.has-bottom-nav) .page-content { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+.my-poll-thumbnails, .my-poll-thumbnails img { min-width: 0; }
+.modal-card { max-height: 100%; overflow-y: auto; }
 .settings-heading { margin: 8px 0 17px; }
 .settings-heading h1 { margin: 5px 0 4px; font-size: 26px; letter-spacing: -.5px; }
 .settings-heading p { margin: 0; color: #8969a6; font-size: 12px; }
@@ -559,7 +558,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .results-redesign .locked-bottom { margin-top: 22px; background: #bca8dd26; border: 1px solid #ffffff60; border-radius: 999px; }
 
 /* Sharing stays over the current screen; the ticket is also the exported image. */
-.share-dialog { position: fixed; inset: 0; width: min(400px, calc(100% - 56px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 26px; color: var(--ink); background: #f8f2ff; box-shadow: 0 24px 80px #32125155; overflow: auto; overscroll-behavior: contain; }
+.share-dialog { position: fixed; inset: 0; width: min(350px, calc(100% - 32px)); max-height: min(780px, calc(100dvh - 32px)); margin: auto; padding: 0; border: 0; border-radius: 26px; color: var(--ink); background: #f8f2ff; box-shadow: 0 24px 80px #32125155; overflow: auto; overscroll-behavior: contain; }
 .share-dialog::backdrop { background: #25133988; backdrop-filter: blur(5px); }
 .share-dialog-content { padding: 24px 30px; }
 .share-dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; }
