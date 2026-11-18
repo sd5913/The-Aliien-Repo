@@ -6,6 +6,8 @@ import type { Poll } from "../../../types/poll";
 import {
   createPoll,
   deletePollRemote,
+  updateCommentRemote,
+  deleteCommentRemote,
   fetchPolls,
   submitVote,
   updatePollMeta,
@@ -108,5 +110,21 @@ export function usePolls() {
     setPolls(next);
   }, []);
 
-  return { polls, loading, error, savePoll, updatePoll, removePoll };
+  const editComment = useCallback(async (pollId: string, commentId: string, text: string) => {
+    await updateCommentRemote(commentId, text);
+    const next = pollsRef.current.map((poll) => poll.id === pollId ? { ...poll,
+      comments: poll.comments.map((comment) => comment.id === commentId ? { ...comment, text: text.trim() } : comment) } : poll);
+    pollsRef.current = next;
+    setPolls(next);
+  }, []);
+
+  const deleteComment = useCallback(async (pollId: string, commentId: string) => {
+    await deleteCommentRemote(commentId);
+    const next = pollsRef.current.map((poll) => poll.id === pollId ? { ...poll,
+      comments: poll.comments.filter((comment) => comment.id !== commentId) } : poll);
+    pollsRef.current = next;
+    setPolls(next);
+  }, []);
+
+  return { polls, loading, error, savePoll, updatePoll, removePoll, editComment, deleteComment };
 }

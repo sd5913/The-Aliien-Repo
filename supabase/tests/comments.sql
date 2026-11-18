@@ -57,6 +57,59 @@ do $$ declare s record; begin
     raise exception 'Closed ballot unexpectedly allowed'; exception when invalid_parameter_value then null; end;
 end $$;
 reset role;
+alter table pg_temp.comment_test_state add column other_owner uuid default gen_random_uuid();
+insert into auth.users(id,aud,role,email,is_anonymous)
+select other_owner,'authenticated','authenticated',other_owner::text||'@example.invalid',false from pg_temp.comment_test_state;
+select set_config('request.jwt.claims','{"role":"anon"}',true);
+set local role anon;
+do $$ declare s record; comment_id uuid; begin
+  select * into s from pg_temp.comment_test_state;
+  select id into comment_id from public.poll_comments where poll_id=s.poll_id;
+  perform public.update_comment(comment_id,s.participant_b,repeat('d',64),'结束后修改自己的理由');
+  assert (select body from public.poll_comments where id=comment_id)='结束后修改自己的理由';
+  begin perform public.update_comment(comment_id,s.participant_a,repeat('c',64),'冒名修改');
+    raise exception 'Non-author edit allowed'; exception when insufficient_privilege then null; end;
+  begin perform public.update_comment(comment_id,s.participant_b,repeat('d',64),'');
+    raise exception 'Empty edit allowed'; exception when invalid_parameter_value then null; end;
+  begin perform public.delete_comment(comment_id,null,null);
+    raise exception 'Null credentials deletion allowed'; exception when insufficient_privilege then null; end;
+  begin perform public.delete_comment(comment_id,s.participant_a,repeat('c',64));
+    raise exception 'Other participant deletion allowed'; exception when insufficient_privilege then null; end;
+  -- Exercise successful author deletion in a subtransaction, then restore the
+  -- comment so the owner's independent moderation path can be tested too.
+  begin
+    perform public.delete_comment(comment_id,s.participant_b,repeat('d',64));
+    assert not exists(select 1 from public.poll_comments where id=comment_id);
+    assert (select count(*) from public.votes where poll_id=s.poll_id)=2;
+    raise exception 'rollback successful author delete' using errcode='P0002';
+  exception when no_data_found then null; end;
+  assert exists(select 1 from public.poll_comments where id=comment_id);
+  assert (select count(*) from public.votes where poll_id=s.poll_id)=2;
+end $$;
+reset role;
+select set_config('request.jwt.claims',jsonb_build_object('sub',other_owner,'role','authenticated')::text,true) from comment_test_state;
+set local role authenticated;
+do $$ declare s record; comment_id uuid; begin
+  select * into s from pg_temp.comment_test_state;
+  select id into comment_id from public.poll_comments where poll_id=s.poll_id;
+  begin perform public.delete_comment(comment_id,null,null);
+    raise exception 'Other account moderation allowed'; exception when insufficient_privilege then null; end;
+  begin update public.poll_comments set body='raw bypass' where id=comment_id;
+    raise exception 'Raw comment update allowed'; exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+select set_config('request.jwt.claims',jsonb_build_object('sub',owner_id,'role','authenticated')::text,true) from comment_test_state;
+set local role authenticated;
+do $$ declare s record; comment_id uuid; begin
+  select * into s from pg_temp.comment_test_state;
+  select id into comment_id from public.poll_comments where poll_id=s.poll_id;
+  begin perform public.update_comment(comment_id,null,null,'Owner cannot rewrite reasons');
+    raise exception 'Owner rewrote somebody else comment'; exception when insufficient_privilege then null; end;
+  perform public.delete_comment(comment_id,null,null);
+  assert not exists(select 1 from public.poll_comments where id=comment_id);
+  assert (select count(*) from public.votes where poll_id=s.poll_id)=2;
+end $$;
+reset role;
 select jsonb_build_object('passed',array['ongoing_comments_hidden','own_comment_restoration','impersonation_denied','raw_write_denied','atomic_ballot_validation',
-  'single_comment_upsert','clear_comment_preserves_vote','owner_moderation_read','closed_public_cross_device_read','closed_ballot_denied']) as verification;
+  'single_comment_upsert','clear_comment_preserves_vote','owner_moderation_read','closed_public_cross_device_read','closed_ballot_denied','author_edit_after_close','non_author_edit_denied','anonymous_delete_denied','author_delete','non_owner_delete_denied','owner_moderation_delete','comment_changes_preserve_votes']) as verification;
 rollback;

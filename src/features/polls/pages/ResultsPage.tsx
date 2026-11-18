@@ -11,11 +11,13 @@ import { sandColors } from "../utils/sandGeometry";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
 import { Modal } from "../../../components/ui/Modal";
+import { Toast } from "../../../components/ui/Toast";
+import type { PollComment } from "../../../types/poll";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { polls, loading, error } = usePolls();
+  const { polls, loading, error, editComment, deleteComment } = usePolls();
   const poll = polls.find((item) => item.id === id);
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
@@ -29,6 +31,22 @@ export function ResultsPage() {
   const { user: accountUser } = useAccount();
   const [exitOpen, setExitOpen] = useState(false);
   const [closeHint, setCloseHint] = useState(false);
+  const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [commentFeedback, setCommentFeedback] = useState("");
+  const confirmCommentDelete = async () => {
+    if (!deletingComment || commentBusy) return;
+    setCommentBusy(true);
+    try {
+      await deleteComment(id, deletingComment.id);
+      setDeletingComment(null);
+      setCommentFeedback("评论已删除，投票选择保持不变");
+    } catch {
+      setCommentFeedback("删除失败，请检查网络或权限后重试。");
+    } finally {
+      setCommentBusy(false);
+    }
+  };
   const returnTo = pollReturnTo(location);
   const closeButton = (
     poll && isPollOwner(poll, accountUser?.id ?? "") ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
@@ -113,11 +131,13 @@ export function ResultsPage() {
               </h2>
             </div>
           </div>
-          <CommentList comments={poll.comments} options={poll.options} />
+          <CommentList comments={poll.comments} options={poll.options} currentVoterId={voter.id} isPollOwner={owner}
+            onEdit={async (comment, text) => { await editComment(id, comment.id, text); setCommentFeedback("评论已更新，投票选择保持不变"); }}
+            onDelete={setDeletingComment} />
         </section>
       )}
       {!open ? (
-        <div className="locked-bottom">🔒 投票已结束，你只能查看结果和评论</div>
+        <div className="locked-bottom">🔒 投票已结束，不能再提交或修改选择</div>
       ) : (
         <Link
           className="purple-button button-full result-vote-button"
@@ -127,6 +147,11 @@ export function ResultsPage() {
         </Link>
       )}
       </div>
+      {deletingComment && <Modal title="确定删除这条评论吗？" onClose={() => { if (!commentBusy) setDeletingComment(null); }} actions={<>
+        <button className="button-soft" disabled={commentBusy} onClick={() => setDeletingComment(null)}>取消</button>
+        <button className="danger-button" disabled={commentBusy} onClick={() => void confirmCommentDelete()}>{commentBusy ? "删除中…" : "删除评论"}</button>
+      </>}><p>删除后无法恢复，投票选择和统计结果不会改变。</p></Modal>}
+      {commentFeedback && <Toast message={commentFeedback} onClose={() => setCommentFeedback("")} />}
       {exitOpen && <Modal title="本次投票已查看完毕" onClose={() => setExitOpen(false)} actions={<>
         <button className="button-soft" type="button" onClick={() => { setCloseHint(true); window.close(); }}>关闭页面</button>
         <Link className="purple-button" to="/">前往首页</Link>

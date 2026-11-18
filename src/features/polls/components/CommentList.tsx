@@ -10,13 +10,15 @@ interface CommentListProps {
   options: PollOption[];
   currentVoterId?: string;
   isPollOwner?: boolean;
-  onEdit?: (comment: PollComment, text: string) => void;
+  onEdit?: (comment: PollComment, text: string) => Promise<void>;
   onDelete?: (comment: PollComment) => void;
 }
 
 export function CommentList({ comments, options, currentVoterId, isPollOwner = false, onEdit, onDelete }: CommentListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState("");
   const { settings } = useUserSettings();
 
   if (!comments.length) return <p className="empty-inline">还没有评论，朋友们的想法会显示在这里。</p>;
@@ -24,13 +26,22 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
   const startEdit = (comment: PollComment) => {
     setEditingId(comment.id);
     setDraft(comment.text);
+    setFeedback("");
   };
 
-  const saveEdit = (comment: PollComment) => {
+  const saveEdit = async (comment: PollComment) => {
     const text = draft.trim();
-    if (!text || text.length > 200 || !onEdit) return;
-    onEdit(comment, text);
-    setEditingId(null);
+    if (!text || text.length > 200 || !onEdit || saving) return;
+    setSaving(true);
+    setFeedback("");
+    try {
+      await onEdit(comment, text);
+      setEditingId(null);
+    } catch {
+      setFeedback("评论保存失败，请检查网络或权限后重试。");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -49,15 +60,16 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
               <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : "匿名朋友"}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time></div>
               {editing ? (
                 <div className="comment-editor">
-                  <textarea className="text-input textarea" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={200} aria-label="修改评论" autoFocus />
-                  <div className="comment-editor-actions"><button className="button-soft" onClick={() => setEditingId(null)}>取消</button><button className="purple-button" disabled={!draft.trim() || draft.trim().length > 200} onClick={() => saveEdit(comment)}>保存</button></div>
+                  <textarea disabled={saving} className="text-input textarea" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={200} aria-label="修改评论" autoFocus />
+                  {feedback && <p role="alert">{feedback}</p>}
+                  <div className="comment-editor-actions"><button disabled={saving} className="button-soft" onClick={() => setEditingId(null)}>取消</button><button className="purple-button" disabled={saving || !draft.trim() || draft.trim().length > 200} onClick={() => void saveEdit(comment)}>{saving ? "保存中…" : "保存"}</button></div>
                 </div>
               ) : <p>{comment.text}</p>}
             </div>
             {!editing && optionIndex >= 0 && <span className="comment-color-dot" style={{ background: colors[optionIndex % colors.length] }} title={options[optionIndex].name} />}
             {!editing && (canEdit || canDelete) && <div className="comment-management-actions">
-              {canEdit && <button aria-label={`修改${comment.voter.nickname}的评论`} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />修改</button>}
-              {canDelete && <button className="comment-delete-button" aria-label={`删除${comment.voter.nickname}的评论`} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />删除</button>}
+              {canEdit && <button disabled={saving} aria-label={`修改${comment.voter.nickname}的评论`} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />修改</button>}
+              {canDelete && <button disabled={saving} className="comment-delete-button" aria-label={`删除${comment.voter.nickname}的评论`} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />删除</button>}
             </div>}
           </article>
         );

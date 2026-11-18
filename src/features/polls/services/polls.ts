@@ -154,3 +154,17 @@ export async function deletePollRemote(pollId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function updateCommentRemote(commentId: string, text: string): Promise<void> {
+  const participant = readParticipant();
+  if (!participant) throw new Error("请先完成软登录。");
+  const { error } = await supabase.rpc("update_comment", { p_comment_id: commentId,
+    p_voter_id: participant.id, p_token: participant.participantToken, p_body: text });
+  if (error) throw error;
+}
+
+export async function deleteCommentRemote(commentId: string): Promise<void> {
+  const participant = readParticipant();
+  const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId,
+    p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null });
+  if (error) throw error;
+}
