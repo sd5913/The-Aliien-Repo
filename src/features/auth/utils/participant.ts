@@ -32,5 +32,11 @@ export async function saveParticipant(nickname: string, avatar: string): Promise
   if (error || typeof data !== "string") throw error ?? new Error("无法建立投票者身份");
   const profile: ParticipantProfile = { ...getVoter(), id: data, nickname: clean, avatar, participantReady: true, participantToken: token };
   writeLocalJson(VOTER_STORAGE_KEY, profile);
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("bothpls:participant-changed"));
   return profile;
+}
+
+export function clearParticipant() {
+  window.localStorage.removeItem(VOTER_STORAGE_KEY);
+  window.dispatchEvent(new Event("bothpls:participant-changed"));
 }

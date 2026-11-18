@@ -1,15 +1,15 @@
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { Link, useLocation } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { MyPollsSection } from "../../polls/pages/MyPollsPage";
-import { readParticipant } from "../../auth/utils/participant";
+import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function SettingsPage() {
   const { settings, error } = useUserSettings();
-  const [participant] = useState(readParticipant);
+  const participant = useParticipant();
   const auth = useAccount();
   const location = useLocation();
   const pollsRef = useRef<HTMLDivElement>(null);
@@ -18,7 +18,7 @@ export function SettingsPage() {
   const hasMatchingProfile = Boolean(user?.email && settings.email.toLowerCase() === user.email.toLowerCase());
   const metadataNickname = typeof user?.user_metadata.nickname === "string" ? user.user_metadata.nickname.trim() : "";
   const nickname = hasMatchingProfile ? settings.nickname : metadataNickname || user?.email?.split("@")[0] || "已登录";
-  const avatar = hasMatchingProfile ? settings.avatar : nickname.slice(0, 1).toUpperCase();
+  const avatar = hasMatchingProfile ? settings.avatar : typeof user?.user_metadata.avatar === "string" ? user.user_metadata.avatar : nickname.slice(0, 1).toUpperCase();
 
   useEffect(() => {
     if (location.hash === "#my-polls") {

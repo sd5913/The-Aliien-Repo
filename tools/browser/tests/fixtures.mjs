@@ -30,7 +30,10 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       return reply({ Key: url.pathname.split('/object/')[1] });
     }
     if (url.pathname.startsWith('/storage/v1/object/public/')) return route.fulfill({ status: 200, body: state.image ?? Buffer.alloc(0), contentType: 'image/png' });
-    if (url.pathname === '/auth/v1/user') return reply(user);
+    if (url.pathname === '/auth/v1/user') {
+      if (request.method() === 'PUT' && user) user.user_metadata = { ...user.user_metadata, ...request.postDataJSON().data };
+      return reply(user);
+    }
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON();
       state.calls.push({ name, body });
@@ -41,6 +44,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
         return reply(poll.id);
       }
       if (name === 'close_poll') state.polls[0].status = 'closed';
+      if (name === 'register_participant') return reply('70000000-0000-4000-8000-000000000001');
       return reply(name === 'own_comments' ? [] : null);
     }
     if (url.pathname === '/rest/v1/polls') return reply(state.polls);

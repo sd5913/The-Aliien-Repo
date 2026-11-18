@@ -9,7 +9,7 @@ import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
 import { isPollOwner } from "../../polls/utils/voting";
 import type { Poll } from "../../../types/poll";
-import { readParticipant } from "../../auth/utils/participant";
+import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function HomePage() {
   const { polls, loading, error, removePoll, updatePoll } = usePolls();
@@ -18,7 +18,7 @@ export function HomePage() {
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
   const { user: accountUser } = useAccount();
-  const [participant] = useState(readParticipant);
+  const participant = useParticipant();
   // Keep the polls this device created at the top so their owner can always reach
   // the manage/edit entry from the home list.
   // 本机发起的投票排在前面，保证发起者能直接从首页进入管理与编辑。

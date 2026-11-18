@@ -56,7 +56,7 @@ export function ResultsPage() {
       onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
       onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
     {
-    poll && isPollOwner(poll, accountUser?.id ?? "") ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
+    (loading || error || !poll || isPollOwner(poll, accountUser?.id ?? "")) ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
       ×
     </Link> : <button className="results-close-button" type="button" onClick={() => { setCloseHint(false); setExitOpen(true); }} aria-label="关闭结果">×</button>
     }</>

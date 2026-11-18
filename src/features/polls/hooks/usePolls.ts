@@ -1,3 +1,4 @@
+import { useParticipant } from "../../auth/utils/useParticipant";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { requireAccountId } from "../../auth/services/auth";
 // React state and updates for Supabase-backed polls.
@@ -32,7 +33,8 @@ export function usePolls() {
   const [error, setError] = useState<Error | null>(null);
   const pollsRef = useRef<Poll[]>([]);
   const { user } = useAccount();
-  const accountId = user?.id ?? "";
+  const participant = useParticipant();
+  const accountId = `${user?.id ?? ""}:${participant?.id ?? ""}`;
   const version = useRef(0);
   const requestSequence = useRef(0);
   const mounted = useRef(false);
