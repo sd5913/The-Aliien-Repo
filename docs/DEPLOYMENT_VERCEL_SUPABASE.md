@@ -133,6 +133,12 @@ Project → Settings → Environment Variables，新增两条，Production / Pre
 
 保存配置后，在目标站点重新发送登录邮件，点击新邮件并确认回到该站点且显示登录状态。旧链接可能已经失效或被使用。不要分享包含登录令牌的完整回调链接。
 
+### 5.4 GitHub 登录回调
+
+GitHub OAuth App 的 **Authorization callback URL** 使用 Supabase GitHub provider 显示的回调地址（通常为 /auth/v1/callback）。Supabase 登录完成后会回到当前前端站点的 /auth，与邮箱登录共用上面的 Redirect URLs 设置。正式部署请使用实际站点域名的精确回调地址。GitHub Client Secret 保存在 Supabase provider 设置中，前端无需新增 VITE 变量。
+
+在目标站点从受保护的页面（例如 /create）进入登录页，点击「使用 GitHub 登录」，确认授权后返回原页面。取消授权时，确认页面显示可重试的提示，且邮箱登录仍可使用。参考 [Supabase GitHub 登录文档](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)。
+
 ---
 
 ## 6. 验收清单

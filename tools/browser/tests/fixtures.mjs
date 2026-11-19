@@ -13,11 +13,13 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     poll_options: [{ id: optionA, poll_id: pollId, label: '选项甲', position: 0 }, { id: optionB, poll_id: pollId, label: '选项乙', position: 1 }] }] };
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const token = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: accountId, role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now()/1000)+3600 })}.${Buffer.from('synthetic-test-signature').toString('base64url')}`;
-  await page.addInitScript(({ user, token }) => {
-    if (user) localStorage.setItem('sb-zptfqvufzsvlzmkdcfeb-auth-token', JSON.stringify({ access_token: token,
+  const project = new URL(process.env.VITE_SUPABASE_URL ?? 'https://zptfqvufzsvlzmkdcfeb.supabase.co').hostname.split('.')[0];
+  const storageKey = 'sb-' + project + '-auth-token';
+  await page.addInitScript(({ user, token, storageKey }) => {
+    if (user) localStorage.setItem(storageKey, JSON.stringify({ access_token: token,
       refresh_token: 'synthetic-refresh-token', expires_at: Math.floor(Date.now()/1000)+3600, expires_in: 3600, token_type: 'bearer', user }));
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => {} } });
-  }, { user, token });
+  }, { user, token, storageKey });
   await page.route('**/*', async (route) => {
     const request = route.request(); const url = new URL(request.url());
     if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') return route.continue();
@@ -50,6 +52,8 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (url.pathname.startsWith('/rest/v1/')) state.requests.push({ path: url.pathname, search: url.search, prefer: request.headers().prefer });
     if (url.pathname === '/rest/v1/polls') {
       let rows = state.polls;
+      const idFilter = url.searchParams.get('id');
+      if (idFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.id === idFilter.slice(3));
       const ownerFilter = url.searchParams.get('owner_id');
       const statusFilter = url.searchParams.get('status');
       const orFilter = url.searchParams.get('or');

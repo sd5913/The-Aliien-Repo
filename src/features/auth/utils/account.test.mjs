@@ -20,15 +20,21 @@ for (const path of [null, "https://evil.test", "//evil.test", "/\\evil.test", "/
 let user = null;
 let authError = null;
 let lastEmail;
+let lastOAuth;
+let oauthError = null;
 globalThis.accountTestAuth = {
   auth: {
     getUser: async () => ({ data: { user }, error: authError }),
     signInWithOtp: async (input) => { lastEmail = input; return { error: null }; },
+    signInWithOAuth: async (input) => {
+      lastOAuth = input;
+      return { data: { provider: input.provider, url: oauthError ? null : "https://bothpls.test/authorize" }, error: oauthError };
+    },
     signOut: async () => ({ error: null }),
   },
 };
 globalThis.accountTestNavigation = navigation;
-const { requireAccountId, sendMagicLink } = await load("../services/auth.ts", [
+const { requireAccountId, sendMagicLink, signInWithGitHub } = await load("../services/auth.ts", [
   [/import \{ supabase \} from [^;]+;/, "const supabase = globalThis.accountTestAuth;"],
   [/import \{ accountReturnTo \} from [^;]+;/, "const { accountReturnTo } = globalThis.accountTestNavigation;"],
 ]);
@@ -53,7 +59,17 @@ assert.equal(callback.searchParams.get("returnTo"), "/create?id=example-poll");
 assert.deepEqual(lastEmail.options.data, { nickname: "测试用户" });
 await sendMagicLink("test@example.test", undefined, "//evil.test");
 assert.equal(new URL(lastEmail.options.emailRedirectTo).searchParams.get("returnTo"), "/");
+const oauth = await signInWithGitHub("/create?id=example-poll#options");
+assert.equal(oauth.data.url, "https://bothpls.test/authorize");
+assert.equal(lastOAuth.provider, "github");
+const oauthCallback = new URL(lastOAuth.options.redirectTo);
+assert.equal(oauthCallback.origin, "https://bothpls.test");
+assert.equal(oauthCallback.pathname, "/auth");
+assert.equal(oauthCallback.searchParams.get("returnTo"), "/create?id=example-poll#options");
+oauthError = new Error("Mock provider unavailable");
+assert.equal((await signInWithGitHub("//evil.test")).error, oauthError);
+assert.equal(new URL(lastOAuth.options.redirectTo).searchParams.get("returnTo"), "/");
 globalThis.window = originalWindow;
 delete globalThis.accountTestAuth;
 delete globalThis.accountTestNavigation;
-console.log("Passed: account-required writes, anonymous rejection, switched accounts, expired sessions, login/edit callback and safe return URLs. No emails sent.");
+console.log("Passed: account-required writes, anonymous rejection, switched accounts, expired sessions, login/edit callback and safe return URLs, and GitHub OAuth options/errors. No live credentials used.");

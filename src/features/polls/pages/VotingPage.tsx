@@ -16,7 +16,7 @@ export function VotingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const returnTo = pollReturnTo(location);
-  const { polls, loading, error, updatePoll } = usePolls();
+  const { polls, loading, error, updatePoll } = usePolls({ pollId: id });
   const poll = polls.find((item) => item.id === id);
   const [voter] = useState(getVoter);
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
