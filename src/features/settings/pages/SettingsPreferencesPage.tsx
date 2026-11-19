@@ -41,14 +41,14 @@ export function SettingsPreferencesPage() {
     <PageShell title="设置" showHeaderTitle backTo="/settings">
       <ProfileSettingsSection />
       <section className="settings-card">
-        <div className="settings-section-heading"><div><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
+        <div className="settings-section-heading"><div><h2>应用权限</h2></div></div>
         <p className="settings-helper">仅保存你的偏好；不会请求设备权限。</p>
         <SettingToggle disabled={loading || Boolean(error)} title="相机" checked={settings.cameraEnabled} onChange={() => void toggleSetting("cameraEnabled")} />
         <SettingToggle disabled={loading || Boolean(error)} title="相册" checked={settings.photosEnabled} onChange={() => void toggleSetting("photosEnabled")} />
       </section>
 
       <section className="settings-card privacy-card">
-        <div className="settings-section-heading"><div><h2>隐私设置</h2></div><span className="settings-heading-icon">♡</span></div>
+        <div className="settings-section-heading"><div><h2>隐私设置</h2></div></div>
         <SettingToggle disabled={loading || Boolean(error)} title="在投票评论中显示昵称" description="关闭后，评论仅显示为匿名朋友" checked={settings.showNickname} onChange={() => void toggleSetting("showNickname")} />
         <div className="privacy-note"><span>🔒</span><p>个人资料和偏好会与此设备的匿名标识关联并保存在 Supabase。</p></div>
       </section>

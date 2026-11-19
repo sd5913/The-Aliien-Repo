@@ -5,13 +5,10 @@
 }
 .participant-page::before { content: ""; position: absolute; z-index: -1; width: 230px; height: 260px; top: 115px; left: -110px; border-radius: 43% 57% 64% 36%; background: linear-gradient(140deg, #d6baff88, #ffd4ef55); transform: rotate(-35deg); }
 .participant-brand { text-align: center; margin: 18px 0 48px; }
-.participant-brand a { display: inline-flex; align-items: center; gap: 13px; }
+.participant-brand a { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .participant-brand strong { font-size: 33px; font-weight: 800; letter-spacing: -1.2px; }
 .participant-brand p { color: #8964a1; font-size: 14px; margin: 10px 0 0; letter-spacing: 1px; }
-.participant-chat { width: 62px; height: 46px; position: relative; display: inline-block; }
-.participant-chat i { position: absolute; width: 41px; height: 38px; left: 0; top: 0; border-radius: 50%; background: linear-gradient(145deg, #ffb5f6, #e99af3); box-shadow: inset 4px 4px 7px #ffffff50; }
-.participant-chat i::after { content: ""; position: absolute; bottom: -3px; left: 6px; border: 7px solid transparent; border-left-color: #eaa2f5; transform: rotate(15deg); }
-.participant-chat i + i { left: 26px; top: 6px; background: linear-gradient(145deg, #b9e2ffb0, #a5a3f0c0); }
+.participant-logo { width: 64px; height: 64px; object-fit: contain; }
 .participant-ticket { position: relative; padding: 24px 19px 25px; border: 1px solid #ffffffe6; border-radius: 30px; background: linear-gradient(125deg, #ffffff55, #fff5ff42); box-shadow: 0 8px 20px #bf91d01c, inset 0 1px 0 #ffffff90; }
 .participant-ticket h1 { margin: 0; text-align: center; font-size: clamp(21px, 5.9vw, 26px); font-weight: 800; letter-spacing: -.7px; }
 .participant-subtitle { text-align: center; color: #88639e; font-size: 14px; margin: 7px 0 28px; }

@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import logoUrl from "../../../../images/logo.png";
 import { getRandomNickname } from "../../polls/utils/voting";
 import { PARTICIPANT_AVATARS, readParticipant, saveParticipant } from "../utils/participant";
 import "./ParticipantLoginPage.css";
@@ -54,7 +55,7 @@ export function ParticipantLoginPage() {
   return (
     <main className="participant-page">
       <header className="participant-brand">
-        <Link to="/" aria-label="BothPls 首页"><span className="participant-chat" aria-hidden="true"><i /><i /></span><strong>BothPls</strong></Link>
+        <Link to="/" aria-label="BothPls 首页"><img className="participant-logo" src={logoUrl} alt="" /><strong>BothPls</strong></Link>
         <p>朋友帮选 · 一起投票</p>
       </header>
       <form className="participant-form" onSubmit={submit} noValidate>

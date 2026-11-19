@@ -51,15 +51,14 @@ export function HomePage() {
   return (
     <PageShell>
       <section className="home-welcome">
-        <span className="eyebrow">HELLO, FRIENDS ✨</span>
+        <span className="eyebrow">HELLO, FRIENDS</span>
         <h1>一个人难选？<br />我们一起选。</h1>
         <p>把纠结交给朋友，让每个小决定都变得好玩。</p>
         <Link to="/create" className="purple-button">发起一个投票 <span>↗</span></Link>
         <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>
-        <div className="welcome-sticker" aria-hidden="true">✦</div>
       </section>
       <section className="home-steps">
-        <div className="section-title-row"><div><span className="eyebrow">简单三步</span><h2>把选择交给大家</h2></div><span className="steps-sparkle" aria-hidden="true">✦</span></div>
+        <div className="section-title-row"><div><span className="eyebrow">简单三步</span><h2>把选择交给大家</h2></div></div>
         <div className="steps-grid">
           <article className="step-card"><span className="step-number">01</span><span className="step-icon"><AppIcon name="edit" size={24} /></span><h3>添加选项</h3><p>把你正在纠结的选择放进来。</p></article>
           <article className="step-card"><span className="step-number">02</span><span className="step-icon"><AppIcon name="share" size={24} /></span><h3>分享给朋友</h3><p>发出链接，听听大家怎么想。</p></article>
