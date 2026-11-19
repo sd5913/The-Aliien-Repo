@@ -13,7 +13,7 @@
 
 .auth-apple-web img {
   display: block;
-  width: min(100%, 300px);
+  width: min(100%, 180px);
   height: auto;
 }
 
