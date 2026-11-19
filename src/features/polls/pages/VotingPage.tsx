@@ -1,6 +1,9 @@
 import { readDraft, saveDraft, clearDraft, isVoteDraft } from "../utils/drafts";
 import { pollPath, pollReturnTo } from "../utils/navigation";
-import { readParticipant } from "../../auth/utils/participant";
+import { readParticipant, saveParticipant } from "../../auth/utils/participant";
+import { useParticipant } from "../../auth/utils/useParticipant";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -18,7 +21,13 @@ export function VotingPage() {
   const returnTo = pollReturnTo(location);
   const { polls, loading, error, updatePoll } = usePolls({ pollId: id });
   const poll = polls.find((item) => item.id === id);
-  const [voter] = useState(getVoter);
+  const { user: accountUser, loading: accountLoading } = useAccount();
+  const participant = useParticipant();
+  const voter = participant ?? getVoter();
+  const share = useSharePoll();
+  const [identityError, setIdentityError] = useState("");
+  const [identityRetry, setIdentityRetry] = useState(0);
+  const identityPending = useRef(false);
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
   const [draftReady, setDraftReady] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,8 +48,17 @@ export function VotingPage() {
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);
   useEffect(() => {
-    if (!poll || hydratedPollId.current === poll.id) return;
-    hydratedPollId.current = poll.id;
+    if (accountLoading || !accountUser || participant || identityPending.current) return;
+    identityPending.current = true;
+    const rawName = accountUser.user_metadata?.nickname ?? accountUser.email?.split("@")[0] ?? "投票朋友";
+    const name = Array.from(String(rawName).trim()).slice(0, 12).join("");
+    void saveParticipant(name.length >= 2 ? name : "投票朋友", "🐱")
+      .catch(() => setIdentityError("投票身份建立失败，请重试。"))
+      .finally(() => { identityPending.current = false; });
+  }, [accountLoading, accountUser, participant, identityRetry]);
+  useEffect(() => {
+    if (!poll || !participant || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
+    hydratedPollId.current = `${poll.id}:${voter.id}`;
     const draft = readDraft(draftKey, isVoteDraft);
     const savedOptionId = draft ? (poll.options.some((option) => option.id === draft.selectedId) ? draft.selectedId : "") : existingVote?.selectedOptionId ?? "";
     setActiveId(draft && poll.options.some((option) => option.id === draft.activeId) ? draft.activeId : savedOptionId);
@@ -48,7 +66,7 @@ export function VotingPage() {
     setComment(draft?.comment ?? existingComment?.text ?? "");
     if (draft) setDraftNotice("已恢复上次未提交的选择与评论");
     setDraftReady(true);
-  }, [poll, existingVote, existingComment, draftKey]);
+  }, [poll, participant, voter.id, existingVote, existingComment, draftKey]);
 
   useEffect(() => {
     if (!draftReady) return;
@@ -60,6 +78,8 @@ export function VotingPage() {
   if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
+  if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在确认登录状态…</p></PageShell>;
+  if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || "正在准备投票身份…"}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>重试</button>}</PageShell>;
   if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
@@ -90,7 +110,9 @@ export function VotingPage() {
       navigate(pollPath(poll.id, "results", returnTo));
     } catch (error) {
       console.error("Could not save vote.", error);
-      setToast("投票保存失败，草稿已保留，请稍后重试");
+      if (error instanceof Error && /POLL_CLOSED|投票已结束|INVALID_DEADLINE/.test(error.message)) {
+        setToast("投票已结束，不能再提交或修改选择");
+      } else setToast("投票保存失败，草稿已保留，请稍后重试");
     } finally { setSaving(false); }
   };
 
@@ -106,6 +128,7 @@ export function VotingPage() {
   return (
     <PageShell showNavigation={false} backTo={returnTo} title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
+      <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>分享投票</button>
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {

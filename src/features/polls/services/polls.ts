@@ -1,4 +1,5 @@
 import { readParticipant } from "../../auth/utils/participant";
+import type { ParticipantProfile } from "../../auth/utils/participant";
 // Supabase persistence for polls, aligned with the normalized three-table schema.
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
@@ -73,6 +74,7 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     description: row.description ?? "",
     createdAt: row.created_at,
     creatorId: row.owner_id ?? undefined,
+    isPublic: row.is_public ?? false,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
     options,
@@ -85,7 +87,7 @@ const POLL_SELECT =
   "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
 
 const CARD_SELECT =
-  "id,title,description,status,owner_id,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
 
 function toCard(row: PollRow): Poll {
   return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
@@ -106,22 +108,18 @@ export async function fetchOwnedPollsPage(ownerId: string, offset: number, filte
   return { polls: rows.slice(0, OWNED_POLL_PAGE_SIZE).map(toCard), hasMore: rows.length > OWNED_POLL_PAGE_SIZE };
 }
 
-export async function fetchRecentPolls(ownerId?: string): Promise<Poll[]> {
-  const latestQuery = supabase.from("polls").select(CARD_SELECT)
+export async function fetchRecentPolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
+  const latestQuery = supabase.from("polls").select(CARD_SELECT).eq("is_public", true)
     .order("created_at", { ascending: false }).limit(5);
-  const [latestResult, ownedResult] = await Promise.all([
+  const [latestResult, votedResult] = await Promise.all([
     latestQuery,
-    ownerId ? supabase.from("polls").select(CARD_SELECT).eq("owner_id", ownerId)
-      .order("created_at", { ascending: false }).limit(5) : Promise.resolve({ data: [], error: null }),
+    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
   ]);
   if (latestResult.error) throw latestResult.error;
-  if (ownedResult.error) throw ownedResult.error;
-
-  const rows = [...(ownedResult.data ?? []), ...(latestResult.data ?? [])] as unknown as PollRow[];
-  const unique = [...new Map(rows.map((row) => [row.id, row])).values()];
-  const owned = unique.filter((row) => row.owner_id === ownerId);
-  const others = unique.filter((row) => row.owner_id !== ownerId);
-  return [...owned, ...others].slice(0, 5).map(toCard);
+  if (votedResult.error) throw votedResult.error;
+  const voted = (votedResult.data ?? []) as unknown as PollRow[];
+  const publicRows = (latestResult.data ?? []) as unknown as PollRow[];
+  return [...new Map([...voted, ...publicRows].map((row) => [row.id, row])).values()].slice(0, 5).map(toCard);
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {
@@ -129,7 +127,16 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
 
   const { data, error } = await supabase.from("polls").select(POLL_SELECT).eq("id", pollId).maybeSingle();
   if (error) throw error;
-  if (!data) return null;
+  if (!data) {
+    const participant = readParticipant();
+    const { data: linked, error: linkError } = await supabase.rpc("get_poll_by_link", {
+      p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null,
+    });
+    if (linkError) throw linkError;
+    if (!linked) return null;
+    const detail = linked as { poll: PollRow; votes: VoteRow[]; comments: CommentRow[] };
+    return toPollView(detail.poll, metadataOnly ? [] : detail.votes, metadataOnly ? [] : detail.comments);
+  }
 
   const row = data as unknown as PollRow;
   if (metadataOnly) return toPollView(row, [], []);

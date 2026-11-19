@@ -24,6 +24,7 @@ function metaChanged(current: Poll, updated: Poll): boolean {
     current.description !== updated.description ||
     current.endsAt !== updated.endsAt ||
     current.creatorId !== updated.creatorId ||
+    current.isPublic !== updated.isPublic ||
     current.status !== updated.status ||
     current.options !== updated.options
   );
@@ -63,7 +64,7 @@ export function usePolls(query: PollQuery) {
     try {
       const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
       let data = page?.polls ?? [];
-      if (recent) data = await fetchRecentPolls(user?.id);
+      if (recent) data = await fetchRecentPolls(participant);
       if (pollId) {
         const poll = await fetchPoll(pollId, metadataOnly);
         data = poll ? [poll] : [];

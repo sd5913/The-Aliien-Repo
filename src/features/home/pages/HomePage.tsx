@@ -21,13 +21,7 @@ export function HomePage() {
   const [toast, setToast] = useState("");
   const { user: accountUser } = useAccount();
   const participant = useParticipant();
-  // Keep the polls this device created at the top so their owner can always reach
-  // the manage/edit entry from the home list.
-  // 本机发起的投票排在前面，保证发起者能直接从首页进入管理与编辑。
-  const recent = [
-    ...polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? "")),
-    ...polls.filter((poll) => !isPollOwner(poll, accountUser?.id ?? "")),
-  ].slice(0, 5);
+  const recent = polls;
 
   const confirmDelete = async () => {
     if (!deleting) return;
