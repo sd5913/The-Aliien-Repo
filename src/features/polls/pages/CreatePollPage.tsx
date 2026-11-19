@@ -1,3 +1,5 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
+import type { MessageKey } from "../../../i18n/catalog";
 import { readDraft, saveDraft, clearDraft, isCreateDraft } from "../utils/drafts";
 import { OptionImageInput } from "../components/OptionImageInput";
 import { useAccount } from "../../auth/components/AccountProvider";
@@ -18,6 +20,7 @@ function makeOption(): PollOption {
 }
 
 export function CreatePollPage() {
+  const { t, number } = useLocale();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const editingId = params.get("id");
@@ -30,7 +33,7 @@ export function CreatePollPage() {
   const { user } = useAccount();
   const draftKey = `bothpls:draft:create:${user?.id ?? "none"}:${editingId || copyId || "new"}`;
   const [draftReady, setDraftReady] = useState("");
-  const [draftNotice, setDraftNotice] = useState("");
+  const [draftNotice, setDraftNotice] = useState<MessageKey | "">("");
   const editingPoll = polls.find((poll) => poll.id === editingId);
   const copySource = polls.find((poll) => poll.id === copyId);
   const canCopy = !copyId || Boolean(copySource && isPollOwner(copySource, user?.id ?? ""));
@@ -44,7 +47,7 @@ export function CreatePollPage() {
   const [options, setOptions] = useState<PollOption[]>(
     editingPoll?.options ?? [makeOption(), makeOption()],
   );
-  const [error, setError] = useState("");
+  const [error, setError] = useState<MessageKey | "">("");
 
   useEffect(() => {
     const key = draftKey;
@@ -55,7 +58,7 @@ export function CreatePollPage() {
     const saved = readDraft(draftKey, isCreateDraft);
     if (saved) {
       setTitle(saved.title); setDescription(saved.description); setOptions(saved.options);
-      setDeadline(saved.deadline); setNewPollId(saved.pollId); setDraftNotice("已恢复上次未提交的草稿");
+      setDeadline(saved.deadline); setNewPollId(saved.pollId); setDraftNotice("poll.restored");
     } else if (source) {
       setTitle(source.title); setDescription(source.description);
       setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
@@ -66,31 +69,31 @@ export function CreatePollPage() {
 
   useEffect(() => {
     if (draftReady !== draftKey || loading || !user) return;
-    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, options })) setDraftNotice("当前浏览器无法保存草稿，请勿关闭页面");
+    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, options })) setDraftNotice("poll.draftUnavailable");
   }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, options]);
 
   if (loading)
-    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
+    return <PageShell showNavigation={false} backTo="/" title={t("poll.create")} showHeaderTitle><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
 
   if (pollsError)
-    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} backTo="/" title={t("poll.create")} showHeaderTitle><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
 
   if (!canEdit || !canCopy)
     return (
       <PageShell
         showNavigation={false}
         backTo={editingPoll ? `/poll/${editingPoll.id}` : "/"}
-        title="编辑投票"
+        title={t("poll.edit")}
         showHeaderTitle
       >
         <div className="empty-state">
-          <h2>无法编辑这次投票</h2>
-          <p>{editingPoll && !isPollOpen(editingPoll) ? "投票已结束，不能再修改内容。" : "只有发起者可以修改投票内容。"}</p>
+          <h2>{t("poll.editUnavailable")}</h2>
+          <p>{editingPoll && !isPollOpen(editingPoll) ? t("poll.closedEdit") : t("poll.ownerEdit")}</p>
           <Link
             className="purple-button"
             to={editingPoll ? `/poll/${editingPoll.id}` : "/"}
           >
-            返回投票
+            {t("poll.backToPoll")}
           </Link>
         </div>
       </PageShell>
@@ -110,11 +113,11 @@ export function CreatePollPage() {
       name: option.name.trim(),
     }));
     if (!title.trim()) {
-      setError("請先寫下投票標題。");
+      setError("poll.titleRequired");
       return;
     }
     if (cleanOptions.some((option) => !option.name)) {
-      setError("請為每個選項填寫名稱。");
+      setError("poll.optionRequired");
       return;
     }
     const endsAt =
@@ -147,7 +150,7 @@ export function CreatePollPage() {
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
-      setError("保存失败，请检查网络后重试，填写内容已保留。");
+      setError("poll.saveFailed");
     } finally { setSaving(false); }
   };
 
@@ -155,48 +158,48 @@ export function CreatePollPage() {
     <PageShell
       showNavigation={false}
       backTo="/"
-      title={editingPoll ? "编辑投票" : copyId ? "复制投票" : "创建投票"}
+      title={editingPoll ? t("poll.edit") : copyId ? t("poll.copy") : t("poll.create")}
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
           <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={draftReady !== draftKey || saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
-            {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
+            {saving ? t("common.saving") : editingPoll ? t("poll.saveChanges") : t("poll.create")} <span>↗</span>
           </PurpleButton>
         </div>
       }
     >
       <form id="create-poll-form" className="create-form" onSubmit={submit}>
-        {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
+        {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
         <label className="field-label" htmlFor="poll-title">
-          投票标题 <span className="required">*</span>
+          {t("poll.title")} <span className="required">*</span>
         </label>
         <input
           id="poll-title"
           className="text-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="例如：周末穿哪件外套？"
+          placeholder={t("poll.titleHint")}
           maxLength={100}
           required
         />
         <label className="field-label" htmlFor="poll-description">
-          说明 <span className="optional">可选</span>
+          {t("poll.description")} <span className="optional">{t("common.optional")}</span>
         </label>
         <textarea
           id="poll-description"
           className="text-input textarea"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          placeholder="补充一点背景，让朋友更了解你的想法～"
+          placeholder={t("poll.descriptionHint")}
           rows={3}
           maxLength={300}
         />
 
         <div className="field-row">
           <div>
-            <label className="field-label">商品选项</label>
+            <label className="field-label">{t("poll.options")}</label>
           </div>
-          <span className="count-pill">{options.length}/5</span>
+          <span className="count-pill">{number(options.length)}/{number(5)}</span>
         </div>
         <div className="option-editor-list">
           {options.map((option, index) => (
@@ -206,16 +209,16 @@ export function CreatePollPage() {
                 onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">
                 <span className="option-letter">
-                  {String.fromCharCode(65 + index)} · 选项名称
+                  {String.fromCharCode(65 + index)} · {t("poll.optionName")}
                 </span>
                 <input
                   className="text-input compact-input"
-                  aria-label={`选项 ${index + 1} 名称`}
+                  aria-label={t("poll.indexedOptionName", { index: index + 1 })}
                   value={option.name}
                   onChange={(event) =>
                     updateOption(option.id, event.target.value)
                   }
-                  placeholder="例如：奶油白针织衫"
+                  placeholder={t("poll.optionHint")}
                   maxLength={60}
                 />
               </div>
@@ -224,7 +227,7 @@ export function CreatePollPage() {
                   className="remove-option-button"
                   disabled={uploadCount > 0}
                   type="button"
-                  aria-label={`删除选项 ${index + 1}`}
+                  aria-label={t("poll.deleteOption", { index: index + 1 })}
                   onClick={() =>
                     setOptions((current) =>
                       current.filter((item) => item.id !== option.id),
@@ -248,12 +251,12 @@ export function CreatePollPage() {
               ])
             }
           >
-            <AppIcon name="plus" /> 添加选项
+            <AppIcon name="plus" /> {t("poll.addOption")}
           </button>
         )}
         <div className="deadline-row">
           <label className="field-label" htmlFor="deadline">
-            截止时间
+            {t("poll.deadline")}
           </label>
           <select
             id="deadline"
@@ -261,18 +264,18 @@ export function CreatePollPage() {
             value={deadline}
             onChange={(event) => setDeadline(event.target.value)}
           >
-            <option value="none">不设置</option>
-            <option value="24">24 小时后</option>
-            <option value="72">3 天后</option>
-            <option value="168">7 天后</option>
+            <option value="none">{t("poll.noDeadline")}</option>
+            <option value="24">{t("poll.hoursLater", { count: 24 })}</option>
+            <option value="72">{t("poll.daysLater", { count: 3 })}</option>
+            <option value="168">{t("poll.daysLater", { count: 7 })}</option>
             {editingPoll?.endsAt && (
-              <option value="custom">保留原截止时间</option>
+              <option value="custom">{t("poll.keepDeadline")}</option>
             )}
           </select>
         </div>
         {error && (
           <p className="form-error" role="alert">
-            {error}
+            {t(error)}
           </p>
         )}
       </form>

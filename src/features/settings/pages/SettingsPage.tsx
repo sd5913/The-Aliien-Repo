@@ -1,3 +1,4 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef } from "react";
 import { useAccount } from "../../auth/components/AccountProvider";
@@ -8,6 +9,7 @@ import { MyPollsSection } from "../../polls/pages/MyPollsPage";
 import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function SettingsPage() {
+  const { t } = useLocale();
   const { settings, error } = useUserSettings();
   const participant = useParticipant();
   const auth = useAccount();
@@ -17,7 +19,7 @@ export function SettingsPage() {
   const user = auth.user;
   const hasMatchingProfile = Boolean(user?.email && settings.email.toLowerCase() === user.email.toLowerCase());
   const metadataNickname = typeof user?.user_metadata.nickname === "string" ? user.user_metadata.nickname.trim() : "";
-  const nickname = hasMatchingProfile ? settings.nickname : metadataNickname || user?.email?.split("@")[0] || "已登录";
+  const nickname = hasMatchingProfile ? settings.nickname : metadataNickname || user?.email?.split("@")[0] || t("profile.signedIn");
   const avatar = hasMatchingProfile ? settings.avatar : typeof user?.user_metadata.avatar === "string" ? user.user_metadata.avatar : nickname.slice(0, 1).toUpperCase();
 
   useEffect(() => {
@@ -27,27 +29,27 @@ export function SettingsPage() {
   }, [location.hash]);
 
   return (
-    <PageShell title="个人" showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link>}>
+    <PageShell title={t("nav.profile")} showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label={t("profile.settings")}><AppIcon name="setting" size={23} /></Link>}>
       <section className="settings-profile-intro">
         <div className="settings-section-heading"></div>
-        {user && error && <p className="settings-feedback" role="alert">个人资料加载失败，请稍后重试。</p>}
+        {user && error && <p className="settings-feedback" role="alert">{t("profile.failed")}</p>}
         {auth.loading ? (
-          <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>正在确认登录状态…</span></div></div>
+          <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>{t("profile.checking")}</span></div></div>
         ) : user ? (
           <div className="profile-summary">
-            <div className="profile-avatar" aria-label={`当前头像 ${avatar}`}>{avatar}</div>
+            <div className="profile-avatar" aria-label={t("profile.currentAvatar", { avatar })}>{avatar}</div>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
           </div>
         ) : participant ? (
           <div className="profile-summary">
-            <div className="profile-avatar" aria-label="投票者头像">{participant.avatar}</div>
-            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>投票者身份 · 已保存在当前浏览器</span></div>
+            <div className="profile-avatar" aria-label={t("profile.voterAvatar")}>{participant.avatar}</div>
+            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>{t("profile.voterSaved")}</span></div>
           </div>
         ) : (
           <div className="profile-summary profile-summary-empty">
             <div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div>
-            <div className="profile-summary-copy"><strong>未登录</strong><span>登录后查看个人信息</span></div>
-            <Link className="profile-login-link" to="/auth?returnTo=%2Fsettings">登录 / 注册</Link>
+            <div className="profile-summary-copy"><strong>{t("profile.signedOut")}</strong><span>{t("profile.signInToView")}</span></div>
+            <Link className="profile-login-link" to="/auth?returnTo=%2Fsettings">{t("auth.loginRegister")}</Link>
           </div>
         )}
       </section>

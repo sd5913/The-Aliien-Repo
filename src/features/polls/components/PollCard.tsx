@@ -1,3 +1,4 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { isPollOwner } from "../utils/voting";
 import { useSharePoll } from "./ShareProvider";
@@ -30,6 +31,7 @@ export function PollCard({
   onDelete,
   onEnd,
 }: PollCardProps) {
+  const { t, locale, votes } = useLocale();
   const { user: accountUser } = useAccount();
   const owner = isPollOwner(poll, accountUser?.id ?? "");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
@@ -47,14 +49,14 @@ export function PollCard({
   const deadlineDate = poll.endsAt ? new Date(poll.endsAt) : null;
   const deadline =
     deadlineDate && !Number.isNaN(deadlineDate.getTime())
-      ? deadlineDate.toLocaleString("zh-CN", {
+      ? deadlineDate.toLocaleString(locale, {
           year: "numeric",
           month: "numeric",
           day: "numeric",
           hour: "2-digit",
           minute: "2-digit",
         })
-      : "未设置";
+      : t("common.notSet");
 
   const openShare = useSharePoll();
   const share = () => openShare(poll);
@@ -136,18 +138,18 @@ export function PollCard({
 
   return (
     <div className={`swipe-card${expanded ? " swipe-card-expanded" : ""}`}>
-      {owner && <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
+      {owner && <div className="swipe-actions" aria-label={t("poll.actions")} aria-hidden={!expanded}>
         <button className="swipe-action swipe-edit" disabled={!isPollOpen(poll)} tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
           <AppIcon name="edit" size={20} />
-          <span>编辑</span>
+          <span>{t("common.edit")}</span>
         </button>
         <button className="swipe-action swipe-delete" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onDelete(poll); }}>
           <AppIcon name="bin" size={20} />
-          <span>删除</span>
+          <span>{t("common.delete")}</span>
         </button>
         <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }} disabled={!isPollOpen(poll)}>
           <AppIcon name="finished" size={20} />
-          <span>结束</span>
+          <span>{t("poll.endShort")}</span>
         </button>
       </div>}
       <article
@@ -169,9 +171,9 @@ export function PollCard({
           <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
             <h3>{poll.title}</h3>
           </Link>
-          <p className="my-poll-ticket-status">{isPollOpen(poll) ? "进行中" : "已结束"} · {poll.voteCount ?? poll.votes.length} 票</p>
-          <p className="my-poll-deadline">截止时间：{deadline}</p>
-          <button className="my-poll-share" onClick={share} aria-label="分享投票">
+          <p className="my-poll-ticket-status">{isPollOpen(poll) ? t("poll.open") : t("poll.closed")} · {votes(poll.voteCount ?? poll.votes.length)}</p>
+          <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
+          <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
             <AppIcon name="share" size={20} />
           </button>
         </div>

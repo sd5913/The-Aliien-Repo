@@ -1,3 +1,4 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { useEffect, useRef } from "react";
 import type { PointerEvent } from "react";
 import type { PollOption } from "../../../types/poll";
@@ -17,6 +18,7 @@ const bubbles = Array.from({ length: 17 }, (_, index) => ({
 }));
 
 export function SandResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
+  const { t, locale, percent } = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tilt = useRef({ target: 0, current: 0 });
   const validTotal = options.reduce((sum, option) => sum + (counts.get(option.id) ?? 0), 0);
@@ -137,7 +139,7 @@ export function SandResults({ options, counts }: { options: PollOption[]; counts
         ctx.textAlign = "center";
         const letterSize = Math.max(10, Math.round(radius * .43));
         const percentSize = Math.max(12, Math.round(radius * .62));
-        const percentText = `${Math.round(count / validTotal * 100)}%`;
+        const percentText = percent(count / validTotal);
         ctx.font = `600 ${letterSize}px sans-serif`;
         ctx.fillText(String.fromCharCode(65 + index), x, y - radius * .15);
         ctx.font = `700 ${percentSize}px sans-serif`;
@@ -152,7 +154,7 @@ export function SandResults({ options, counts }: { options: PollOption[]; counts
       cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [options, counts, validTotal]);
+  }, [options, counts, validTotal, percent]);
 
   const moveSand = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
@@ -160,11 +162,21 @@ export function SandResults({ options, counts }: { options: PollOption[]; counts
     tilt.current.target = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
   };
 
+  const chartLabel = validTotal
+    ? t("results.sandAria", {
+        options: new Intl.ListFormat(locale).format(options.map((option, index) => t("results.sandOption", {
+          letter: String.fromCharCode(65 + index),
+          name: option.name,
+          percent: percent((counts.get(option.id) ?? 0) / validTotal),
+        }))),
+      })
+    : t("results.sandEmptyAria");
+
   return (
     <div className="sand-results">
       <div className="sand-stage" onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); moveSand(event); }} onPointerMove={moveSand} onPointerUp={() => { tilt.current.target = 0; }} onPointerCancel={() => { tilt.current.target = 0; }}>
-        <canvas ref={canvasRef} role="img" aria-label={validTotal ? `流沙投票结果。${options.map((option, index) => `${String.fromCharCode(65 + index)} ${option.name}：${Math.round((counts.get(option.id) ?? 0) / validTotal * 100)}%`).join("；")}` : "还没有投票，流沙区域为空"} />
-        {!validTotal && <span className="sand-empty">等待第一份心意</span>}
+        <canvas ref={canvasRef} role="img" aria-label={chartLabel} />
+        {!validTotal && <span className="sand-empty">{t("results.sandEmpty")}</span>}
       </div>
 
     </div>

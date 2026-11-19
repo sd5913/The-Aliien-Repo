@@ -67,6 +67,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       return reply(rows.slice(offset, offset + limit).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
     }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
+    if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);
     return reply([]);
   });
   return state;

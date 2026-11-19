@@ -1,3 +1,4 @@
+import { useLocale } from "../../i18n/LocaleProvider";
 import type { Poll } from "../../types/poll";
 
 export function isPollOpen(poll: Poll): boolean {
@@ -5,6 +6,7 @@ export function isPollOpen(poll: Poll): boolean {
 }
 
 export function StatusPill({ poll }: { poll: Poll }) {
+  const { t } = useLocale();
   const open = isPollOpen(poll);
-  return <span className={`status-pill${open ? " status-open" : " status-closed"}`}>{open ? "进行中" : "已结束"}</span>;
+  return <span className={`status-pill${open ? " status-open" : " status-closed"}`}>{open ? t("poll.open") : t("poll.closed")}</span>;
 }
