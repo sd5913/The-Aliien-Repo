@@ -1,7 +1,8 @@
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
+import { publicAppOrigin } from "../../../lib/platform";
 
-export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
+export const pollUrl = (id: string) => `${publicAppOrigin}/poll/${encodeURIComponent(id)}`;
 
 export async function copyPollLink(id: string) {
   const value = pollUrl(id);

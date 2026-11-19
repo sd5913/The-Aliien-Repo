@@ -13,7 +13,7 @@ const { accountReturnTo } = navigation;
 for (const path of ["/create", "/create?id=owned-poll", "/settings", "/poll/test/results"]) {
   assert.equal(accountReturnTo(path), path);
 }
-for (const path of [null, "https://evil.test", "//evil.test", "/\\evil.test", "/auth", "/auth?returnTo=/create", "/login/", "/foo/../auth"]) {
+for (const path of [null, "https://evil.test", "//evil.test", "/\\evil.test", "/auth", "/auth?returnTo=/create", "/login/", "/foo/../auth", "/AUTH", "/nested/..//evil.test"]) {
   assert.equal(accountReturnTo(path), "/");
 }
 
