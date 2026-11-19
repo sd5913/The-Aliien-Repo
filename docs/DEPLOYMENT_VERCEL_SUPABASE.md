@@ -122,6 +122,17 @@ Project → Settings → Environment Variables，新增两条，Production / Pre
 
 新项目部署验证通过后，把 `bothpls.vercel.app` 从旧 v0 项目解绑，再绑到新项目；在此之前线上 v0 版本继续可用。
 
+### 5.3 邮箱登录回调
+
+在 Supabase 项目的 **Authentication → URL Configuration** 中配置：
+
+- **Site URL**：`https://the-aliien-repo-oqpi.vercel.app`（正式域名变更后同步更新）。
+- **Redirect URLs**：添加 `https://the-aliien-repo-oqpi.vercel.app/auth`；保留仍在使用的已有地址。本地开发需要时另加 `http://localhost:5173/auth`。
+
+前端发出邮件时会指定当前站点的 `/auth` 作为回调，并附带 `returnTo` 查询参数。如果回调地址不在允许列表，Supabase 会使用 Site URL；Site URL 若仍是 `http://localhost:3000`，用户就会跳到自己的电脑而无法打开网站。Vercel 预览部署使用不同域名时，也需要将实际预览域名的 `/auth` 加入允许列表。
+
+保存配置后，在目标站点重新发送登录邮件，点击新邮件并确认回到该站点且显示登录状态。旧链接可能已经失效或被使用。不要分享包含登录令牌的完整回调链接。
+
 ---
 
 ## 6. 验收清单
