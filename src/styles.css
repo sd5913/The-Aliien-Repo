@@ -196,6 +196,19 @@ h1, h2, h3 { color: var(--deep-purple); }
 .empty-art i { position: absolute; right: 10px; top: 0; color: #ec4899; font-size: 22px; font-style: normal; }
 .empty-state h3 { margin: 8px 0; font-size: 16px; }
 .empty-state p { margin: 0 0 16px; color: #8b6aa9; font-size: 12px; }
+.home-recent-empty { display: flex; min-height: 225px; flex-direction: column; align-items: center; justify-content: center; padding: 28px 18px; background: linear-gradient(145deg, #fff7ffba, #edf3ffb8); }
+.home-recent-empty .empty-art { width: 92px; height: 78px; margin-bottom: 12px; border-radius: 42% 58% 52% 48%; background: linear-gradient(135deg, #f9e8f6, #e3dcff); }
+.home-recent-empty .empty-art svg { width: 52px; height: 52px; }
+.home-recent-empty h3 { margin: 0 0 8px; color: #4c1d95; }
+.home-recent-empty p { max-width: 230px; margin: 0; line-height: 1.6; }
+.home-square { padding-top: 34px; }
+.home-square-description { max-width: 470px; margin: 8px 0 0; color: #7952a5; line-height: 1.6; }
+.my-poll-visibility { margin: 3px 0 0; color: #6d43a0; font-size: 11px; }
+.legacy-visibility-review { position: relative; z-index: 1; margin-top: 8px; padding: 9px; border: 1px solid #decaf4; border-radius: 12px; background: #faf4ff; }
+.legacy-visibility-review p { margin: 0 0 7px; color: #5d328b; font-size: 11px; line-height: 1.4; }
+.legacy-visibility-review div { display: flex; flex-wrap: wrap; gap: 6px; }
+.legacy-visibility-review button { padding: 5px 8px; border: 1px solid #b886ed; border-radius: 8px; background: white; color: #5d328b; font-size: 11px; cursor: pointer; }
+.legacy-visibility-review button:last-child { background: #8642df; color: white; }
 
 .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 19px; }
 .page-heading h1 { margin: 5px 0 0; font-size: 26px; letter-spacing: -.5px; }

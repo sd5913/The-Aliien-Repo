@@ -4,6 +4,7 @@ import type { ParticipantProfile } from "../../auth/utils/participant";
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
+import { readRecentPollIds } from "../utils/recentHistory";
 
 interface PollRow {
   id: string;
@@ -13,6 +14,7 @@ interface PollRow {
   author_name: string | null;
   owner_id: string | null;
   is_public: boolean | null;
+  visibility_reviewed_at: string | null;
   emoji: string | null;
   created_at: string;
   closed_at: string | null;
@@ -75,6 +77,7 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     createdAt: row.created_at,
     creatorId: row.owner_id ?? undefined,
     isPublic: row.is_public ?? false,
+    visibilityReviewedAt: row.visibility_reviewed_at,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
     options,
@@ -84,16 +87,28 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
 }
 
 const POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
 
 const CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
 
 function toCard(row: PollRow): Poll {
   return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
 }
 
 export const OWNED_POLL_PAGE_SIZE = 12;
+
+export async function fetchSquarePolls(): Promise<Poll[]> {
+  const { data, error } = await supabase.from("polls").select(CARD_SELECT).eq("is_public", true)
+    .order("created_at", { ascending: false }).limit(5);
+  if (error) throw error;
+  return ((data ?? []) as unknown as PollRow[]).map(toCard);
+}
+
+export async function setPollVisibility(pollId: string, isPublic: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_poll_visibility", { p_poll_id: pollId, p_public: isPublic });
+  if (error) throw error;
+}
 
 export async function fetchOwnedPollsPage(ownerId: string, offset: number, filter?: "active" | "ended"): Promise<{ polls: Poll[]; hasMore: boolean }> {
   let query = supabase.from("polls").select(CARD_SELECT).eq("owner_id", ownerId)
@@ -109,17 +124,14 @@ export async function fetchOwnedPollsPage(ownerId: string, offset: number, filte
 }
 
 export async function fetchRecentPolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
-  const latestQuery = supabase.from("polls").select(CARD_SELECT).eq("is_public", true)
-    .order("created_at", { ascending: false }).limit(5);
-  const [latestResult, votedResult] = await Promise.all([
-    latestQuery,
+  const [visited, votedResult] = await Promise.all([
+    Promise.all(readRecentPollIds().slice(0, 5).map((id) => fetchPoll(id))),
     participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
   ]);
-  if (latestResult.error) throw latestResult.error;
   if (votedResult.error) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
-  const publicRows = (latestResult.data ?? []) as unknown as PollRow[];
-  return [...new Map([...voted, ...publicRows].map((row) => [row.id, row])).values()].slice(0, 5).map(toCard);
+  const recent = [...visited.filter((poll): poll is Poll => poll !== null), ...voted.map(toCard)];
+  return [...new Map(recent.map((poll) => [poll.id, poll])).values()].slice(0, 5);
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {

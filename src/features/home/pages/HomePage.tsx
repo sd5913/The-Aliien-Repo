@@ -15,6 +15,7 @@ import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function HomePage() {
   const { polls, loading, error, removePoll, updatePoll } = usePolls({ recent: true });
+  const { polls: squarePolls, loading: squareLoading, error: squareError, removePoll: removeSquarePoll, updatePoll: updateSquarePoll } = usePolls({ square: true });
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
@@ -27,7 +28,7 @@ export function HomePage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     try {
-      await removePoll(deleting.id);
+      await (polls.some((item) => item.id === deleting.id) ? removePoll : removeSquarePoll)(deleting.id);
       setExpandedPollId(null);
       setToast("投票已删除");
     } catch (error) {
@@ -40,7 +41,7 @@ export function HomePage() {
 
   const endPoll = async (poll: Poll) => {
     try {
-      await updatePoll(poll.id, (current) => ({ ...current, status: "closed" }));
+      await (polls.some((item) => item.id === poll.id) ? updatePoll : updateSquarePoll)(poll.id, (current) => ({ ...current, status: "closed" }));
       setExpandedPollId(null);
       setToast("投票已结束");
     } catch (error) {
@@ -73,10 +74,14 @@ export function HomePage() {
         </div>
       </section>
       <section className="home-recent">
-        <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div><Link className="subtle-link" to="/settings#my-polls">查看全部 →</Link></div>
+        <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div></div>
         {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : (
-          <div className="empty-state"><div className="empty-art" aria-hidden="true"><span>☁</span><i>♡</i></div><h3>还没有投票哦</h3><p>创建一个小问题，邀请朋友帮你选。</p><Link className="purple-button" to="/create">开始创建</Link></div>
+          <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>还没有最近投票</h3><p>浏览或参与一次投票后，会显示在这里。</p></div>
         )}
+      </section>
+      <section className="home-recent home-square">
+        <div className="section-title-row"><div><span className="eyebrow">发现大家的选择</span><h2>广场</h2><p className="home-square-description">公开投票会展示在这里，让更多人一起参与。仅通过链接分享的投票不会进入广场。</p></div></div>
+        {squareLoading ? <p className="empty-inline">正在加载广场…</p> : squareError ? <p className="settings-feedback" role="alert">广场加载失败，请稍后重试。</p> : squarePolls.length ? <div className="poll-card-list">{squarePolls.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true">✦</div><h3>广场还没有公开投票</h3><p>投票发起者选择公开后，会出现在这里。</p></div>}
       </section>
       {ending && <Modal title="确定结束这次投票吗？" onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>取消</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>确认结束</button></>}><p>结束后不能继续投票或修改选择，结果和评论将公开。</p></Modal>}
       {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}

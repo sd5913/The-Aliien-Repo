@@ -14,6 +14,7 @@ import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
 import { getVoter } from "../utils/voting";
 import { optionColors } from "../utils/optionColors";
+import { rememberViewedPoll } from "../utils/recentHistory";
 
 export function VotingPage() {
   const { id = "" } = useParams();
@@ -45,6 +46,7 @@ export function VotingPage() {
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState("");
   const open = poll ? isPollOpen(poll) : false;
+  useEffect(() => { if (poll) rememberViewedPoll(poll.id); }, [poll?.id]);
   // Seed the form once per poll, after the async fetch resolves.
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);

@@ -14,6 +14,7 @@ import { getVoter, isPollOwner } from "../utils/voting";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import type { PollComment } from "../../../types/poll";
+import { rememberViewedPoll } from "../utils/recentHistory";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
@@ -21,6 +22,7 @@ export function ResultsPage() {
   const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls({ pollId: id });
   const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
+  useEffect(() => { if (poll) rememberViewedPoll(poll.id); }, [poll?.id]);
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
   useEffect(() => {

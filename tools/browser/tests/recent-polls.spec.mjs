@@ -1,17 +1,30 @@
 import { test, expect } from '@playwright/test';
-import { mockApp } from './fixtures.mjs';
+import { mockApp, pollId } from './fixtures.mjs';
 
-test('home limits recent polls and requests counts without loading comments or ballots', async ({ page }) => {
+test('home is empty without browsing history and shows a poll after it is viewed', async ({ page }) => {
   const state = await mockApp(page);
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
+  await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  expect(state.requests.some((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('is_public') === 'eq.true')).toBe(true);
+  await page.goto(`/poll/${pollId}/results`);
   await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await page.goto('/');
+  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+});
 
-  const pollRequests = state.requests.filter((request) => request.path === '/rest/v1/polls');
-  expect(pollRequests.length).toBeGreaterThan(0);
-  expect(pollRequests.every((request) => new URLSearchParams(request.search).get('limit') === '5')).toBe(true);
-  expect(pollRequests.every((request) => new URLSearchParams(request.search).get('select')?.includes('votes(count)'))).toBe(true);
-  expect(state.requests.some((request) => request.path === '/rest/v1/votes')).toBe(false);
-  expect(state.requests.some((request) => request.path === '/rest/v1/poll_comments')).toBe(false);
+test('older polls stay out of the square until their owner chooses public', async ({ page }) => {
+  const state = await mockApp(page);
+  state.polls[0].is_public = false;
+  state.polls[0].visibility_reviewed_at = null;
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '广场还没有公开投票' })).toBeVisible();
+  await page.goto('/settings');
+  await expect(page.getByText('这条旧投票目前不在广场展示。请选择是否公开。')).toBeVisible();
+  await page.getByRole('button', { name: '公开到广场' }).click();
+  await expect(page.getByText('投票已公开到广场')).toBeVisible();
+  await page.goto('/');
+  await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
 });
 
 test('personal page loads owned polls in pages and filters on the server', async ({ page }) => {
