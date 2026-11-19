@@ -67,7 +67,7 @@ export function usePolls(query: PollQuery) {
     try {
       const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
       let data = page?.polls ?? [];
-      if (recent) data = await fetchRecentPolls(participant);
+      if (recent) data = await fetchRecentPolls(participant, user?.id);
       if (square) data = await fetchSquarePolls();
       if (pollId) {
         const poll = await fetchPoll(pollId, metadataOnly);

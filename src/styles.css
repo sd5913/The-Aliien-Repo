@@ -537,6 +537,10 @@ h1, h2, h3 { color: var(--deep-purple); }
 .privacy-note span { font-size: 13px; }
 .privacy-note p { margin: 0; color: #8e73a7; font-size: 9px; line-height: 1.55; }
 .settings-feedback { margin: 0 0 10px; color: #7c3aed; font-size: 11px; text-align: center; }
+.home-retry-icon { display: inline-grid; width: 20px; height: 20px; margin-left: 5px; padding: 2px; place-items: center; vertical-align: middle; border: 0; border-radius: 50%; color: #7c3aed; background: transparent; cursor: pointer; }
+.home-retry-icon:hover { background: #f3e8ff; }
+.home-retry-icon:focus-visible { outline: 2px solid #a855f7; outline-offset: 2px; }
+.home-retry-icon svg { width: 15px; height: 15px; fill: currentColor; }
 .logout-button { width: 100%; min-height: 44px; margin-top: 20px; border: 1px solid #fecdd3; border-radius: 999px; color: #be123c; background: #fff1f2; font-size: 12px; font-weight: 700; cursor: pointer; }
 .logout-button:disabled { cursor: wait; opacity: .6; }
 

@@ -14,7 +14,6 @@ import { getVoter, isPollOwner } from "../utils/voting";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import type { PollComment } from "../../../types/poll";
-import { rememberViewedPoll } from "../utils/recentHistory";
 import { AppIcon } from "../../../components/ui/AppIcon";
 
 export function ResultsPage() {
@@ -24,7 +23,6 @@ export function ResultsPage() {
   const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
   const { user: accountUser } = useAccount();
-  useEffect(() => { if (poll) rememberViewedPoll(poll.id); }, [poll?.id]);
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
   useEffect(() => {
@@ -79,7 +77,7 @@ export function ResultsPage() {
     return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="empty-inline">正在加载投票…</p></PageShell>;
 
   if (error)
-    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
 
   if (!poll)
     return (

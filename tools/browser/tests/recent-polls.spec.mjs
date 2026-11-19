@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { mockApp, pollId } from './fixtures.mjs';
 
-test('home is empty without browsing history and shows a poll after it is viewed', async ({ page }) => {
-  const state = await mockApp(page);
+test('public square is visible to visitors, but viewing a poll does not put it in recent polls', async ({ page }) => {
+  const state = await mockApp(page, { accountId: null });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
   await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
@@ -10,7 +10,21 @@ test('home is empty without browsing history and shows a poll after it is viewed
   await page.goto(`/poll/${pollId}/results`);
   await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   await page.goto('/');
-  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
+  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toHaveCount(0);
+});
+
+test('poll loading failures use the generic message and icon-only retry controls', async ({ page }) => {
+  await mockApp(page);
+  await page.route('**/rest/v1/polls*', (route) => route.fulfill({
+    status: 500,
+    contentType: 'application/json',
+    body: JSON.stringify({ message: 'database unavailable' }),
+  }));
+  await page.goto('/');
+  await expect(page.getByText('投票加载失败，请稍后重试。').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(2);
+  await expect(page.getByText(/Supabase 配置/)).toHaveCount(0);
 });
 
 test('older polls stay out of the square until their owner chooses public', async ({ page }) => {

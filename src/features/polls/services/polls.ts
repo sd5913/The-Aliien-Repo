@@ -4,7 +4,6 @@ import type { ParticipantProfile } from "../../auth/utils/participant";
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
-import { readRecentPollIds } from "../utils/recentHistory";
 
 interface PollRow {
   id: string;
@@ -18,6 +17,7 @@ interface PollRow {
   emoji: string | null;
   created_at: string;
   closed_at: string | null;
+  last_voted_at?: string;
   poll_options: OptionRow[] | null;
   votes?: { count: number }[] | null;
 }
@@ -123,14 +123,20 @@ export async function fetchOwnedPollsPage(ownerId: string, offset: number, filte
   return { polls: rows.slice(0, OWNED_POLL_PAGE_SIZE).map(toCard), hasMore: rows.length > OWNED_POLL_PAGE_SIZE };
 }
 
-export async function fetchRecentPolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
-  const [visited, votedResult] = await Promise.all([
-    Promise.all(readRecentPollIds().slice(0, 5).map((id) => fetchPoll(id))),
+export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string): Promise<Poll[]> {
+  const [votedResult, ownedPage] = await Promise.all([
     participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
+    ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
   ]);
   if (votedResult.error) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
-  const recent = [...visited.filter((poll): poll is Poll => poll !== null), ...voted.map(toCard)];
+  const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
+  const recent = [...voted.map(toCard), ...ownedPage.polls]
+    .sort((a, b) => {
+      const aTimestamp = voteActivity.get(a.id) ?? a.createdAt;
+      const bTimestamp = voteActivity.get(b.id) ?? b.createdAt;
+      return Date.parse(bTimestamp) - Date.parse(aTimestamp);
+    });
   return [...new Map(recent.map((poll) => [poll.id, poll])).values()].slice(0, 5);
 }
 

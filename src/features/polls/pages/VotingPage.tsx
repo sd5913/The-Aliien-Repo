@@ -14,7 +14,6 @@ import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
 import { getVoter } from "../utils/voting";
 import { optionColors } from "../utils/optionColors";
-import { rememberViewedPoll } from "../utils/recentHistory";
 
 export function VotingPage() {
   const { id = "" } = useParams();
@@ -46,7 +45,6 @@ export function VotingPage() {
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState("");
   const open = poll ? isPollOpen(poll) : false;
-  useEffect(() => { if (poll) rememberViewedPoll(poll.id); }, [poll?.id]);
   // Seed the form once per poll, after the async fetch resolves.
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);
@@ -77,7 +75,7 @@ export function VotingPage() {
   }, [draftReady, draftKey, activeId, selectedId, comment]);
 
   if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在加载投票…</p></PageShell>;
-  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
   if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
