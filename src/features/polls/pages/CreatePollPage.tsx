@@ -105,16 +105,12 @@ export function CreatePollPage() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canEdit || !canCopy || !user || saving || uploadCount > 0) return;
-    const cleanOptions = options.map((option) => ({
+    const cleanOptions = options.map((option, index) => ({
       ...option,
-      name: option.name.trim(),
+      name: option.name.trim() || String.fromCharCode(65 + index),
     }));
     if (!title.trim()) {
       setError("請先寫下投票標題。");
-      return;
-    }
-    if (cleanOptions.some((option) => !option.name)) {
-      setError("請為每個選項填寫名稱。");
       return;
     }
     const endsAt =
@@ -159,7 +155,7 @@ export function CreatePollPage() {
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
-          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={draftReady !== draftKey || saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5 || options.some((option) => !option.name.trim())}>
+          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={draftReady !== draftKey || saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5}>
             {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
           </PurpleButton>
         </div>
@@ -194,7 +190,7 @@ export function CreatePollPage() {
 
         <div className="field-row">
           <div>
-            <label className="field-label">商品选项</label>
+            <label className="field-label">选项</label>
           </div>
           <span className="count-pill">{options.length}/5</span>
         </div>
@@ -206,7 +202,7 @@ export function CreatePollPage() {
                 onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">
                 <span className="option-letter">
-                  {String.fromCharCode(65 + index)} · 选项名称
+                  {String.fromCharCode(65 + index)} · 选项（可选）
                 </span>
                 <input
                   className="text-input compact-input"
@@ -215,7 +211,7 @@ export function CreatePollPage() {
                   onChange={(event) =>
                     updateOption(option.id, event.target.value)
                   }
-                  placeholder="例如：奶油白针织衫"
+                  placeholder={`留空则使用 ${String.fromCharCode(65 + index)}`}
                   maxLength={60}
                 />
               </div>
