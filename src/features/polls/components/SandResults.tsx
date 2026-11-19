@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { PointerEvent } from "react";
 import type { PollOption } from "../../../types/poll";
-import { sandBoundary, sandColors } from "../utils/sandGeometry";
+import { sandBoundary } from "../utils/sandGeometry";
+import { optionColors } from "../utils/optionColors";
 
 const grains = Array.from({ length: 620 }, (_, index) => ({
   x: ((index * 73.137) % 360),
@@ -67,7 +68,7 @@ export function SandResults({ options, counts }: { options: PollOption[]; counts
         path.closePath();
         ctx.save();
         ctx.clip(path);
-        ctx.fillStyle = sandColors[index % sandColors.length];
+        ctx.fillStyle = optionColors[index % optionColors.length];
         ctx.fillRect(0, 0, 360, 360);
         const shimmer = Math.sin(phase * .8 + index * .7) * 45;
         const sheen = ctx.createLinearGradient(shimmer, 0, 330 + shimmer, 360);

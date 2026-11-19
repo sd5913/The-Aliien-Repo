@@ -8,7 +8,7 @@ import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
 import { SandResults } from "../components/SandResults";
-import { sandColors } from "../utils/sandGeometry";
+import { optionColors } from "../utils/optionColors";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
 import { Modal } from "../../../components/ui/Modal";
@@ -117,7 +117,7 @@ export function ResultsPage() {
               <div className="result-option-row" key={option.id}>
                 <span
                   className="result-color"
-                  style={{ background: sandColors[index % sandColors.length] }}
+                  style={{ background: optionColors[index % optionColors.length] }}
                 />
                 <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>

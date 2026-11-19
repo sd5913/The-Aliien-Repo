@@ -10,6 +10,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
 import { getVoter } from "../utils/voting";
+import { optionColors } from "../utils/optionColors";
 
 export function VotingPage() {
   const { id = "" } = useParams();
@@ -67,8 +68,7 @@ export function VotingPage() {
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
-  const selectionColors = ["#e6b477", "#9eacf0", "#e9a2be", "#8bc9af", "#be9be6"];
-  const selectionColor = selectionColors[Math.max(0, selectedIndex) % selectionColors.length];
+  const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
   const saveVote = async () => {
     if (saving) return;
     if (!isPollOpen(poll)) { navigate(pollPath(poll.id, "results", returnTo), { replace: true }); return; }
