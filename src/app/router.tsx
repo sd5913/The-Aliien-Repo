@@ -10,19 +10,24 @@ import { AuthPage } from "../features/auth/pages/AuthPage";
 
 
 import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
+import { RouteFallback } from "./RouteFallback";
 import { RequireAccount } from "../features/auth/components/AccountProvider";
 
-export const router = createBrowserRouter([
-  { path: "/auth", element: <AuthPage /> },
-  { path: "/login", element: <AuthPage /> },
-  { path: "/", element: <HomePage /> },
-  { path: "/settings", element: <SettingsPage /> },
-  { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
-  { path: "/create", element: <RequireAccount><CreatePollPage /></RequireAccount> },
-  { path: "/join", element: <ParticipantLoginPage /> },
-  { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
-  { path: "/poll/:id", element: <VotingPage /> },
-  { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
-  { path: "/poll/:id/results", element: <ResultsPage /> },
-  { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },
-]);
+export const router = createBrowserRouter([{
+  errorElement: <RouteFallback />,
+  children: [
+    { path: "/auth", element: <AuthPage /> },
+    { path: "/login", element: <AuthPage /> },
+    { path: "/", element: <HomePage /> },
+    { path: "/settings", element: <SettingsPage /> },
+    { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
+    { path: "/create", element: <RequireAccount><CreatePollPage /></RequireAccount> },
+    { path: "/join", element: <ParticipantLoginPage /> },
+    { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
+    { path: "/poll/:id", element: <VotingPage /> },
+    { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
+    { path: "/poll/:id/results", element: <ResultsPage /> },
+    { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },
+    { path: "*", element: <RouteFallback missing /> },
+  ],
+}]);

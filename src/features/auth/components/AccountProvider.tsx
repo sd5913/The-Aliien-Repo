@@ -1,3 +1,4 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Navigate, useLocation } from "react-router-dom";
@@ -20,9 +21,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 }
 
 export function RequireAccount({ children }: { children: ReactNode }) {
+  const { t } = useLocale();
   const { user, loading } = useAccount();
   const location = useLocation();
-  if (loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline" role="status">正在确认账号登录状态…</p></PageShell>;
+  if (loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline" role="status">{t("auth.checking")}</p></PageShell>;
   if (!user) return <Navigate replace to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search + location.hash)}`} />;
   return <>{children}</>;
 }

@@ -20,7 +20,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
       expect(dimensions.width).toBeLessThanOrEqual(viewport.width + 1);
       expect(dimensions.height).toBeLessThanOrEqual(viewport.height + 1);
       if (path === '/') {
-        const nav = page.getByRole('navigation', { name: '主导航' }); const before = await nav.boundingBox();
+        const nav = page.getByRole('navigation', { name: '主選單' }); const before = await nav.boundingBox();
         await page.locator('.page-content').evaluate((element) => { element.scrollTop = element.scrollHeight; });
         const after = await nav.boundingBox(); expect(after.y).toBeCloseTo(before.y, 1);
         expect(after.y + after.height).toBeLessThanOrEqual(box.y + box.height + 1);
@@ -32,8 +32,8 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
         expect(footer.y + footer.height).toBeLessThanOrEqual(box.y + box.height + 1);
       }
       if (path === '/join') {
-        await page.getByRole('button', { name: '登录并参与' }).scrollIntoViewIfNeeded();
-        await expect(page.getByRole('button', { name: '登录并参与' })).toBeInViewport();
+        await page.getByRole('button', { name: '參與投票' }).scrollIntoViewIfNeeded();
+        await expect(page.getByRole('button', { name: '參與投票' })).toBeInViewport();
         await frame.screenshot({ path: info.outputPath('soft-login.png') });
       }
       if (path.endsWith('/results')) {

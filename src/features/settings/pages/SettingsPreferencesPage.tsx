@@ -1,3 +1,5 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
+import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
 import { clearParticipant } from "../../auth/utils/participant";
@@ -9,21 +11,22 @@ import { useUserSettings } from "../hooks/useUserSettings";
 import { ProfileSettingsSection } from "../components/ProfileSettingsSection";
 
 export function SettingsPreferencesPage() {
+  const { t } = useLocale();
   const { settings, loading, error, save } = useUserSettings();
   const navigate = useNavigate();
   const { user } = useAccount();
   const participant = useParticipant();
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<MessageKey | "">("");
   const [loggingOut, setLoggingOut] = useState(false);
 
   const toggleSetting = async (key: "cameraEnabled" | "photosEnabled" | "showNickname") => {
     const next = { ...settings, [key]: !settings[key] };
     try {
       await save(next);
-      setFeedback("偏好设置已更新");
+      setFeedback("settings.updated");
     } catch (error) {
       console.error("BothPls: could not save user settings.", error);
-      setFeedback("保存失败，请稍后重试。");
+      setFeedback("settings.saveFailed");
     }
   };
 
@@ -39,31 +42,31 @@ export function SettingsPreferencesPage() {
       navigate("/", { replace: true });
     } catch (cause) {
       console.error("BothPls: could not sign out.", cause);
-      setFeedback("退出登录失败，请稍后重试。");
+      setFeedback("settings.signOutFailed");
     } finally {
       setLoggingOut(false);
     }
   };
 
   return (
-    <PageShell title="设置" showHeaderTitle backTo="/settings">
+    <PageShell title={t("profile.settings")} showHeaderTitle backTo="/settings">
       <ProfileSettingsSection />
       <section className="settings-card">
-        <div className="settings-section-heading"><div><h2>应用权限</h2></div><span className="settings-heading-icon">✿</span></div>
-        <p className="settings-helper">仅保存你的偏好；不会请求设备权限。</p>
-        <SettingToggle disabled={loading || Boolean(error)} title="相机" checked={settings.cameraEnabled} onChange={() => void toggleSetting("cameraEnabled")} />
-        <SettingToggle disabled={loading || Boolean(error)} title="相册" checked={settings.photosEnabled} onChange={() => void toggleSetting("photosEnabled")} />
+        <div className="settings-section-heading"><div><h2>{t("settings.permissions")}</h2></div><span className="settings-heading-icon">✿</span></div>
+        <p className="settings-helper">{t("settings.permissionNote")}</p>
+        <SettingToggle disabled={loading || Boolean(error)} title={t("settings.camera")} checked={settings.cameraEnabled} onChange={() => void toggleSetting("cameraEnabled")} />
+        <SettingToggle disabled={loading || Boolean(error)} title={t("common.photos")} checked={settings.photosEnabled} onChange={() => void toggleSetting("photosEnabled")} />
       </section>
 
       <section className="settings-card privacy-card">
-        <div className="settings-section-heading"><div><h2>隐私设置</h2></div><span className="settings-heading-icon">♡</span></div>
-        <SettingToggle disabled={loading || Boolean(error)} title="在投票评论中显示昵称" description="关闭后，评论仅显示为匿名朋友" checked={settings.showNickname} onChange={() => void toggleSetting("showNickname")} />
-        <div className="privacy-note"><span>🔒</span><p>偏好按当前身份保存在本浏览器，账号昵称与头像同步到登录账号。</p></div>
+        <div className="settings-section-heading"><div><h2>{t("settings.privacy")}</h2></div><span className="settings-heading-icon">♡</span></div>
+        <SettingToggle disabled={loading || Boolean(error)} title={t("settings.showNickname")} description={t("settings.showNicknameHelp")} checked={settings.showNickname} onChange={() => void toggleSetting("showNickname")} />
+        <div className="privacy-note"><span>🔒</span><p>{t("settings.storageNote")}</p></div>
       </section>
-      {error && <p className="settings-feedback" role="alert">设置加载失败，请检查 Supabase 配置后重试。</p>}
-      {feedback && <p className="settings-feedback" role="status">{feedback}</p>}
+      {error && <p className="settings-feedback" role="alert">{t("settings.loadFailed")}</p>}
+      {feedback && <p className="settings-feedback" role="status">{t(feedback)}</p>}
       {(user || participant) && <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>
-        {loggingOut ? "正在退出…" : user ? "退出账号与当前身份" : "退出投票者身份"}
+        {loggingOut ? t("settings.signingOut") : user ? t("settings.signOut") : t("settings.leaveVoter")}
       </button>}
     </PageShell>
   );
