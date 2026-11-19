@@ -13,6 +13,10 @@ test('recent active poll opens voting directly for a participant', async ({ page
   await page.locator('.home-recent:not(.home-square)').getByRole('link', { name: '浏览器测试投票' }).click();
   await expect(page).toHaveURL(new RegExp(`/poll/${pollId}(\\?|$)`));
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
+  const comment = page.getByLabel('留句话吧');
+  const submit = page.getByRole('button', { name: '提交我的选择' });
+  expect(await comment.evaluate((element) => element.compareDocumentPosition(document.querySelector('.vote-cup-submit')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
+  await expect(submit).toHaveCSS('background-image', /linear-gradient/);
 });
 
 test('recent closed poll opens results', async ({ page }) => {

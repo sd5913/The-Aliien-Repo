@@ -167,12 +167,12 @@ export function VotingPage() {
           </svg>
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? `已选 ${letter(selectedIndex)}` : `选择 ${letter(activeIndex)}`}</span>
         </div>
-        <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{saving ? "提交中…" : existingVote ? "提交修改" : "提交我的选择"}</button>
       </section>
-      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
       <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
       <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
+      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{saving ? "提交中…" : existingVote ? "提交修改" : "提交我的选择"}</button>
+      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
       {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>

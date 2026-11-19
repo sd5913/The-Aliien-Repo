@@ -19,6 +19,7 @@ test('older polls stay out of the square until their owner chooses public', asyn
   state.polls[0].visibility_reviewed_at = null;
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '广场还没有公开投票' })).toBeVisible();
+  await expect(page.locator('.home-square .poll-card-list')).toHaveCount(0);
   await page.goto('/settings');
   await expect(page.getByText('这条旧投票目前不在广场展示。请选择是否公开。')).toBeVisible();
   await page.getByRole('button', { name: '公开到广场' }).click();
