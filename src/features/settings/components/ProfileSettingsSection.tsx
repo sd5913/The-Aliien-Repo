@@ -49,7 +49,7 @@ export function ProfileSettingsSection() {
       <form className="profile-form profile-edit-card" onSubmit={saveProfile}>
         <div className="avatar-picker-row">
           <div className="profile-avatar" aria-label={`当前头像 ${draft.avatar}`}>{draft.avatar}</div>
-          <div className="avatar-picker-copy"><strong>选择头像</strong><span>挑一个喜欢的糖果头像</span></div>
+          <div className="avatar-picker-copy"><strong>选择头像</strong><span>挑一个喜欢的头像</span></div>
         </div>
         <div className="avatar-options" role="group" aria-label="选择头像">{choices.map((avatar) => <button disabled={disabled} key={avatar} type="button" className={`avatar-option${draft.avatar === avatar ? " selected" : ""}`} aria-label={`选择头像 ${avatar}`} aria-pressed={draft.avatar === avatar} onClick={() => setDraft((current) => ({ ...current, avatar }))}>{avatar}</button>)}</div>
         <label className="field-label" htmlFor="settings-nickname">昵称</label>
