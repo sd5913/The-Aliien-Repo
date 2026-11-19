@@ -12,6 +12,7 @@ import {
   deleteCommentRemote,
   fetchPoll,
   fetchRecentPolls,
+  fetchSquarePolls,
   fetchOwnedPollsPage,
   submitVote,
   updatePollMeta,
@@ -32,11 +33,13 @@ function metaChanged(current: Poll, updated: Poll): boolean {
 
 type PollQuery =
   | { recent: true }
+  | { square: true }
   | { owned: true; ownedFilter?: "active" | "ended" }
   | { pollId: string | null; metadataOnly?: boolean };
 
 export function usePolls(query: PollQuery) {
   const recent = "recent" in query;
+  const square = "square" in query;
   const owned = "owned" in query;
   const ownedFilter = "owned" in query ? query.ownedFilter : undefined;
   const pollId = "pollId" in query ? query.pollId : null;
@@ -64,7 +67,8 @@ export function usePolls(query: PollQuery) {
     try {
       const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
       let data = page?.polls ?? [];
-      if (recent) data = await fetchRecentPolls(participant);
+      if (recent) data = await fetchRecentPolls(participant, user?.id);
+      if (square) data = await fetchSquarePolls();
       if (pollId) {
         const poll = await fetchPoll(pollId, metadataOnly);
         data = poll ? [poll] : [];
@@ -78,7 +82,7 @@ export function usePolls(query: PollQuery) {
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [accountId, recent, owned, ownedFilter, pollId, metadataOnly]);
+  }, [accountId, recent, square, owned, ownedFilter, pollId, metadataOnly]);
 
   const loadMore = useCallback(async () => {
     if (!owned || !user?.id || !hasMore || loadingMoreRef.current || loading) return;

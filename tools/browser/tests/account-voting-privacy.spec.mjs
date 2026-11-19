@@ -3,14 +3,13 @@ import { mockApp, pollId } from './fixtures.mjs';
 
 test('signed-in account votes without opening the participant login page', async ({ page }) => {
   const state = await mockApp(page, { accountId: '10000000-0000-4000-8000-000000000099' });
-  await page.goto('/');
-  await page.getByRole('link', { name: '浏览器测试投票' }).click();
+  await page.goto(`/poll/${pollId}`);
   await expect(page).toHaveURL(new RegExp(`/poll/${pollId}(\\?|$)`));
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
   expect(state.calls.some((call) => call.name === 'register_participant')).toBe(true);
 });
 
-test('new poll is private and appears in my polls but not recent polls', async ({ page }) => {
+test('new poll is private, appears in my polls and recent polls as its creator', async ({ page }) => {
   const state = await mockApp(page);
   await page.goto('/create');
   await expect(page.getByRole('checkbox', { name: '公开投票', exact: false })).not.toBeChecked();
@@ -21,7 +20,7 @@ test('new poll is private and appears in my polls but not recent polls', async (
   expect(state.calls.find((call) => call.name === 'save_poll')?.body.p_poll.isPublic).toBe(false);
   await page.getByRole('button', { name: '关闭分享' }).click();
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '仅自己可见的投票' })).toHaveCount(0);
+  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '仅自己可见的投票' })).toBeVisible();
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: '仅自己可见的投票' })).toBeVisible();
 });

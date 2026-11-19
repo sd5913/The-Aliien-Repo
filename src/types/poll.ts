@@ -39,6 +39,7 @@ export interface Poll {
   createdAt: string;
   creatorId?: string;
   isPublic?: boolean;
+  visibilityReviewedAt?: string | null;
   commentsPublic?: boolean;
   endsAt?: string;
   status: PollStatus;

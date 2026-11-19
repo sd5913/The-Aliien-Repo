@@ -60,7 +60,7 @@ Reaching the deadline also produces final results. Duplication excludes original
 
 | Situation | Rule |
 | --- | --- |
-| Browsing | Home, Profile, and Results allow unsigned access; open voting requires soft login |
+| Browsing | Home, Profile, and Results allow unsigned access; the Home square shows public polls to visitors and soft-login users; Recent polls contains only polls created or participated in by the current identity, not polls merely viewed |
 | Create / manage | Registered accounts create polls; only owners edit, end, or delete their polls |
 | Select / submit | Single choice; confirmation triggers pouring, followed by separate submission; optional comment is submitted with the vote |
 | Vote changes | Allowed while open; only the current identity's latest valid selection counts |
@@ -76,4 +76,5 @@ Reaching the deadline also produces final results. Duplication excludes original
 - Creation and voting drafts are scoped by identity, cleared after successful submission, and retained for retries after failure.
 - Submission uses server state and time; expired or closed polls reject submissions.
 - Results refresh about every 10 seconds and on visibility or network recovery.
+- Poll loading failures for visitors and soft-login users use the generic “Poll loading failed. Please try again later.” message; Home Recent polls and Square provide retry actions instead of exposing Supabase configuration errors.
 - Permission errors, loading failures, and missing links provide feedback and safe exits without forcing participants into creator login.
