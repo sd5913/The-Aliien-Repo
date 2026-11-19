@@ -515,10 +515,6 @@ h1, h2, h3 { color: var(--deep-purple); }
 .logout-button:disabled { cursor: wait; opacity: .6; }
 
 .auth-page { position: relative; padding: 12px 4px 32px; }
-.auth-hero { position: absolute; top: -6px; right: 7px; width: 82px; height: 75px; color: #c084fc; font-size: 41px; transform: rotate(11deg); }
-.auth-hero span { position: absolute; top: 2px; left: 10px; }
-.auth-hero i { position: absolute; right: 5px; bottom: 3px; color: #f0abfc; font-size: 31px; font-style: normal; }
-.auth-hero b { position: absolute; right: 37px; top: 39px; color: #a78bfa; font-size: 17px; }
 .auth-page > .eyebrow { display: block; margin-top: 25px; }
 .auth-page h1 { margin: 9px 0 7px; font-size: 29px; letter-spacing: -.8px; }
 .auth-subtitle { margin: 0 0 22px; color: #8062a4; font-size: 12px; line-height: 1.6; }

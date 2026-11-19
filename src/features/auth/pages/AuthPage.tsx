@@ -72,7 +72,6 @@ export function AuthPage() {
   return (
     <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to={returnTo}>先逛逛</Link>}>
       <section className="auth-page">
-        <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>
         <h1>{mode === "login" ? "欢迎回来！" : "加入 BothPls"}</h1>
         <p className="auth-subtitle">{mode === "login" ? "打开邮箱中的登录链接，继续和朋友一起做决定。" : "注册一个账号，把每次选择都变得更轻松。"}</p>
