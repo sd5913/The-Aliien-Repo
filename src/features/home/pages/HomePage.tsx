@@ -8,6 +8,8 @@ import { Toast } from "../../../components/ui/Toast";
 import { PollCard } from "../../polls/components/PollCard";
 import { usePolls } from "../../polls/hooks/usePolls";
 import { isPollOwner } from "../../polls/utils/voting";
+import { isPollOpen } from "../../../components/ui/StatusPill";
+import { pollPath } from "../../polls/utils/navigation";
 import type { Poll } from "../../../types/poll";
 import { useParticipant } from "../../auth/utils/useParticipant";
 
@@ -72,7 +74,7 @@ export function HomePage() {
       </section>
       <section className="home-recent">
         <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div><Link className="subtle-link" to="/settings#my-polls">查看全部 →</Link></div>
-        {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={`/poll/${poll.id}/results`} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : (
+        {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : recent.length ? <div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : (
           <div className="empty-state"><div className="empty-art" aria-hidden="true"><span>☁</span><i>♡</i></div><h3>还没有投票哦</h3><p>创建一个小问题，邀请朋友帮你选。</p><Link className="purple-button" to="/create">开始创建</Link></div>
         )}
       </section>
