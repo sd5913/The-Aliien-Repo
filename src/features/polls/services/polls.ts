@@ -16,6 +16,7 @@ interface PollRow {
   created_at: string;
   closed_at: string | null;
   poll_options: OptionRow[] | null;
+  votes?: { count: number }[] | null;
 }
 
 interface OptionRow {
@@ -82,6 +83,46 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
 
 const POLL_SELECT =
   "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+
+const CARD_SELECT =
+  "id,title,description,status,owner_id,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+
+function toCard(row: PollRow): Poll {
+  return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
+}
+
+export const OWNED_POLL_PAGE_SIZE = 12;
+
+export async function fetchOwnedPollsPage(ownerId: string, offset: number, filter?: "active" | "ended"): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  let query = supabase.from("polls").select(CARD_SELECT).eq("owner_id", ownerId)
+    .order("created_at", { ascending: false }).order("id", { ascending: false })
+    .range(offset, offset + OWNED_POLL_PAGE_SIZE);
+  const now = new Date().toISOString();
+  if (filter === "active") query = query.eq("status", "open").or(`closed_at.is.null,closed_at.gt.${now}`);
+  if (filter === "ended") query = query.or(`status.eq.closed,closed_at.lte.${now}`);
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as PollRow[];
+  return { polls: rows.slice(0, OWNED_POLL_PAGE_SIZE).map(toCard), hasMore: rows.length > OWNED_POLL_PAGE_SIZE };
+}
+
+export async function fetchRecentPolls(ownerId?: string): Promise<Poll[]> {
+  const latestQuery = supabase.from("polls").select(CARD_SELECT)
+    .order("created_at", { ascending: false }).limit(5);
+  const [latestResult, ownedResult] = await Promise.all([
+    latestQuery,
+    ownerId ? supabase.from("polls").select(CARD_SELECT).eq("owner_id", ownerId)
+      .order("created_at", { ascending: false }).limit(5) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (latestResult.error) throw latestResult.error;
+  if (ownedResult.error) throw ownedResult.error;
+
+  const rows = [...(ownedResult.data ?? []), ...(latestResult.data ?? [])] as unknown as PollRow[];
+  const unique = [...new Map(rows.map((row) => [row.id, row])).values()];
+  const owned = unique.filter((row) => row.owner_id === ownerId);
+  const others = unique.filter((row) => row.owner_id !== ownerId);
+  return [...owned, ...others].slice(0, 5).map(toCard);
+}
 
 export async function fetchPolls(): Promise<Poll[]> {
   const { data, error } = await supabase

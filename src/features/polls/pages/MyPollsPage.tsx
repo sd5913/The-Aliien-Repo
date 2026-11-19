@@ -2,7 +2,7 @@ import { useAccount } from "../../auth/components/AccountProvider";
 import { isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
@@ -174,7 +174,7 @@ function MyPollCard({
             <h3>{poll.title}</h3>
           </Link>
           <p className="my-poll-ticket-status">
-            {isPollOpen(poll) ? "进行中" : "已结束"} · {poll.votes.length} 票
+            {isPollOpen(poll) ? "进行中" : "已结束"} · {poll.voteCount ?? poll.votes.length} 票
           </p>
           <p className="my-poll-deadline">截止时间：{deadline}</p>
           <button className="my-poll-share" onClick={share} aria-label="分享投票">
@@ -187,8 +187,9 @@ function MyPollCard({
 }
 
 export function MyPollsSection({ showCreateButton = true, personalPageStyle = false }: { showCreateButton?: boolean; personalPageStyle?: boolean }) {
-  const { polls, loading, error, removePoll, updatePoll } = usePolls();
   const [filter, setFilter] = useState<Filter>("全部");
+  const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, removePoll, updatePoll } = usePolls({ owned: true, ownedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" : "ended" });
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
@@ -196,7 +197,16 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
   const [toast, setToast] = useState(typeof location.state?.toast === "string" ? location.state.toast : "");
   const { user: accountUser } = useAccount();
   const ownedPolls = polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? ""));
-  const filtered = ownedPolls.filter((poll) => filter === "全部" || (filter === "进行中" ? isPollOpen(poll) : !isPollOpen(poll)));
+  const filtered = ownedPolls;
+
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore || syncError || !loadMoreRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void loadMore();
+    }, { rootMargin: "300px" });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, syncError, loadMore]);
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -228,6 +238,8 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
       <div className="page-heading my-heading"><div><span className="eyebrow">收集每一个小想法</span><h1>我的投票</h1></div>{showCreateButton && <Link to="/create" className="purple-button create-shortcut">＋ 创建投票</Link>}</div>
       <div className="filter-tabs" role="tablist">{(["全部", "进行中", "已结束"] as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{tab}</button>)}</div>
       {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p> : filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{ownedPolls.length ? "这里暂时没有这类投票" : "还没有投票哦"}</h3><p>创建一个小问题，邀请朋友帮你选。</p>{showCreateButton && <Link to="/create" className="purple-button">＋ 创建投票</Link>}</div>}
+      {hasMore && <div ref={loadMoreRef} className="my-poll-load-more"><button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "正在加载更多…" : "加载更多投票"}</button></div>}
+      {syncError && <p className="settings-feedback" role="alert">加载更多失败，请点击“加载更多投票”重试。</p>}
       {ending && <Modal title="确定结束这次投票吗？" onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>取消</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>确认结束</button></>}><p>结束后不能继续投票或修改选择，结果和评论将公开。</p></Modal>}
       {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}
       {toast && <Toast message={toast} onClose={() => setToast("")} />}

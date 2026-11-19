@@ -11,6 +11,8 @@ import {
   updateCommentRemote,
   deleteCommentRemote,
   fetchPolls,
+  fetchRecentPolls,
+  fetchOwnedPollsPage,
   submitVote,
   updatePollMeta,
 } from "../services/polls";
@@ -27,7 +29,7 @@ function metaChanged(current: Poll, updated: Poll): boolean {
   );
 }
 
-export function usePolls() {
+export function usePolls({ recent = false, owned = false, ownedFilter }: { recent?: boolean; owned?: boolean; ownedFilter?: "active" | "ended" } = {}) {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -40,14 +42,19 @@ export function usePolls() {
   const mounted = useRef(false);
   const initialized = useRef(false);
   const [syncError, setSyncError] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
+  const loadedCount = useRef(0);
 
   const refresh = useCallback(async () => {
     const sequence = ++requestSequence.current;
     const revision = version.current;
     try {
-      const data = await fetchPolls();
+      const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
+      const data = owned ? page?.polls ?? [] : recent ? await fetchRecentPolls(user?.id) : await fetchPolls();
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
-      pollsRef.current = data; setPolls(data); setError(null); setSyncError(false); initialized.current = true;
+      pollsRef.current = data; loadedCount.current = page?.polls.length ?? 0; setPolls(data); setHasMore(page?.hasMore ?? false); setError(null); setSyncError(false); initialized.current = true;
     } catch (cause) {
       if (!mounted.current || sequence !== requestSequence.current) return;
       if (!initialized.current) setError(cause instanceof Error ? cause : new Error(String(cause)));
@@ -55,18 +62,35 @@ export function usePolls() {
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, recent, owned, ownedFilter]);
+
+  const loadMore = useCallback(async () => {
+    if (!owned || !user?.id || !hasMore || loadingMoreRef.current || loading) return;
+    loadingMoreRef.current = true; setLoadingMore(true);
+    const sequence = requestSequence.current;
+    const revision = version.current;
+    try {
+      const page = await fetchOwnedPollsPage(user.id, loadedCount.current, ownedFilter);
+      if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
+      const next = [...pollsRef.current, ...page.polls.filter((poll) => !pollsRef.current.some((existing) => existing.id === poll.id))];
+      loadedCount.current += page.polls.length; pollsRef.current = next; setPolls(next); setHasMore(page.hasMore); setSyncError(false);
+    } catch {
+      if (mounted.current && sequence === requestSequence.current) setSyncError(true);
+    } finally {
+      loadingMoreRef.current = false; if (mounted.current) setLoadingMore(false);
+    }
+  }, [owned, user?.id, hasMore, loading, ownedFilter]);
 
   useEffect(() => {
     mounted.current = true; initialized.current = false; setLoading(true);
-    pollsRef.current = []; setPolls([]);
+    pollsRef.current = []; loadedCount.current = 0; setPolls([]); setHasMore(false);
     void refresh();
     const check = () => { if (!document.hidden && navigator.onLine) void refresh(); };
-    const timer = window.setInterval(check, 10000);
+    const timer = recent || owned ? undefined : window.setInterval(check, 10000);
     window.addEventListener("focus", check); window.addEventListener("online", check);
     document.addEventListener("visibilitychange", check);
     return () => {
-      mounted.current = false; ++requestSequence.current; window.clearInterval(timer);
+      mounted.current = false; ++requestSequence.current; if (timer !== undefined) window.clearInterval(timer);
       window.removeEventListener("focus", check); window.removeEventListener("online", check);
       document.removeEventListener("visibilitychange", check);
     };
@@ -160,5 +184,5 @@ export function usePolls() {
     setPolls(next);
   }, []);
 
-  return { polls, loading, error, syncError, refresh, savePoll, updatePoll, removePoll, editComment, deleteComment };
+  return { polls, loading, loadingMore, hasMore, loadMore, error, syncError, refresh, savePoll, updatePoll, removePoll, editComment, deleteComment };
 }

@@ -43,6 +43,7 @@ export interface Poll {
   status: PollStatus;
   options: PollOption[];
   votes: Vote[];
+  voteCount?: number;
   comments: PollComment[];
 }
 

@@ -12,7 +12,7 @@ import type { Poll } from "../../../types/poll";
 import { useParticipant } from "../../auth/utils/useParticipant";
 
 export function HomePage() {
-  const { polls, loading, error, removePoll, updatePoll } = usePolls();
+  const { polls, loading, error, removePoll, updatePoll } = usePolls({ recent: true });
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
@@ -25,7 +25,7 @@ export function HomePage() {
   const recent = [
     ...polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? "")),
     ...polls.filter((poll) => !isPollOwner(poll, accountUser?.id ?? "")),
-  ].slice(0, 3);
+  ].slice(0, 5);
 
   const confirmDelete = async () => {
     if (!deleting) return;
