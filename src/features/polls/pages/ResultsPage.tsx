@@ -15,6 +15,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import type { PollComment } from "../../../types/poll";
 import { rememberViewedPoll } from "../utils/recentHistory";
+import { AppIcon } from "../../../components/ui/AppIcon";
 
 export function ResultsPage() {
   const { id = "" } = useParams();
@@ -22,22 +23,32 @@ export function ResultsPage() {
   const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls({ pollId: id });
   const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
+  const { user: accountUser } = useAccount();
   useEffect(() => { if (poll) rememberViewedPoll(poll.id); }, [poll?.id]);
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
   useEffect(() => {
-    if (poll && new URLSearchParams(location.search).get("share") === "1" && !openedShare) {
+    if (poll && isPollOwner(poll, accountUser?.id ?? "") && new URLSearchParams(location.search).get("share") === "1" && !openedShare) {
       setOpenedShare(true);
       openShare(poll);
     }
-  }, [poll, location.search, openedShare, openShare]);
+  }, [poll, accountUser?.id, location.search, openedShare, openShare]);
   const [voter] = useState(getVoter);
-  const { user: accountUser } = useAccount();
   const [exitOpen, setExitOpen] = useState(false);
   const [closeHint, setCloseHint] = useState(false);
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentFeedback, setCommentFeedback] = useState(location.state?.published ? "发布成功，分享给朋友来投票吧" : location.state?.saved ? "修改已保存" : "");
+  const shareResult = async () => {
+    if (!poll || !isPollOwner(poll, accountUser?.id ?? "")) return;
+    const url = `${window.location.origin}/poll/${encodeURIComponent(poll.id)}/results`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCommentFeedback("结果链接已复制");
+    } catch {
+      setCommentFeedback("复制失败，请从地址栏复制结果链接");
+    }
+  };
   const confirmCommentDelete = async () => {
     if (!deletingComment || commentBusy) return;
     setCommentBusy(true);
@@ -105,7 +116,6 @@ export function ResultsPage() {
         <h1>{poll.title}</h1>
         <p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p>
       </div>
-      <button className="button-soft result-share-button" type="button" onClick={() => openShare(poll)}>分享投票</button>
       {syncError && <p className="field-hint" role="status">结果更新暂时失败，已保留上次数据；网络恢复后会重试。</p>}
       {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? `平票 · ${leaderText} 并列领先` : `${leaderText} ${open ? "当前领先" : "获得最多选择"}`}</p>}
       <SandResults options={poll.options} counts={counts} />
@@ -118,10 +128,7 @@ export function ResultsPage() {
               : 0;
             return (
               <div className="result-option-row" key={option.id}>
-                <span
-                  className="result-color"
-                  style={{ background: optionColors[index % optionColors.length] }}
-                />
+                {option.imageUrl ? <img className="result-option-image" src={option.imageUrl} alt="" /> : <span className="result-color" style={{ background: optionColors[index % optionColors.length] }} />}
                 <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>
                   {count} 票 · {percent}%
@@ -163,6 +170,7 @@ export function ResultsPage() {
           {poll.votes.some((vote) => vote.voter.id === voter.id) ? "修改我的投票" : "参与投票"} <span>↗</span>
         </Link>
       )}
+      {owner && <button className="result-share-icon" type="button" onClick={() => void shareResult()} aria-label="分享结果" title="分享结果"><AppIcon name="share" size={24} /></button>}
       </div>
       {deletingComment && <Modal title="确定删除这条评论吗？" onClose={() => { if (!commentBusy) setDeletingComment(null); }} actions={<>
         <button className="button-soft" disabled={commentBusy} onClick={() => setDeletingComment(null)}>取消</button>

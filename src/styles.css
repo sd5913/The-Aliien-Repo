@@ -577,6 +577,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .results-redesign .result-option-row strong { font-size: 13px; overflow-wrap: anywhere; }
 .results-redesign .result-option-row > span:last-child { flex-shrink: 0; }
 .results-redesign .result-color { width: 26px; height: 26px; border-radius: 8px; border: 1px solid #ffffffbb; box-shadow: inset 0 0 0 2px #ffffff40, 0 3px 7px #9c6bc31a; }
+.results-redesign .result-option-image { width: 42px; height: 42px; flex: 0 0 42px; border: 2px solid #ffffffd9; border-radius: 10px; object-fit: cover; background: #f3e7fc; box-shadow: 0 3px 8px #9c6bc326; }
+.result-share-icon { display: grid; width: 48px; height: 48px; place-items: center; margin: 24px auto 8px; border: 1px solid #ffffffd9; border-radius: 50%; background: #ffffffa8; box-shadow: 0 5px 16px #8b5cf629; cursor: pointer; }
 .results-redesign .comments-section { margin-top: 24px; }
 .results-redesign .comment-row { background: transparent; border: 0; border-bottom: 1px solid #ddc6ef66; border-radius: 0; padding: 13px 2px; }
 .results-redesign .comment-avatar { width: 39px; height: 39px; flex-basis: 39px; }
