@@ -103,6 +103,7 @@ export function ResultsPage() {
         <h1>{poll.title}</h1>
         <p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p>
       </div>
+      <button className="button-soft result-share-button" type="button" onClick={() => openShare(poll)}>分享投票</button>
       {syncError && <p className="field-hint" role="status">结果更新暂时失败，已保留上次数据；网络恢复后会重试。</p>}
       {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? `平票 · ${leaderText} 并列领先` : `${leaderText} ${open ? "当前领先" : "获得最多选择"}`}</p>}
       <SandResults options={poll.options} counts={counts} />

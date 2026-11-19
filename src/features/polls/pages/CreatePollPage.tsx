@@ -41,6 +41,7 @@ export function CreatePollPage() {
   );
 
   const [deadline, setDeadline] = useState("none");
+  const [isPublic, setIsPublic] = useState(false);
   const [options, setOptions] = useState<PollOption[]>(
     editingPoll?.options ?? [makeOption(), makeOption()],
   );
@@ -55,19 +56,20 @@ export function CreatePollPage() {
     const saved = readDraft(draftKey, isCreateDraft);
     if (saved) {
       setTitle(saved.title); setDescription(saved.description); setOptions(saved.options);
-      setDeadline(saved.deadline); setNewPollId(saved.pollId); setDraftNotice("已恢复上次未提交的草稿");
+      setDeadline(saved.deadline); setIsPublic(saved.isPublic ?? (editingId ? Boolean(source?.isPublic) : false)); setNewPollId(saved.pollId); setDraftNotice("已恢复上次未提交的草稿");
     } else if (source) {
       setTitle(source.title); setDescription(source.description);
       setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
       setDeadline(editingId && source.endsAt ? "custom" : "none");
+      setIsPublic(editingId ? Boolean(source.isPublic) : false);
     }
     setDraftReady(draftKey);
   }, [editingId, copyId, editingPoll, copySource, draftKey]);
 
   useEffect(() => {
     if (draftReady !== draftKey || loading || !user) return;
-    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, options })) setDraftNotice("当前浏览器无法保存草稿，请勿关闭页面");
-  }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, options]);
+    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, isPublic, options })) setDraftNotice("当前浏览器无法保存草稿，请勿关闭页面");
+  }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, isPublic, options]);
 
   if (loading)
     return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
@@ -127,6 +129,7 @@ export function CreatePollPage() {
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
       creatorId: user.id,
+      isPublic,
       commentsPublic: editingPoll?.commentsPublic ?? true,
       ...(endsAt ? { endsAt } : {}),
       status: editingPoll?.status ?? "open",
@@ -266,6 +269,10 @@ export function CreatePollPage() {
             )}
           </select>
         </div>
+        <label className="poll-visibility-choice">
+          <input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} />
+          <span>公开投票<small>公开后会显示在最近投票；不公开时也可通过分享链接邀请朋友参与。</small></span>
+        </label>
         {error && (
           <p className="form-error" role="alert">
             {error}

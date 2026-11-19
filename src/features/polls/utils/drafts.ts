@@ -1,6 +1,6 @@
 import type { PollOption } from "../../../types/poll";
 
-export interface CreateDraft { pollId: string; title: string; description: string; deadline: string; options: PollOption[] }
+export interface CreateDraft { pollId: string; title: string; description: string; deadline: string; isPublic?: boolean; options: PollOption[] }
 export interface VoteDraft { activeId: string; selectedId: string; comment: string }
 export function readDraft<T>(key: string, validate: (value: unknown) => value is T): T | null {
   try {
@@ -19,6 +19,7 @@ export function isCreateDraft(value: unknown): value is CreateDraft {
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return typeof draft.pollId === "string" && uuid.test(draft.pollId) && typeof draft.title === "string" && draft.title.length <= 100 &&
     typeof draft.description === "string" && draft.description.length <= 300 && ["none", "custom", "24", "72", "168"].includes(draft.deadline) &&
+    (draft.isPublic === undefined || typeof draft.isPublic === "boolean") &&
     Array.isArray(draft.options) && draft.options.length >= 2 && draft.options.length <= 5 && draft.options.every((option) =>
       option && typeof option.id === "string" && uuid.test(option.id) && typeof option.name === "string" && option.name.length <= 60 && (option.imageUrl === undefined || typeof option.imageUrl === "string"));
 }

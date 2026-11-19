@@ -41,12 +41,25 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       state.calls.push({ name, body });
       if (name === 'save_poll') {
         const poll = body.p_poll;
-        state.polls = [{ ...poll, owner_id: accountId, author_name: accountId, created_at: poll.createdAt, closed_at: poll.endsAt ?? null,
+        state.polls = [{ ...poll, is_public: poll.isPublic ?? false, owner_id: accountId, author_name: accountId, created_at: poll.createdAt, closed_at: poll.endsAt ?? null,
           poll_options: poll.options.map((o,i) => ({ id: o.id, poll_id: poll.id, label: o.name, image_url: o.imageUrl, position: i })) }];
         return reply(poll.id);
       }
       if (name === 'close_poll') state.polls[0].status = 'closed';
       if (name === 'register_participant') return reply('70000000-0000-4000-8000-000000000001');
+      if (name === 'get_poll_by_link') {
+        const poll = state.polls.find((item) => item.id === body.p_poll_id);
+        return reply(poll ? { poll, votes: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id), comments: [] } : null);
+      }
+      if (name === 'my_voted_polls') {
+        const votedIds = new Set((state.votes ?? []).filter((vote) => vote.voter_id === body.p_voter_id).map((vote) => vote.poll_id));
+        return reply(state.polls.filter((poll) => votedIds.has(poll.id)).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
+      }
+      if (name === 'submit_ballot') {
+        const vote = { id: '90000000-0000-4000-8000-000000000001', poll_id: body.p_poll_id, voter_id: body.p_voter_id, ranking: body.p_ranking, created_at: new Date().toISOString() };
+        state.votes = [...(state.votes ?? []).filter((item) => item.poll_id !== vote.poll_id || item.voter_id !== vote.voter_id), vote];
+        return reply(null);
+      }
       return reply(name === 'own_comments' ? [] : null);
     }
     if (url.pathname.startsWith('/rest/v1/')) state.requests.push({ path: url.pathname, search: url.search, prefer: request.headers().prefer });
@@ -55,9 +68,12 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       const idFilter = url.searchParams.get('id');
       if (idFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.id === idFilter.slice(3));
       const ownerFilter = url.searchParams.get('owner_id');
+      const publicFilter = url.searchParams.get('is_public');
       const statusFilter = url.searchParams.get('status');
       const orFilter = url.searchParams.get('or');
       if (ownerFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.owner_id === ownerFilter.slice(3));
+      rows = rows.filter((poll) => poll.is_public || poll.owner_id === accountId);
+      if (publicFilter?.startsWith('eq.')) rows = rows.filter((poll) => String(poll.is_public) === publicFilter.slice(3));
       if (statusFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.status === statusFilter.slice(3));
       if (orFilter?.includes('status.eq.closed')) rows = rows.filter((poll) => poll.status === 'closed' || (poll.closed_at && Date.parse(poll.closed_at) <= Date.now()));
       if (orFilter?.includes('closed_at.is.null')) rows = rows.filter((poll) => !poll.closed_at || Date.parse(poll.closed_at) > Date.now());
