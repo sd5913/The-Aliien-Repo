@@ -44,7 +44,7 @@ body { height: 100dvh; overflow: hidden; background: #f3f4f6; }
 button, input, textarea, select { font: inherit; }
 /* Display: headings, button labels, and brand names. */
 h1, h2, h3, h4, h5, h6, button, [role="button"],
-.purple-button, .auth-quick-link, .subtle-link, .nav-item,
+.purple-button, .auth-quick-link, .home-auth-banner-link, .subtle-link, .nav-item,
 .brand-copy strong, .participant-brand strong, .topbar-title,
 .eyebrow, .carousel-option-label > span, .vote-cup-label {
   font-family: var(--font-display);
