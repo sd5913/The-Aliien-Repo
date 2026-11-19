@@ -12,7 +12,9 @@ final class BothPlsViewController: CAPBridgeViewController {
 final class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "AppleSignInPlugin"
     let jsName = "AppleSignIn"
-    let pluginMethods = [CAPPluginMethod(name: "authorize", returnType: CAPPluginReturnPromise)]
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "authorize", returnType: CAPPluginReturnPromise)
+    ]
 
     private var authorization: AppleAuthorization?
 
