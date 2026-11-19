@@ -19,8 +19,9 @@ export function HomePage() {
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
-  const { user: accountUser } = useAccount();
+  const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const recent = polls;
 
   const confirmDelete = async () => {
@@ -50,6 +51,11 @@ export function HomePage() {
 
   return (
     <PageShell>
+      {!accountLoading && !accountUser && !bannerDismissed && <aside className="home-auth-banner" aria-label="注册或登录提示">
+        <button className="home-auth-banner-close" type="button" aria-label="关闭注册提示" onClick={() => setBannerDismissed(true)}>×</button>
+        <p>{participant ? "喜欢和朋友一起做选择？注册账号，发起自己的投票。" : "现在就加入 BothPls，和朋友一起做决定。"}</p>
+        <Link to="/auth" className="home-auth-banner-link">注册或登录 <span aria-hidden="true">↗</span></Link>
+      </aside>}
       <section className="home-welcome">
         <span className="eyebrow">HELLO, FRIENDS ✨</span>
         <h1>一个人难选？<br />我们一起选。</h1>

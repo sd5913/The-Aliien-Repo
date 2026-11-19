@@ -18,7 +18,7 @@ export function AuthPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const mode: AuthMode = searchParams.get("mode") === "register" ? "register" : "login";
+  const mode: AuthMode = searchParams.get("mode") === "login" ? "login" : "register";
   const requestedReturnTo = searchParams.get("returnTo");
   const returnTo = accountReturnTo(requestedReturnTo);
   const { user, loading: accountLoading } = useAccount();
@@ -39,7 +39,7 @@ export function AuthPage() {
 
   const switchMode = (nextMode: AuthMode) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (nextMode === "register") nextParams.set("mode", "register");
+    if (nextMode === "login") nextParams.set("mode", "login");
     else nextParams.delete("mode");
     setSearchParams(nextParams);
     setFeedback("");
@@ -52,8 +52,8 @@ export function AuthPage() {
     setProviderError("");
     const cleanEmail = email.trim();
     const cleanNickname = nickname.trim();
-    if (!cleanEmail || (mode === "register" && !cleanNickname)) {
-      setFeedback(mode === "register" ? "请填写昵称和邮箱。" : "请填写邮箱。");
+    if (!cleanEmail) {
+      setFeedback("请填写邮箱。");
       return;
     }
     setPending("email");
@@ -61,7 +61,7 @@ export function AuthPage() {
     try {
       const result = await sendMagicLink(cleanEmail, mode === "register" ? cleanNickname : undefined, returnTo);
       if (result.error) throw result.error;
-      setFeedback("登录链接已发送，请打开邮箱并点击邮件中的链接。链接只能使用一次，有效期为一小时。 ");
+      setFeedback("邮箱链接已发送，请打开邮箱完成登录或注册。链接只能使用一次，有效期为一小时。");
     } catch (error) {
       setFeedback(getAuthErrorMessage(error instanceof Error ? error.message : ""));
     } finally {
@@ -97,10 +97,11 @@ export function AuthPage() {
         </div>
 
         <form className="auth-form" onSubmit={submit}>
-          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">昵称</label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder="朋友们会这样称呼你" autoComplete="nickname" /></>}
+          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">昵称 <span className="optional">可选</span></label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder="朋友们会这样称呼你" autoComplete="nickname" /></>}
           <label className="field-label" htmlFor="auth-email">邮箱</label>
           <input id="auth-email" className="text-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" />
-          <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{pending === "email" ? "发送中…" : "发送登录链接"}</button>
+          <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{pending === "email" ? "发送中…" : "继续使用邮箱"}</button>
+          <p className="auth-mode-prompt">{mode === "register" ? "已有账户？" : "还没有账户？"} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{mode === "register" ? "去登录" : "去注册"}</button></p>
         </form>
 
         <div className="auth-divider" aria-hidden="true">或</div>
