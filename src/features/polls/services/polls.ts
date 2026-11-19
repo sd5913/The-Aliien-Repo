@@ -124,38 +124,34 @@ export async function fetchRecentPolls(ownerId?: string): Promise<Poll[]> {
   return [...owned, ...others].slice(0, 5).map(toCard);
 }
 
-export async function fetchPolls(): Promise<Poll[]> {
-  const { data, error } = await supabase
-    .from("polls")
-    .select(POLL_SELECT)
-    .order("created_at", { ascending: false });
+export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {
+  if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(pollId)) return null;
 
+  const { data, error } = await supabase.from("polls").select(POLL_SELECT).eq("id", pollId).maybeSingle();
   if (error) throw error;
+  if (!data) return null;
 
-  const pollRows = (data ?? []) as unknown as PollRow[];
-  const pollIds = pollRows.map((row) => row.id);
+  const row = data as unknown as PollRow;
+  if (metadataOnly) return toPollView(row, [], []);
 
-  let voteRows: VoteRow[] = [];
-  let commentRows: CommentRow[] = [];
-  if (pollIds.length > 0) {
-    const participant = readParticipant();
-    const [votesResult, commentsResult, ownResult] = await Promise.all([
-      supabase.from("votes").select("id,poll_id,voter_id,ranking,created_at").in("poll_id", pollIds),
-      supabase.from("poll_comments").select("id,poll_id,voter_id,nickname,avatar,body,option_id,created_at").in("poll_id", pollIds).order("created_at"),
-      participant ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
-    ]);
-    if (votesResult.error) throw votesResult.error;
-    if (commentsResult.error) throw commentsResult.error;
-    if (ownResult.error) throw ownResult.error;
-    voteRows = (votesResult.data ?? []) as VoteRow[];
-    const merged = new Map<string, CommentRow>();
-    for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) merged.set(comment.id, comment);
-    commentRows = [...merged.values()].sort((a,b) => a.created_at.localeCompare(b.created_at));
+  const participant = readParticipant();
+  const [votesResult, commentsResult, ownResult] = await Promise.all([
+    supabase.from("votes").select("id,poll_id,voter_id,ranking,created_at").eq("poll_id", row.id),
+    supabase.from("poll_comments").select("id,poll_id,voter_id,nickname,avatar,body,option_id,created_at").eq("poll_id", row.id),
+    participant
+      ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: participant.participantToken }).eq("poll_id", row.id)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (votesResult.error) throw votesResult.error;
+  if (commentsResult.error) throw commentsResult.error;
+  if (ownResult.error) throw ownResult.error;
+
+  const merged = new Map<string, CommentRow>();
+  for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) {
+    merged.set(comment.id, comment);
   }
-
-  return pollRows.map((row) =>
-    toPollView(row, voteRows.filter((vote) => vote.poll_id === row.id), commentRows.filter((comment) => comment.poll_id === row.id)),
-  );
+  const comments = [...merged.values()].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  return toPollView(row, (votesResult.data ?? []) as VoteRow[], comments);
 }
 
 // Atomic RPCs set ownership from auth.uid() and enforce permissions server-side.

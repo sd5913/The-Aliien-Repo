@@ -26,7 +26,7 @@ export function CreatePollPage() {
   const [newPollId, setNewPollId] = useState<string>(() => crypto.randomUUID());
   const [uploadCount, setUploadCount] = useState(0);
   const [saving, setSaving] = useState(false);
-  const { polls, loading, error: pollsError, savePoll } = usePolls();
+  const { polls, loading, error: pollsError, savePoll } = usePolls({ pollId: editingId ?? copyId, metadataOnly: true });
   const { user } = useAccount();
   const draftKey = `bothpls:draft:create:${user?.id ?? "none"}:${editingId || copyId || "new"}`;
   const [draftReady, setDraftReady] = useState("");

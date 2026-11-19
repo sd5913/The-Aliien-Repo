@@ -18,7 +18,7 @@ import type { PollComment } from "../../../types/poll";
 export function ResultsPage() {
   const { id = "" } = useParams();
   const location = useLocation();
-  const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls();
+  const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls({ pollId: id });
   const navigate = useNavigate();
   const poll = polls.find((item) => item.id === id);
   const openShare = useSharePoll();

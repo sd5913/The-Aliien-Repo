@@ -531,6 +531,9 @@ h1, h2, h3 { color: var(--deep-purple); }
 .auth-submit { margin-top: 4px; }
 .auth-divider { display: flex; align-items: center; gap: 10px; margin: 19px 0 13px; color: #a085bd; font-size: 10px; }
 .auth-divider::before, .auth-divider::after { height: 1px; flex: 1; background: #ffffffc7; content: ""; }
+.auth-github { min-height: 44px; padding: 8px 16px; border: 1px solid #ddd0f0; border-radius: 999px; color: #4c2579; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.auth-github:hover:not(:disabled) { background: #f8f2ff; }
+.auth-github:disabled { cursor: wait; opacity: .65; }
 .auth-feedback { margin: 14px 4px 0; color: #b4233c; font-size: 11px; line-height: 1.6; text-align: center; }
 .auth-legal { margin: 19px 13px 0; color: #a085bd; font-size: 9px; line-height: 1.55; text-align: center; }
 

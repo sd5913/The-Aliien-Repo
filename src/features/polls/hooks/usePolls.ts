@@ -10,7 +10,7 @@ import {
   deletePollRemote,
   updateCommentRemote,
   deleteCommentRemote,
-  fetchPolls,
+  fetchPoll,
   fetchRecentPolls,
   fetchOwnedPollsPage,
   submitVote,
@@ -29,7 +29,17 @@ function metaChanged(current: Poll, updated: Poll): boolean {
   );
 }
 
-export function usePolls({ recent = false, owned = false, ownedFilter }: { recent?: boolean; owned?: boolean; ownedFilter?: "active" | "ended" } = {}) {
+type PollQuery =
+  | { recent: true }
+  | { owned: true; ownedFilter?: "active" | "ended" }
+  | { pollId: string | null; metadataOnly?: boolean };
+
+export function usePolls(query: PollQuery) {
+  const recent = "recent" in query;
+  const owned = "owned" in query;
+  const ownedFilter = "owned" in query ? query.ownedFilter : undefined;
+  const pollId = "pollId" in query ? query.pollId : null;
+  const metadataOnly = "pollId" in query && query.metadataOnly === true;
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -52,7 +62,12 @@ export function usePolls({ recent = false, owned = false, ownedFilter }: { recen
     const revision = version.current;
     try {
       const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
-      const data = owned ? page?.polls ?? [] : recent ? await fetchRecentPolls(user?.id) : await fetchPolls();
+      let data = page?.polls ?? [];
+      if (recent) data = await fetchRecentPolls(user?.id);
+      if (pollId) {
+        const poll = await fetchPoll(pollId, metadataOnly);
+        data = poll ? [poll] : [];
+      }
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
       pollsRef.current = data; loadedCount.current = page?.polls.length ?? 0; setPolls(data); setHasMore(page?.hasMore ?? false); setError(null); setSyncError(false); initialized.current = true;
     } catch (cause) {
@@ -62,7 +77,7 @@ export function usePolls({ recent = false, owned = false, ownedFilter }: { recen
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [accountId, recent, owned, ownedFilter]);
+  }, [accountId, recent, owned, ownedFilter, pollId, metadataOnly]);
 
   const loadMore = useCallback(async () => {
     if (!owned || !user?.id || !hasMore || loadingMoreRef.current || loading) return;
@@ -86,7 +101,7 @@ export function usePolls({ recent = false, owned = false, ownedFilter }: { recen
     pollsRef.current = []; loadedCount.current = 0; setPolls([]); setHasMore(false);
     void refresh();
     const check = () => { if (!document.hidden && navigator.onLine) void refresh(); };
-    const timer = recent || owned ? undefined : window.setInterval(check, 10000);
+    const timer = pollId ? window.setInterval(check, 10000) : undefined;
     window.addEventListener("focus", check); window.addEventListener("online", check);
     document.addEventListener("visibilitychange", check);
     return () => {
@@ -94,7 +109,7 @@ export function usePolls({ recent = false, owned = false, ownedFilter }: { recen
       window.removeEventListener("focus", check); window.removeEventListener("online", check);
       document.removeEventListener("visibilitychange", check);
     };
-  }, [refresh]);
+  }, [refresh, pollId]);
 
   useEffect(() => {
     const deadlines = polls.map((poll) => poll.endsAt ? Date.parse(poll.endsAt) - Date.now() : -1).filter((delay) => delay > 0);

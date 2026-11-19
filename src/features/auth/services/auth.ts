@@ -1,12 +1,23 @@
 import { supabase } from "../../../lib/supabase/client";
 import { accountReturnTo } from "../utils/navigation";
 
+function authCallbackUrl(returnTo: string) {
+  return `${window.location.origin}/auth?returnTo=${encodeURIComponent(accountReturnTo(returnTo))}`;
+}
+
+export function signInWithGitHub(returnTo = "/") {
+  return supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: { redirectTo: authCallbackUrl(returnTo) },
+  });
+}
+
 export async function sendMagicLink(email: string, nickname?: string, returnTo = "/") {
   return supabase.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser: true,
-      emailRedirectTo: `${window.location.origin}/auth?returnTo=${encodeURIComponent(accountReturnTo(returnTo))}`,
+      emailRedirectTo: authCallbackUrl(returnTo),
       ...(nickname ? { data: { nickname } } : {}),
     },
   });
