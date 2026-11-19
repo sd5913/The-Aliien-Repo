@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { useAccount } from "../components/AccountProvider";
 import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
-import { sendMagicLink, signInWithGitHub } from "../services/auth";
+import { sendMagicLink, signInWithApple, signInWithGitHub } from "../services/auth";
+import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
 
 type AuthMode = "login" | "register";
 
@@ -24,7 +25,7 @@ export function AuthPage() {
   const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
-  const [pending, setPending] = useState<"email" | "github" | null>(null);
+  const [pending, setPending] = useState<"email" | "github" | "apple" | null>(null);
   const [providerError, setProviderError] = useState(() => {
     const fragment = new URLSearchParams(hash.slice(1));
     return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key))
@@ -36,6 +37,14 @@ export function AuthPage() {
   useEffect(() => {
     if (!accountLoading && user) navigate(returnTo, { replace: true });
   }, [accountLoading, user, navigate, returnTo]);
+
+  useEffect(() => {
+    const restoreAppleButton = (event: PageTransitionEvent) => {
+      if (event.persisted) setPending((current) => current === "apple" ? null : current);
+    };
+    window.addEventListener("pageshow", restoreAppleButton);
+    return () => window.removeEventListener("pageshow", restoreAppleButton);
+  }, []);
 
   const switchMode = (nextMode: AuthMode) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -83,13 +92,27 @@ export function AuthPage() {
     }
   };
 
+  const submitApple = async () => {
+    if (pending) return;
+    setPending("apple");
+    setFeedback("");
+    setProviderError("");
+    try {
+      const { data, error } = await signInWithApple(returnTo);
+      if (error || !data.url) throw new Error("Apple OAuth did not start");
+    } catch {
+      setProviderError("无法使用 Apple 登录，请稍后重试。");
+      setPending(null);
+    }
+  };
+
   return (
     <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">先逛逛</Link>}>
       <section className="auth-page">
         <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>
         <h1>{mode === "login" ? "欢迎回来！" : "加入 BothPls"}</h1>
-        <p className="auth-subtitle">{mode === "login" ? "使用邮箱或 GitHub 登录，继续和朋友一起做决定。" : "注册一个账号，把每次选择都变得更轻松。"}</p>
+        <p className="auth-subtitle">{mode === "login" ? "选择 Apple、邮箱或 GitHub 登录，继续和朋友一起做决定。" : "选择喜欢的方式创建账号，把每次选择都变得更轻松。"}</p>
 
         <div className="auth-tabs" role="tablist" aria-label="登录或注册">
           <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>登录</button>
@@ -105,6 +128,7 @@ export function AuthPage() {
         </form>
 
         <div className="auth-divider" aria-hidden="true">或</div>
+        <AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={submitApple} />
         <button className="auth-github button-full" type="button" onClick={submitGitHub} disabled={pending !== null}>
           {pending === "github" ? "正在前往 GitHub…" : "使用 GitHub 登录"}
         </button>
