@@ -139,6 +139,21 @@ GitHub OAuth App 的 **Authorization callback URL** 使用 Supabase GitHub provi
 
 在目标站点从受保护的页面（例如 /create）进入登录页，点击「使用 GitHub 登录」，确认授权后返回原页面。取消授权时，确认页面显示可重试的提示，且邮箱登录仍可使用。参考 [Supabase GitHub 登录文档](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)。
 
+### 微信网页登录
+
+微信扫码登录使用**微信开放平台已审核的网站应用**及 `snsapi_login` 权限。用户给出的 [移动应用登录指南](https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_Login/Development_Guide.html?lang=en) 面向原生移动应用；本站是网页，因此使用 [网站应用微信登录指南](https://developers.weixin.qq.com/doc/oplatform/Website_App/WeChat_Login/Wechat_Login.html)。在开放平台填写正式站点的授权回调域名。微信不在 Supabase 内置社交登录提供商列表中，本站用服务端授权码交换及 Supabase 管理端一次性链接建立会话。
+
+在 Vercel 项目的 **Production** 环境变量中设置：
+
+| 变量 | 值 |
+| --- | --- |
+| `WECHAT_APP_ID` | 网站应用的 AppID |
+| `WECHAT_APP_SECRET` | 网站应用的 AppSecret，仅服务端使用 |
+| `WECHAT_REDIRECT_URI` | `https://<正式站点>/api/wechat/callback`，须与开放平台允许的域名一致 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 项目的 service role key，仅服务端使用 |
+
+现有 `VITE_SUPABASE_URL` 仍需配置。不要把 AppSecret 或 service role key 写入 `VITE_` 变量。设置后重新部署；在正式域名打开 `/auth`，点击「使用微信登录」，扫码授权后确认返回原页面。被拒绝或失败时页面会显示可重试的提示。微信身份创建独立的 BothPls 账号，不会自动关联同一个人的邮箱或 GitHub 账号。预览域名通常不在微信开放平台授权域名内，需在正式域名验收。
+
 ---
 
 ## 6. 验收清单
