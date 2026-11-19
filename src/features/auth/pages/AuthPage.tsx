@@ -4,6 +4,7 @@ import { useAccount } from "../components/AccountProvider";
 import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
 import { sendMagicLink, signInWithGitHub } from "../services/auth";
+import { supabase } from "../../../lib/supabase/client";
 
 type AuthMode = "login" | "register";
 
@@ -24,7 +25,7 @@ export function AuthPage() {
   const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
-  const [pending, setPending] = useState<"email" | "github" | null>(null);
+  const [pending, setPending] = useState<"email" | "github" | "wechat" | null>(null);
   const [providerError, setProviderError] = useState(() => {
     const fragment = new URLSearchParams(hash.slice(1));
     return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key))
@@ -36,6 +37,22 @@ export function AuthPage() {
   useEffect(() => {
     if (!accountLoading && user) navigate(returnTo, { replace: true });
   }, [accountLoading, user, navigate, returnTo]);
+
+  useEffect(() => {
+    const token_hash = searchParams.get("token_hash");
+    if (!token_hash || searchParams.get("type") !== "magiclink") return;
+    const cleanParams = new URLSearchParams(searchParams);
+    cleanParams.delete("token_hash");
+    cleanParams.delete("type");
+    window.history.replaceState(null, "", `/auth?${cleanParams}`);
+    setPending("wechat");
+    void supabase.auth.verifyOtp({ token_hash, type: "magiclink" }).then(({ error }) => {
+      if (error) setProviderError("微信登录未完成，请重试。");
+      setPending(null);
+    });
+  // Only consume the one-time callback token once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchMode = (nextMode: AuthMode) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -89,7 +106,7 @@ export function AuthPage() {
         <div className="auth-hero" aria-hidden="true"><span>✦</span><i>♡</i><b>✧</b></div>
         <span className="eyebrow">WELCOME TO BOTHPLS</span>
         <h1>{mode === "login" ? "欢迎回来！" : "加入 BothPls"}</h1>
-        <p className="auth-subtitle">{mode === "login" ? "使用邮箱或 GitHub 登录，继续和朋友一起做决定。" : "注册一个账号，把每次选择都变得更轻松。"}</p>
+        <p className="auth-subtitle">{mode === "login" ? "使用邮箱、GitHub 或微信登录，继续和朋友一起做决定。" : "注册一个账号，把每次选择都变得更轻松。"}</p>
 
         <div className="auth-tabs" role="tablist" aria-label="登录或注册">
           <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>登录</button>
@@ -106,6 +123,9 @@ export function AuthPage() {
         <div className="auth-divider" aria-hidden="true">或</div>
         <button className="auth-github button-full" type="button" onClick={submitGitHub} disabled={pending !== null}>
           {pending === "github" ? "正在前往 GitHub…" : "使用 GitHub 登录"}
+        </button>
+        <button className="auth-wechat button-full" type="button" disabled={pending !== null} onClick={() => { setPending("wechat"); window.location.assign(`/api/wechat/start?returnTo=${encodeURIComponent(returnTo)}`); }}>
+          {pending === "wechat" ? "正在连接微信…" : "使用微信登录"}
         </button>
 
         {providerError && <p className="auth-feedback" role="alert">{providerError}</p>}
