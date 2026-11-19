@@ -25,7 +25,7 @@ export function HomePage() {
   const recent = [
     ...polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? "")),
     ...polls.filter((poll) => !isPollOwner(poll, accountUser?.id ?? "")),
-  ].slice(0, 3);
+  ].slice(0, 5);
 
   const confirmDelete = async () => {
     if (!deleting) return;

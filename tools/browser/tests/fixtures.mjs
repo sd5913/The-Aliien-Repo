@@ -48,7 +48,20 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       return reply(name === 'own_comments' ? [] : null);
     }
     if (url.pathname.startsWith('/rest/v1/')) state.requests.push({ path: url.pathname, search: url.search, prefer: request.headers().prefer });
-    if (url.pathname === '/rest/v1/polls') return reply(state.polls);
+    if (url.pathname === '/rest/v1/polls') {
+      let rows = state.polls;
+      const ownerFilter = url.searchParams.get('owner_id');
+      const statusFilter = url.searchParams.get('status');
+      const orFilter = url.searchParams.get('or');
+      if (ownerFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.owner_id === ownerFilter.slice(3));
+      if (statusFilter?.startsWith('eq.')) rows = rows.filter((poll) => poll.status === statusFilter.slice(3));
+      if (orFilter?.includes('status.eq.closed')) rows = rows.filter((poll) => poll.status === 'closed' || (poll.closed_at && Date.parse(poll.closed_at) <= Date.now()));
+      if (orFilter?.includes('closed_at.is.null')) rows = rows.filter((poll) => !poll.closed_at || Date.parse(poll.closed_at) > Date.now());
+      rows = [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at));
+      const offset = Number(url.searchParams.get('offset') ?? 0);
+      const limit = Number(url.searchParams.get('limit') ?? rows.length);
+      return reply(rows.slice(offset, offset + limit).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
+    }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
     return reply([]);
   });
