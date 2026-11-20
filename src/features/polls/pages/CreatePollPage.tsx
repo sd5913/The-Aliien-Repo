@@ -1,17 +1,19 @@
+import { readDraft, saveDraft, clearDraft, isCreateDraft } from "../utils/drafts";
+import { OptionImageInput } from "../components/OptionImageInput";
+import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
 import { usePolls } from "../hooks/usePolls";
-import { getVoter, isPollOwner } from "../utils/voting";
+import { isPollOwner, isPollOpen } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
-function makeOption(index: number): PollOption {
+function makeOption(): PollOption {
   return {
     id: crypto.randomUUID(),
     name: "",
-    imageUrl: `https://picsum.photos/seed/bothpls-option-${index}/240/240`,
   };
 }
 
@@ -19,53 +21,78 @@ export function CreatePollPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const editingId = params.get("id");
-  const { polls, loading, error: pollsError, savePoll } = usePolls();
-  const [voter] = useState(getVoter);
+  const copyId = params.get("copy");
+  const initialized = useRef("");
+  const [newPollId, setNewPollId] = useState<string>(() => crypto.randomUUID());
+  const [uploadCount, setUploadCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const { polls, loading, error: pollsError, savePoll } = usePolls({ pollId: editingId ?? copyId, metadataOnly: true });
+  const { user } = useAccount();
+  const draftKey = `bothpls:draft:create:${user?.id ?? "none"}:${editingId || copyId || "new"}`;
+  const [draftReady, setDraftReady] = useState("");
+  const [draftNotice, setDraftNotice] = useState("");
   const editingPoll = polls.find((poll) => poll.id === editingId);
-  const canEdit = !editingPoll || isPollOwner(editingPoll, voter.id);
+  const copySource = polls.find((poll) => poll.id === copyId);
+  const canCopy = !copyId || Boolean(copySource && isPollOwner(copySource, user?.id ?? ""));
+  const canEdit = !editingId || Boolean(editingPoll && isPollOwner(editingPoll, user?.id ?? "") && isPollOpen(editingPoll));
   const [title, setTitle] = useState(editingPoll?.title ?? "");
   const [description, setDescription] = useState(
     editingPoll?.description ?? "",
   );
 
   const [deadline, setDeadline] = useState("none");
+  const [isPublic, setIsPublic] = useState(false);
   const [options, setOptions] = useState<PollOption[]>(
-    editingPoll?.options ?? [makeOption(1), makeOption(2)],
+    editingPoll?.options ?? [makeOption(), makeOption()],
   );
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!editingId) return;
-    if (editingPoll) {
-      setTitle(editingPoll.title);
-      setDescription(editingPoll.description);
-      setOptions(editingPoll.options);
-      if (editingPoll.endsAt) setDeadline("custom");
+    const key = draftKey;
+    if (initialized.current === key) return;
+    const source = editingId ? editingPoll : copySource;
+    if ((editingId || copyId) && !source) return;
+    initialized.current = key;
+    const saved = readDraft(draftKey, isCreateDraft);
+    if (saved) {
+      setTitle(saved.title); setDescription(saved.description); setOptions(saved.options);
+      setDeadline(saved.deadline); setIsPublic(saved.isPublic ?? (editingId ? Boolean(source?.isPublic) : false)); setNewPollId(saved.pollId); setDraftNotice("已恢复上次未提交的草稿");
+    } else if (source) {
+      setTitle(source.title); setDescription(source.description);
+      setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
+      setDeadline(editingId && source.endsAt ? "custom" : "none");
+      setIsPublic(editingId ? Boolean(source.isPublic) : false);
     }
-  }, [editingId, editingPoll]);
+    setDraftReady(draftKey);
+  }, [editingId, copyId, editingPoll, copySource, draftKey]);
+
+  useEffect(() => {
+    if (draftReady !== draftKey || loading || !user) return;
+    if (!saveDraft(draftKey, { pollId: newPollId, title, description, deadline, isPublic, options })) setDraftNotice("当前浏览器无法保存草稿，请勿关闭页面");
+  }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, isPublic, options]);
 
   if (loading)
     return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
 
   if (pollsError)
-    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请检查 Supabase 配置后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
 
-  if (!canEdit)
+  if (!canEdit || !canCopy)
     return (
       <PageShell
         showNavigation={false}
-        backTo="/"
+        backTo={editingPoll ? `/poll/${editingPoll.id}` : "/"}
         title="编辑投票"
         showHeaderTitle
       >
         <div className="empty-state">
           <h2>无法编辑这次投票</h2>
-          <p>只有发起者可以修改投票内容。</p>
+          <p>{editingPoll && !isPollOpen(editingPoll) ? "投票已结束，不能再修改内容。" : "只有发起者可以修改投票内容。"}</p>
           <Link
             className="purple-button"
-            to={`/poll/${editingPoll?.id}/results`}
+            to={editingPoll ? `/poll/${editingPoll.id}` : "/"}
           >
-            返回投票结果
+            返回投票
           </Link>
         </div>
       </PageShell>
@@ -79,17 +106,13 @@ export function CreatePollPage() {
     );
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canEdit) return;
-    const cleanOptions = options.map((option) => ({
+    if (!canEdit || !canCopy || !user || saving || uploadCount > 0) return;
+    const cleanOptions = options.map((option, index) => ({
       ...option,
-      name: option.name.trim(),
+      name: option.name.trim() || String.fromCharCode(65 + index),
     }));
     if (!title.trim()) {
       setError("請先寫下投票標題。");
-      return;
-    }
-    if (cleanOptions.some((option) => !option.name)) {
-      setError("請為每個選項填寫名稱。");
       return;
     }
     const endsAt =
@@ -101,17 +124,12 @@ export function CreatePollPage() {
               Date.now() + Number(deadline) * 60 * 60 * 1000,
             ).toISOString();
     const poll: Poll = {
-      id: editingPoll?.id ?? crypto.randomUUID(),
+      id: editingPoll?.id ?? newPollId,
       title: title.trim(),
       description: description.trim(),
       createdAt: editingPoll?.createdAt ?? new Date().toISOString(),
-      // Editing claims an older poll that only stored a display name, so the next
-      // reload can still recognise the creator by voter id.
-      // 编辑旧投票时把发起者认领为当前投票者，刷新后才能继续识别发起者。
-      creatorId:
-        editingPoll && editingPoll.creatorId === voter.id
-          ? editingPoll.creatorId
-          : voter.id,
+      creatorId: user.id,
+      isPublic,
       commentsPublic: editingPoll?.commentsPublic ?? true,
       ...(endsAt ? { endsAt } : {}),
       status: editingPoll?.status ?? "open",
@@ -120,31 +138,34 @@ export function CreatePollPage() {
       comments: editingPoll?.comments ?? [],
     };
     try {
+      setSaving(true);
       await savePoll(poll);
-      navigate("/settings", {
-        state: { toast: editingPoll ? "已保存" : "已发布" },
+      clearDraft(draftKey);
+      navigate(`/poll/${poll.id}/results${editingPoll ? "" : "?share=1"}`, {
+        state: { returnTo: "/settings", published: !editingPoll, saved: Boolean(editingPoll) },
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
-      setError("保存失败，请检查 Supabase 配置后重试。");
-    }
+      setError("保存失败，请检查网络后重试，填写内容已保留。");
+    } finally { setSaving(false); }
   };
 
   return (
     <PageShell
       showNavigation={false}
       backTo="/"
-      title={editingPoll ? "编辑投票" : "创建投票"}
+      title={editingPoll ? "编辑投票" : copyId ? "复制投票" : "创建投票"}
       showHeaderTitle
       footer={
         <div className="create-submit-footer">
-          <PurpleButton type="submit" form="create-poll-form" fullWidth>
-            {editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
+          <PurpleButton type="submit" form="create-poll-form" fullWidth disabled={draftReady !== draftKey || saving || uploadCount > 0 || !title.trim() || options.length < 2 || options.length > 5}>
+            {saving ? "保存中…" : editingPoll ? "保存修改" : "创建投票"} <span>↗</span>
           </PurpleButton>
         </div>
       }
     >
       <form id="create-poll-form" className="create-form" onSubmit={submit}>
+        {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
         <label className="field-label" htmlFor="poll-title">
           投票标题 <span className="required">*</span>
         </label>
@@ -172,24 +193,19 @@ export function CreatePollPage() {
 
         <div className="field-row">
           <div>
-            <label className="field-label">商品选项</label>
+            <label className="field-label">选项</label>
           </div>
           <span className="count-pill">{options.length}/5</span>
         </div>
         <div className="option-editor-list">
           {options.map((option, index) => (
             <div className="option-editor" key={option.id}>
-              <img
-                className="option-editor-image"
-                src={
-                  option.imageUrl ||
-                  `https://picsum.photos/seed/bothpls-option-${index}/240/240`
-                }
-                alt=""
-              />
+              <OptionImageInput url={option.imageUrl} index={index}
+                onChange={(imageUrl) => setOptions((current) => current.map((item) => item.id === option.id ? { ...item, imageUrl } : item))}
+                onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">
                 <span className="option-letter">
-                  {String.fromCharCode(65 + index)} · 选项名称
+                  {String.fromCharCode(65 + index)} · 选项（可选）
                 </span>
                 <input
                   className="text-input compact-input"
@@ -198,13 +214,14 @@ export function CreatePollPage() {
                   onChange={(event) =>
                     updateOption(option.id, event.target.value)
                   }
-                  placeholder="例如：奶油白针织衫"
+                  placeholder={`留空则使用 ${String.fromCharCode(65 + index)}`}
                   maxLength={60}
                 />
               </div>
               {options.length > 2 && (
                 <button
                   className="remove-option-button"
+                  disabled={uploadCount > 0}
                   type="button"
                   aria-label={`删除选项 ${index + 1}`}
                   onClick={() =>
@@ -226,7 +243,7 @@ export function CreatePollPage() {
             onClick={() =>
               setOptions((current) => [
                 ...current,
-                makeOption(current.length + 1),
+                makeOption(),
               ])
             }
           >
@@ -252,6 +269,10 @@ export function CreatePollPage() {
             )}
           </select>
         </div>
+        <label className="poll-visibility-choice">
+          <input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} />
+          <span>公开投票<small>公开后会显示在最近投票；不公开时也可通过分享链接邀请朋友参与。</small></span>
+        </label>
         {error && (
           <p className="form-error" role="alert">
             {error}

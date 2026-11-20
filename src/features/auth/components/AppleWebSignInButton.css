@@ -1,0 +1,22 @@
+.auth-apple-web {
+  display: grid;
+  place-items: center;
+  min-width: 140px;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #000;
+  cursor: pointer;
+}
+
+.auth-apple-web img {
+  display: block;
+  width: min(100%, 180px);
+  height: auto;
+}
+
+.auth-apple-web:focus-visible { outline: 3px solid #6d28d9; outline-offset: 3px; }
+.auth-apple-web:disabled { cursor: wait; opacity: .65; }
+.auth-apple-web + .auth-github { margin-top: 12px; }

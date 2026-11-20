@@ -9,7 +9,8 @@ import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPref
 import { AuthPage } from "../features/auth/pages/AuthPage";
 
 
-import { ParticipantGate, ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
+import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
+import { RequireAccount } from "../features/auth/components/AccountProvider";
 
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
@@ -17,10 +18,10 @@ export const router = createBrowserRouter([
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
-  { path: "/create", element: <CreatePollPage /> },
+  { path: "/create", element: <RequireAccount><CreatePollPage /></RequireAccount> },
   { path: "/join", element: <ParticipantLoginPage /> },
   { path: "/poll/:id/join", element: <ParticipantLoginPage /> },
-  { path: "/poll/:id", element: <ParticipantGate><VotingPage /></ParticipantGate> },
+  { path: "/poll/:id", element: <VotingPage /> },
   { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
   { path: "/poll/:id/results", element: <ResultsPage /> },
   { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },

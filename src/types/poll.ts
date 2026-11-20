@@ -10,6 +10,7 @@ export interface PollOption {
 export interface VoterIdentity {
   id: string;
   nickname: string;
+  avatar?: string;
 }
 
 export interface Vote {
@@ -37,11 +38,14 @@ export interface Poll {
   description: string;
   createdAt: string;
   creatorId?: string;
+  isPublic?: boolean;
+  visibilityReviewedAt?: string | null;
   commentsPublic?: boolean;
   endsAt?: string;
   status: PollStatus;
   options: PollOption[];
   votes: Vote[];
+  voteCount?: number;
   comments: PollComment[];
 }
 

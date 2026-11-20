@@ -12,9 +12,9 @@ export interface UserSettings {
 }
 
 export const defaultUserSettings: UserSettings = {
-  nickname: "小云朵",
-  email: "hello@bothpls.app",
-  avatar: "🌷",
+  nickname: "",
+  email: "",
+  avatar: "",
   cameraEnabled: false,
   photosEnabled: true,
   showNickname: true,
@@ -33,12 +33,12 @@ function isUserSettings(value: unknown): value is UserSettings {
 }
 
 export async function fetchUserSettings(_userId: string): Promise<UserSettings> {
-  return readLocalJson(SETTINGS_KEY, defaultUserSettings, isUserSettings);
+  return readLocalJson(`${SETTINGS_KEY}:${_userId}`, defaultUserSettings, isUserSettings);
 }
 
 export async function saveUserSettings(
   _userId: string,
   settings: UserSettings,
 ): Promise<void> {
-  writeLocalJson(SETTINGS_KEY, settings);
+  writeLocalJson(`${SETTINGS_KEY}:${_userId}`, settings);
 }

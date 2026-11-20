@@ -1,3 +1,6 @@
+import { useAccount } from "../../auth/components/AccountProvider";
+import { useParticipant } from "../../auth/utils/useParticipant";
+import { clearParticipant } from "../../auth/utils/participant";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -8,6 +11,8 @@ import { ProfileSettingsSection } from "../components/ProfileSettingsSection";
 export function SettingsPreferencesPage() {
   const { settings, loading, error, save } = useUserSettings();
   const navigate = useNavigate();
+  const { user } = useAccount();
+  const participant = useParticipant();
   const [feedback, setFeedback] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -26,9 +31,12 @@ export function SettingsPreferencesPage() {
     setFeedback("");
     setLoggingOut(true);
     try {
-      const { error: signOutError } = await signOut();
-      if (signOutError) throw signOutError;
-      navigate("/auth", { replace: true });
+      if (user) {
+        const { error: signOutError } = await signOut();
+        if (signOutError) throw signOutError;
+      }
+      clearParticipant();
+      navigate("/", { replace: true });
     } catch (cause) {
       console.error("BothPls: could not sign out.", cause);
       setFeedback("退出登录失败，请稍后重试。");
@@ -50,13 +58,13 @@ export function SettingsPreferencesPage() {
       <section className="settings-card privacy-card">
         <div className="settings-section-heading"><div><h2>隐私设置</h2></div></div>
         <SettingToggle disabled={loading || Boolean(error)} title="在投票评论中显示昵称" description="关闭后，评论仅显示为匿名朋友" checked={settings.showNickname} onChange={() => void toggleSetting("showNickname")} />
-        <div className="privacy-note"><span>🔒</span><p>个人资料和偏好会与此设备的匿名标识关联并保存在 Supabase。</p></div>
+        <div className="privacy-note"><span>🔒</span><p>偏好按当前身份保存在本浏览器，账号昵称与头像同步到登录账号。</p></div>
       </section>
       {error && <p className="settings-feedback" role="alert">设置加载失败，请检查 Supabase 配置后重试。</p>}
       {feedback && <p className="settings-feedback" role="status">{feedback}</p>}
-      <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>
-        {loggingOut ? "正在退出…" : "退出登录"}
-      </button>
+      {(user || participant) && <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>
+        {loggingOut ? "正在退出…" : user ? "退出账号与当前身份" : "退出投票者身份"}
+      </button>}
     </PageShell>
   );
 }

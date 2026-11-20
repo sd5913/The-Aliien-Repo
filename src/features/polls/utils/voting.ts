@@ -20,26 +20,16 @@ export function isPollOpen(poll: Poll, now = Date.now()): boolean {
 export function getVoter(): VoterIdentity {
   const isIdentity = (value: unknown): value is VoterIdentity => Boolean(value && typeof value === "object" && "id" in value && "nickname" in value && typeof value.id === "string" && typeof value.nickname === "string");
   const stored = readLocalJson(VOTER_STORAGE_KEY, null, isIdentity);
-  if (stored) return stored;
+  // Never copy the private participant capability into votes, comments, or UI data.
+  if (stored) return { id: stored.id, nickname: stored.nickname };
   const voter = { id: crypto.randomUUID(), nickname: "朋友" };
   writeLocalJson(VOTER_STORAGE_KEY, voter);
   return voter;
 }
 
-// polls.author_name doubles as the creator id: new polls store the voter UUID,
-// older rows store a display name such as "bothpls friend". A non-UUID value can
-// never match the local voter id, so it is treated as an unclaimed creator and the
-// first successful edit writes the current voter UUID back into that column.
-// polls.author_name 兼作发起者标识：新投票写入投票者 UUID，旧数据写入昵称，
-// 非 UUID 的旧值永远无法匹配本机 voter id，因此视为「未认领」，允许编辑并在保存时写回 UUID。
-const VOTER_ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
+// Ownership requires an explicit match; legacy or missing creators are read-only.
 export function isPollOwner(poll: Poll, voterId: string): boolean {
-  const creatorId = poll.creatorId?.trim();
-  if (!creatorId) return true;
-  if (!VOTER_ID_PATTERN.test(creatorId)) return true;
-  return creatorId === voterId;
+  return Boolean(voterId && poll.creatorId?.trim() === voterId);
 }
 
 export function getBordaResults(poll: Poll): RankedOptionResult[] {
