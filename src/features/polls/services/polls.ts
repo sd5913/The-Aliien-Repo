@@ -143,6 +143,27 @@ export async function fetchOwnedPollsPage(ownerId: string, offset: number, filte
   return { polls: rows.slice(0, OWNED_POLL_PAGE_SIZE).map(toCard), hasMore: rows.length > OWNED_POLL_PAGE_SIZE };
 }
 
+export async function fetchVotedPollsPage(participant: ParticipantProfile, filter?: "active" | "ended"): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  const now = Date.now();
+  const { data, error } = await supabase.rpc("my_voted_polls", {
+    p_voter_id: participant.id,
+    p_token: participant.participantToken,
+  });
+  if (error) throw error;
+  let polls = ((data ?? []) as unknown as PollRow[])
+    .map(toCard)
+    .filter((poll) => isNotDeletedAndMatchesFilter(poll, filter, now));
+  polls = polls.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return { polls, hasMore: false };
+}
+
+function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | undefined, now: number): boolean {
+  const active = poll.status === "open" && (!poll.endsAt || Date.parse(poll.endsAt) > now);
+  if (filter === "active") return active;
+  if (filter === "ended") return !active;
+  return true;
+}
+
 export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string): Promise<Poll[]> {
   const [votedResult, ownedPage] = await Promise.all([
     participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),

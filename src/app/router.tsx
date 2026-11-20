@@ -17,6 +17,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <AuthPage /> },
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
+  { path: "/profile", loader: () => redirect("/settings") },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
   { path: "/create", element: <RequireAccount><CreatePollPage /></RequireAccount> },
   { path: "/join", element: <ParticipantLoginPage /> },

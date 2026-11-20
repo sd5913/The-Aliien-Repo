@@ -1,4 +1,5 @@
 import { useAccount } from "../../auth/components/AccountProvider";
+import { useParticipant } from "../../auth/utils/useParticipant";
 import { isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
@@ -193,14 +194,20 @@ function MyPollCard({
 
 export function MyPollsSection({ showCreateButton = true, personalPageStyle = false }: { showCreateButton?: boolean; personalPageStyle?: boolean }) {
   const [filter, setFilter] = useState<Filter>("全部");
-  const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, refresh, removePoll, updatePoll } = usePolls({ owned: true, ownedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" : "ended" });
+  const { user: accountUser } = useAccount();
+  const participant = useParticipant();
+  const identityQuery = accountUser
+    ? { owned: true as const, ownedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+    : participant
+      ? { voted: true as const, votedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+      : { owned: true as const, ownedFilter: undefined };
+  const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, refresh, removePoll, updatePoll } = usePolls(identityQuery);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const location = useLocation();
   const [toast, setToast] = useState(typeof location.state?.toast === "string" ? location.state.toast : "");
-  const { user: accountUser } = useAccount();
   const ownedPolls = polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? ""));
   const filtered = ownedPolls;
 

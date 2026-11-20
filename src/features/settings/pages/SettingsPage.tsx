@@ -27,7 +27,7 @@ export function SettingsPage() {
   }, [location.hash]);
 
   return (
-    <PageShell title="个人" showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link>}>
+    <PageShell title="个人" showHeaderTitle headerAction={<div style={{ display: "flex", gap: 8 }}>{!auth.loading && (user || participant) && <Link className="settings-nav-button" to="/edit-profile" aria-label="编辑资料"><AppIcon name="edit" size={21} /></Link>}<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link></div>}>
       <section className="settings-profile-intro">
         <div className="settings-section-heading"></div>
         {user && error && <p className="settings-feedback" role="alert">个人资料加载失败，请稍后重试。</p>}
