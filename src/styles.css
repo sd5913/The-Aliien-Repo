@@ -520,6 +520,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .avatar-option { width: 35px; height: 35px; border: 1px solid transparent; border-radius: 13px; background: #f3e8ff; font-size: 18px; cursor: pointer; }
 .avatar-option.selected { border-color: #a78bfa; background: #ede9fe; box-shadow: 0 0 0 2px #c4b5fd66; }
 .profile-form .text-input { min-height: 39px; margin-bottom: 10px; font-size: 11px; }
+.profile-bio-input { min-height: 76px; resize: vertical; }
 .profile-form .field-label { margin-bottom: 5px; font-size: 11px; }
 .profile-form .purple-button { min-height: 40px; margin-top: 2px; font-size: 11px; }
 .settings-helper { margin: 7px 0 8px; color: #a085bd; font-size: 10px; line-height: 1.5; }
