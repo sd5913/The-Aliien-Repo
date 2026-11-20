@@ -1,11 +1,12 @@
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { Link, useLocation } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { MyPollsSection } from "../../polls/pages/MyPollsPage";
 import { useParticipant } from "../../auth/utils/useParticipant";
+import { Modal } from "../../../components/ui/Modal";
 
 export function SettingsPage() {
   const { settings, error } = useUserSettings();
@@ -13,6 +14,7 @@ export function SettingsPage() {
   const auth = useAccount();
   const location = useLocation();
   const pollsRef = useRef<HTMLDivElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const user = auth.user;
   const hasMatchingProfile = Boolean(user?.email && settings.email.toLowerCase() === user.email.toLowerCase());
@@ -35,12 +37,12 @@ export function SettingsPage() {
           <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>正在确认登录状态…</span></div></div>
         ) : user ? (
           <div className="profile-summary">
-            <div className="profile-avatar" aria-label={`当前头像 ${avatar}`}>{avatar}</div>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={() => setAvatarPreview(typeof avatar === "string" && avatar.startsWith("http") ? avatar : null)}>{avatar}</button>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
           </div>
         ) : participant ? (
           <div className="profile-summary">
-            <div className="profile-avatar" aria-label="投票者头像">{participant.avatar}</div>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={() => setAvatarPreview(participant.avatar.startsWith("http") ? participant.avatar : null)}>{participant.avatar}</button>
             <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>投票者身份 · 已保存在当前浏览器</span></div>
           </div>
         ) : (
@@ -54,6 +56,7 @@ export function SettingsPage() {
       <div ref={pollsRef} id="my-polls" style={{ scrollMarginTop: 80 }}>
         <MyPollsSection showCreateButton={false} personalPageStyle />
       </div>
+      {avatarPreview && <Modal title="头像预览" onClose={() => setAvatarPreview(null)}><img className="profile-avatar-preview" src={avatarPreview} alt="头像大图" /></Modal>}
     </PageShell>
   );
 }

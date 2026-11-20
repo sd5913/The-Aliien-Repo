@@ -543,6 +543,13 @@ h1, h2, h3 { color: var(--deep-purple); }
 .home-retry-icon svg { width: 15px; height: 15px; fill: currentColor; }
 .logout-button { width: 100%; min-height: 44px; margin-top: 20px; border: 1px solid #fecdd3; border-radius: 999px; color: #be123c; background: #fff1f2; font-size: 12px; font-weight: 700; cursor: pointer; }
 .logout-button:disabled { cursor: wait; opacity: .6; }
+.settings-row-button, .settings-row-static { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 0; border-top: 1px solid #f1e8f8; background: transparent; color: #5b21b6; text-align: left; font-size: 12px; font-weight: 700; }
+.settings-row-button:first-of-type { border-top: 0; }
+.settings-row-button span, .settings-row-static span { color: #9678ad; font-size: 10px; font-weight: 600; }
+.settings-row-static strong { color: #5b21b6; }
+.danger-text { color: #be123c; }
+.profile-avatar-button { border: 3px solid #fff; cursor: pointer; }
+.profile-avatar-preview { display: block; width: 180px; max-width: 70vw; height: 180px; margin: 0 auto; border-radius: 24px; object-fit: cover; }
 
 .auth-page { position: relative; padding: 12px 4px 32px; }
 .auth-page > .eyebrow { display: block; margin-top: 25px; }
