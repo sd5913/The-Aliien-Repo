@@ -43,8 +43,21 @@ test('only the owner sees the bottom result share action and uploaded option pho
   await expect(share).toBeVisible();
   await expect(page.locator('.result-option-row').first().locator('img.result-option-image')).toHaveAttribute('src', 'https://example.invalid/cat.png');
   await expect(page.locator('.result-option-row').nth(1).locator('.result-color')).toBeVisible();
+  await expect(page.getByRole('link', { name: /参与投票|修改我的投票/ })).toHaveCount(0);
   await share.click();
-  await expect(page.getByText('结果链接已复制')).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '分享投票结果' })).toBeVisible();
+  await expect(page.getByLabel('结果分享链接')).toHaveValue(`http://127.0.0.1:5180/poll/${pollId}/results`);
+});
+
+test('editing from results preserves the settings return path', async ({ page }) => {
+  await mockApp(page);
+  await page.goto(`/poll/${pollId}/results?returnTo=${encodeURIComponent('/settings')}`);
+  await page.getByRole('button', { name: '管理投票', exact: true }).click();
+  await page.getByRole('button', { name: '编辑投票 / 截止时间' }).click();
+  await expect(page).toHaveURL(new RegExp(`/create\\?id=${pollId}.*returnTo=%2Fsettings`));
+  await page.getByRole('button', { name: '保存修改', exact: false }).click();
+  await page.getByRole('link', { name: '关闭结果' }).click();
+  await expect(page).toHaveURL('http://127.0.0.1:5180/settings');
 });
 
 test('foreign account cannot open result sharing via the creation query', async ({ page }) => {

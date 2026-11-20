@@ -22,6 +22,8 @@ export function CreatePollPage() {
   const [params] = useSearchParams();
   const editingId = params.get("id");
   const copyId = params.get("copy");
+  const returnTo: "/" | "/settings" = params.get("returnTo") === "/settings" ? "/settings" : "/";
+  const resultReturnTo: "/" | "/settings" = params.has("returnTo") ? returnTo : "/settings";
   const initialized = useRef("");
   const [newPollId, setNewPollId] = useState<string>(() => crypto.randomUUID());
   const [uploadCount, setUploadCount] = useState(0);
@@ -72,16 +74,16 @@ export function CreatePollPage() {
   }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, isPublic, options]);
 
   if (loading)
-    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
+    return <PageShell showNavigation={false} backTo={returnTo} title="创建投票" showHeaderTitle><p className="empty-inline">正在加载投票…</p></PageShell>;
 
   if (pollsError)
-    return <PageShell showNavigation={false} backTo="/" title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} backTo={returnTo} title="创建投票" showHeaderTitle><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
 
   if (!canEdit || !canCopy)
     return (
       <PageShell
         showNavigation={false}
-        backTo={editingPoll ? `/poll/${editingPoll.id}` : "/"}
+        backTo={returnTo}
         title="编辑投票"
         showHeaderTitle
       >
@@ -90,7 +92,7 @@ export function CreatePollPage() {
           <p>{editingPoll && !isPollOpen(editingPoll) ? "投票已结束，不能再修改内容。" : "只有发起者可以修改投票内容。"}</p>
           <Link
             className="purple-button"
-            to={editingPoll ? `/poll/${editingPoll.id}` : "/"}
+            to={returnTo}
           >
             返回投票
           </Link>
@@ -142,7 +144,7 @@ export function CreatePollPage() {
       await savePoll(poll);
       clearDraft(draftKey);
       navigate(`/poll/${poll.id}/results${editingPoll ? "" : "?share=1"}`, {
-        state: { returnTo: "/settings", published: !editingPoll, saved: Boolean(editingPoll) },
+        state: { returnTo: resultReturnTo, published: !editingPoll, saved: Boolean(editingPoll) },
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
@@ -153,7 +155,7 @@ export function CreatePollPage() {
   return (
     <PageShell
       showNavigation={false}
-      backTo="/"
+      backTo={returnTo}
       title={editingPoll ? "编辑投票" : copyId ? "复制投票" : "创建投票"}
       showHeaderTitle
       footer={

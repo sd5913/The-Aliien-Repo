@@ -1,10 +1,10 @@
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
 
-export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
+export const pollUrl = (id: string, page: "vote" | "results" = "vote") => `${window.location.origin}/poll/${encodeURIComponent(id)}${page === "results" ? "/results" : ""}`;
 
-export async function copyPollLink(id: string) {
-  const value = pollUrl(id);
+export async function copyPollLink(id: string, page: "vote" | "results" = "vote") {
+  const value = pollUrl(id, page);
   try {
     if (!navigator.clipboard) throw new Error("Clipboard unavailable");
     await navigator.clipboard.writeText(value);
@@ -37,7 +37,7 @@ function loadImage(url?: string): Promise<HTMLImageElement | null> {
 }
 
 // Render once for both the preview and the downloaded PNG, including transparent perforations.
-export async function renderShareTicket(poll: Poll) {
+export async function renderShareTicket(poll: Poll, page: "vote" | "results" = "vote") {
   const images = await Promise.all(poll.options.map((option) => loadImage(option.imageUrl)));
   const styles = getComputedStyle(document.documentElement);
   const displayFont = styles.getPropertyValue("--font-display").trim();
@@ -159,7 +159,7 @@ export async function renderShareTicket(poll: Poll) {
   ctx.beginPath(); ctx.moveTo(margin, height - 220); ctx.lineTo(width - margin, height - 220); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = "#5b21b6";
-  const url = pollUrl(poll.id);
+  const url = pollUrl(poll.id, page);
   // Draw modules directly into the exported PNG: no external QR service or image request.
   const qr = QRCode.create(url, { errorCorrectionLevel: "M" });
   const quietZone = 4;
@@ -179,7 +179,7 @@ export async function renderShareTicket(poll: Poll) {
   }
   const linkWidth = contentWidth - qrSize - 24;
   ctx.fillStyle = "#5b21b6";
-  text("扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
+  text(page === "results" ? "扫码，查看投票结果" : "扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;
   do {
     ctx.font = `${urlSize}px ${bodyFamily}`;
