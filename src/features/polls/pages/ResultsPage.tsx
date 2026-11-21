@@ -137,7 +137,7 @@ export function ResultsPage() {
         </div>
         {!poll.votes.length && (
           <p className="empty-inline">
-            还没有人投票，分享链接邀请朋友来参与吧。
+            {owner ? "还没有人投票，分享链接邀请朋友来参与吧。" : "还没有人投票，来提交你的选择吧。"}
           </p>
         )}
       </section>

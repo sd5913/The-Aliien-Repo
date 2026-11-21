@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Toast } from "../../../components/ui/Toast";
 import type { Poll } from "../../../types/poll";
 import { copyPollLink, pollUrl, renderShareTicket } from "../utils/share";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { canSharePoll } from "../utils/voting";
 
 const ShareContext = createContext<(poll: Poll) => void>(() => {});
 export const useSharePoll = () => useContext(ShareContext);
@@ -48,12 +50,14 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
 }
 
 export function ShareProvider({ children }: { children: ReactNode }) {
+  const { user, loading } = useAccount();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [toast, setToast] = useState("");
   const open = (selected: Poll) => {
+    if (loading || !canSharePoll(selected, user?.id ?? "")) return;
     setPoll(selected);
     // Begin inside the click gesture: browsers require user activation for clipboard writes.
     void copyPollLink(selected.id).then(() => setToast("链接已复制")).catch(() => setToast("复制失败，可在浮窗中重试或手动复制链接"));
   };
-  return <ShareContext.Provider value={open}>{children}{poll && <ShareDialog key={poll.id} poll={poll} feedback={toast} clearFeedback={() => setToast("")} onClose={() => { setPoll(null); setToast(""); }} />}</ShareContext.Provider>;
+  return <ShareContext.Provider value={open}>{children}{poll && !loading && canSharePoll(poll, user?.id ?? "") && <ShareDialog key={poll.id} poll={poll} feedback={toast} clearFeedback={() => setToast("")} onClose={() => { setPoll(null); setToast(""); }} />}</ShareContext.Provider>;
 }

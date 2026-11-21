@@ -32,6 +32,12 @@ export function isPollOwner(poll: Poll, voterId: string): boolean {
   return Boolean(voterId && poll.creatorId?.trim() === voterId);
 }
 
+// PRD 1.4 section 6.5: sharing is an owner-only management action.
+// Visibility, participation and navigation origin never grant sharing rights.
+export function canSharePoll(poll: Poll, accountId: string): boolean {
+  return isPollOwner(poll, accountId);
+}
+
 export function getBordaResults(poll: Poll): RankedOptionResult[] {
   const scores = new Map(poll.options.map((option) => [option.id, 0]));
   for (const vote of poll.votes) {

@@ -109,11 +109,15 @@ function toCard(row: PollRow): Poll {
 export const OWNED_POLL_PAGE_SIZE = 12;
 
 export async function fetchSquarePolls(): Promise<Poll[]> {
-  const initial = await supabase.from("polls").select(CARD_SELECT).eq("is_public", true)
-    .order("created_at", { ascending: false }).limit(5);
+  // PostgREST casts `now` to timestamptz on the server, so a device clock
+  // cannot put expired polls back in the square. Filter before limiting.
+  const runQuery = (columns: string) => supabase.from("polls").select(columns)
+    .eq("is_public", true).eq("status", "open")
+    .or("closed_at.is.null,closed_at.gt.now")
+    .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(5);
+  const initial = await runQuery(CARD_SELECT);
   const result = isMissingVisibilityColumn(initial.error)
-    ? await supabase.from("polls").select(LEGACY_CARD_SELECT).eq("is_public", true)
-      .order("created_at", { ascending: false }).limit(5)
+    ? await runQuery(LEGACY_CARD_SELECT)
     : initial;
   const { data, error } = result;
   if (error) throw error;

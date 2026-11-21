@@ -1,6 +1,6 @@
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
-import { isPollOwner } from "../utils/voting";
+import { canSharePoll, isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
@@ -30,6 +30,8 @@ function MyPollCard({
   onEnd: (poll: Poll) => void;
   onVisibilityChange: (poll: Poll, isPublic: boolean) => void;
 }) {
+  const { user: accountUser } = useAccount();
+  const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;
@@ -44,7 +46,7 @@ function MyPollCard({
   const offset = dragOffset ?? (expanded ? -ACTION_WIDTH : 0);
 
   const openShare = useSharePoll();
-  const share = () => openShare(poll);
+  const share = () => { if (shareAllowed) openShare(poll); };
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -183,9 +185,9 @@ function MyPollCard({
           <p className="my-poll-deadline">截止时间：{deadline}</p>
           <p className="my-poll-visibility">{poll.isPublic ? "公开 · 展示在广场" : "不公开 · 可通过链接分享"}</p>
           {poll.visibilityReviewedAt === null && Date.parse(poll.createdAt) < Date.parse("2026-11-19T16:00:00Z") && <div className="legacy-visibility-review" onClick={(event) => event.stopPropagation()}><p>这条旧投票目前不在广场展示。请选择是否公开。</p><div><button type="button" onClick={() => onVisibilityChange(poll, false)}>保持不公开</button><button type="button" onClick={() => onVisibilityChange(poll, true)}>公开到广场</button></div></div>}
-          <button className="my-poll-share" onClick={share} aria-label="分享投票">
+          {shareAllowed && <button className="my-poll-share" onClick={share} aria-label="分享投票">
             <AppIcon name="share" size={20} />
-          </button>
+          </button>}
         </div>
       </article>
     </div>
