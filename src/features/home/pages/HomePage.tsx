@@ -48,6 +48,7 @@ export function HomePage() {
   const endPoll = async (poll: Poll) => {
     try {
       await (polls.some((item) => item.id === poll.id) ? updatePoll : updateSquarePoll)(poll.id, (current) => ({ ...current, status: "closed" }));
+      void refreshSquare();
       setExpandedPollId(null);
       setToast("投票已结束");
     } catch (error) {
