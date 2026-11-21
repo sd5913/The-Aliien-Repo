@@ -20,14 +20,17 @@ for (const width of [320, 390, 430]) {
     const dimensions = await text.evaluate(element => {
       const textRect = element.getBoundingClientRect();
       const body = element.closest('.text-option-bottle-body').getBoundingClientRect();
+      const label = element.closest('.text-option-content').getBoundingClientRect();
       return { textWidth: element.scrollWidth, width: element.clientWidth,
         height: textRect.height, lineHeight: parseFloat(getComputedStyle(element).lineHeight),
         inside: textRect.x >= body.x && textRect.right <= body.right && textRect.y >= body.y && textRect.bottom <= body.bottom,
+        insideLabel: textRect.x >= label.x && textRect.right <= label.right && textRect.y >= label.y && textRect.bottom <= label.bottom,
         pageOverflow: document.documentElement.scrollWidth > innerWidth };
     });
     expect(dimensions.textWidth).toBeLessThanOrEqual(dimensions.width + 1);
     expect(dimensions.height).toBeGreaterThan(dimensions.lineHeight * 2);
     expect(dimensions.inside).toBe(true);
+    expect(dimensions.insideLabel).toBe(true);
     expect(dimensions.pageOverflow).toBe(false);
     await page.locator('.option-carousel').screenshot({ path: info.outputPath('text-bottle.png') });
     await page.getByRole('button', { name: '下一个选项' }).click();
@@ -61,6 +64,31 @@ test('text choices keep two-step submission, switching and draft restore', async
   await expect(page).toHaveURL(new RegExp(`/poll/${pollId}/results`));
   expect(state.calls.filter(call => call.name === 'submit_ballot')).toHaveLength(1);
   expect(state.calls.find(call => call.name === 'submit_ballot').body.p_ranking).toEqual([optionB]);
+});
+
+test('every text bottle uses the poured liquid color and has a surface label', async ({ page }, info) => {
+  const state = await mockApp(page);
+  const base = state.polls[0].poll_options[0];
+  state.polls[0].poll_options = Array.from({ length: 5 }, (_, index) => ({
+    ...base, id: `30000000-0000-4000-8000-00000000000${index + 1}`,
+    position: index, label: `饮料选项 ${index + 1}`,
+  }));
+  await page.goto(`/poll/${pollId}`);
+  const colors = [];
+  for (let index = 0; index < 5; index++) {
+    await page.getByRole('button', { name: `查看选项 ${index + 1}` }).click();
+    await page.getByRole('button', { name: `选择当前选项 ${String.fromCharCode(65 + index)}`, exact: false }).click();
+    const liquid = await page.locator('.text-option-bottle-body').evaluate(element => getComputedStyle(element, '::before').backgroundColor);
+    await expect(page.locator('.vote-cup-liquid')).toHaveCSS('fill', liquid);
+    colors.push(liquid);
+  }
+  expect(new Set(colors).size).toBe(5);
+  const label = page.locator('.text-option-content');
+  await expect(label).toHaveCSS('border-top-style', 'solid');
+  const background = await label.evaluate(element => getComputedStyle(element).backgroundColor);
+  expect(background).not.toBe('rgba(0, 0, 0, 0)');
+  await page.getByRole('button', { name: '查看选项 1' }).click();
+  await page.locator('.option-carousel').screenshot({ path: info.outputPath('bottle-label-color.png') });
 });
 
 test('unbroken English and explicit newlines remain inside the bottle', async ({ page }) => {

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { PollOption } from "../../../types/poll";
 import { Modal } from "../../../components/ui/Modal";
+import { optionColors } from "../utils/optionColors";
 
 export function OptionCarousel({ options, activeId, onBrowse }: { options: PollOption[]; activeId: string; onBrowse: (id: string) => void }) {
   const [index, setIndex] = useState(Math.max(0, options.findIndex((option) => option.id === activeId)));
@@ -31,7 +32,7 @@ export function OptionCarousel({ options, activeId, onBrowse }: { options: PollO
         setTouchStart(null);
       }}>
         <div className={textOnly ? "carousel-text-wrap" : "carousel-image-wrap"}>
-          {textOnly ? <div className="text-option-bottle">
+          {textOnly ? <div className="text-option-bottle" style={{ "--option-liquid-color": optionColors[index % optionColors.length] } as CSSProperties}>
             <span className="text-option-cap" aria-hidden="true" />
             <span className="text-option-neck" aria-hidden="true" />
             <div className="text-option-bottle-body">

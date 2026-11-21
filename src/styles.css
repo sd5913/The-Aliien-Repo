@@ -296,8 +296,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .text-option-cap { position: absolute; z-index: 2; top: 0; left: 30%; width: 40%; height: 23px; border: 2px solid #ffffffb3; border-radius: 8px 8px 5px 5px; background: repeating-linear-gradient(90deg, #b59bd5 0 3px, #cdb5e6 3px 6px); }
 .text-option-neck { position: absolute; top: 20px; left: 34%; width: 32%; height: 24px; border: 2px solid #ffffffe6; border-bottom: 0; background: #ffffff59; }
 .text-option-bottle-body { position: relative; isolation: isolate; min-height: 218px; display: grid; place-items: center; padding: 38px 14px 30px; border: 3px solid #ffffffe6; border-radius: 40px 40px 30px 30px; background: linear-gradient(100deg, #ffffff80, #ffffff26 30%, #ffffff40 70%, #ffffff99); box-shadow: inset 5px 0 0 #ffffff40, inset -5px 0 0 #ffffff26; }
-.text-option-bottle-body::before { content: ""; position: absolute; z-index: -1; inset: 38% 7px 7px; border: 1px solid #ffffff70; border-radius: 45% 40% 22px 22px / 8px 8px 22px 22px; background: linear-gradient(#c4b5fd26, #ddd6fe80); }
-.text-option-content { min-width: 0; max-width: 100%; display: grid; gap: 12px; text-align: center; color: var(--deep-purple); }
+.text-option-bottle-body::before { content: ""; position: absolute; z-index: -1; inset: 38% 7px 7px; border: 1px solid #ffffff70; border-radius: 45% 40% 22px 22px / 8px 8px 22px 22px; background: var(--option-liquid-color); opacity: .7; }
+.text-option-content { min-width: 0; width: 100%; max-width: 100%; display: grid; gap: 8px; padding: 12px 8px; border: 2px solid #ede9fe; border-radius: 12px; background: #fffdf9fa; box-shadow: 0 3px 0 #4c1d9512; text-align: center; color: var(--deep-purple); }
 .text-option-letter { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--purple); }
 .text-option-content strong { font-family: var(--font-display); font-size: 17px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
 .carousel-count { position: absolute; right: 12px; top: 12px; padding: 6px 10px; border-radius: 999px; background: #321154aa; color: white; font-size: 10px; font-weight: 700; }
