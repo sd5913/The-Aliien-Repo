@@ -21,7 +21,7 @@ export function PageShell({ children, title, showNavigation = true, backTo, show
   return (
     <div className={`app-shell${showNavigation ? " has-bottom-nav" : ""}`}>
       <header className="topbar">
-        {backTo && <Link className="back-link" to={backTo} aria-label="返回"><AppIcon name="chevronLeft" size={20} /></Link>}
+        {backTo && <Link className="back-link" to={backTo} aria-label={t("nav.back")}><AppIcon name="chevronLeft" size={20} /></Link>}
         {showHeaderTitle && title ? (
           <h1 className="page-header-title">{title}</h1>
         ) : (

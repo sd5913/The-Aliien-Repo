@@ -60,9 +60,9 @@ test('personal page loads owned polls in pages and filters on the server', async
   }));
   await page.goto('/settings');
   await expect(page.locator('.my-poll-card')).toHaveCount(12);
-  await page.getByRole('button', { name: '載入更多投票' }).scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: '载入更多投票' }).scrollIntoViewIfNeeded();
   await expect(page.locator('.my-poll-card')).toHaveCount(24);
-  await page.getByRole('button', { name: '載入更多投票' }).scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: '载入更多投票' }).scrollIntoViewIfNeeded();
   await expect(page.locator('.my-poll-card')).toHaveCount(25);
   expect(state.requests.filter((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('offset') === '12').length).toBeGreaterThan(0);
   await page.getByRole('tab', { name: '已结束' }).click();

@@ -54,10 +54,10 @@ export function VotingPage() {
   useEffect(() => {
     if (accountLoading || !accountUser || participant || identityPending.current) return;
     identityPending.current = true;
-    const rawName = accountUser.user_metadata?.nickname ?? accountUser.email?.split("@")[0] ?? "投票朋友";
+    const rawName = accountUser.user_metadata?.nickname ?? accountUser.email?.split("@")[0] ?? t("vote.defaultNickname");
     const name = Array.from(String(rawName).trim()).slice(0, 12).join("");
-    void saveParticipant(name.length >= 2 ? name : "投票朋友", "🐱")
-      .catch(() => setIdentityError("投票身份建立失败，请重试。"))
+    void saveParticipant(name.length >= 2 ? name : t("vote.defaultNickname"), "🐱")
+      .catch(() => setIdentityError(t("guest.identityFailed")))
       .finally(() => { identityPending.current = false; });
   }, [accountLoading, accountUser, participant, identityRetry]);
   useEffect(() => {
@@ -83,7 +83,7 @@ export function VotingPage() {
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
   if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("auth.checking")}</p></PageShell>;
-  if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || "正在准备投票身份…"}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>重试</button>}</PageShell>;
+  if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || t("vote.preparingIdentity")}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>{t("common.retry")}</button>}</PageShell>;
   if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));

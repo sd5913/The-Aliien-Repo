@@ -9,7 +9,7 @@ test('GitHub OAuth works without filling in the email form and preserves the ret
     route.fulfill({ status: 302, headers: { location: consentUrl } }));
   await page.goto('/auth?returnTo=' + encodeURIComponent(destination));
   const authorize = page.waitForRequest('https://*.supabase.co/auth/v1/authorize**');
-  await page.getByRole('button', { name: '以 GitHub 登入' }).click();
+  await page.getByRole('button', { name: '以 GitHub 登录' }).click();
   const url = new URL((await authorize).url());
   expect(url.searchParams.get('provider')).toBe('github');
   const callback = new URL(url.searchParams.get('redirect_to'));
@@ -29,9 +29,9 @@ test('GitHub cancellation displays retry feedback and keeps email sign-in availa
     await route.fulfill({ status: 302, headers: { location: callback.href } });
   });
   await page.goto('/auth?returnTo=' + encodeURIComponent('//evil.test'));
-  await page.getByRole('button', { name: '使用 GitHub 登录' }).click();
-  await expect(page.getByRole('alert')).toHaveText('登录未完成，请重试。');
-  await expect(page.getByRole('button', { name: '使用 GitHub 登录' })).toBeEnabled();
+  await page.getByRole('button', { name: '以 GitHub 登录' }).click();
+  await expect(page.getByRole('alert')).toHaveText('未完成登录，请再试一次。');
+  await expect(page.getByRole('button', { name: '以 GitHub 登录' })).toBeEnabled();
   await expect(page.getByRole('button', { name: '继续使用邮箱' })).toBeEnabled();
   await expect(page.getByText('Sensitive provider detail')).toHaveCount(0);
 });

@@ -28,10 +28,10 @@ export function OwnerPollActions({ poll, onEnd, onDelete }: { poll: Poll; onEnd:
     <button className="settings-nav-button" aria-label={t("poll.manage")} onClick={() => setMode("menu")}>···</button>
     {mode === "menu" && <Modal title={t("poll.manage")} onClose={() => setMode(null)}>
       <div className="owner-action-menu">
-        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => navigate(`/create?id=${poll.id}`)}>编辑投票 / 截止时间</button>
-        <button className="button-soft" onClick={() => navigate(`/create?copy=${poll.id}`)}>复制为新投票</button>
-        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => setMode("end")}>结束投票</button>
-        <button className="danger-button" onClick={() => setMode("delete")}>删除投票</button>
+        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => navigate(`/create?id=${poll.id}`)}>{t("poll.editDeadline")}</button>
+        <button className="button-soft" onClick={() => navigate(`/create?copy=${poll.id}`)}>{t("poll.copyNew")}</button>
+        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => setMode("end")}>{t("poll.end")}</button>
+        <button className="danger-button" onClick={() => setMode("delete")}>{t("poll.delete")}</button>
       </div>
     </Modal>}
     {(mode === "end" || mode === "delete") && <Modal title={mode === "end" ? t("poll.endQuestion") : t("poll.deleteQuestion")}

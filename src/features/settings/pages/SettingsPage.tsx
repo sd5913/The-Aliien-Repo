@@ -39,16 +39,16 @@ export function SettingsPage() {
         {auth.loading ? (
           <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>{t("profile.checking")}</span></div></div>
         ) : user ? (
-          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label="编辑个人资料" onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
-            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={(event) => { event.stopPropagation(); if (typeof avatar === "string" && avatar.startsWith("http")) setAvatarPreview(avatar); }}>{avatar}</button>
+          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label={t("profile.edit")} onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label={t("profile.previewAvatar")} onClick={(event) => { event.stopPropagation(); if (typeof avatar === "string" && avatar.startsWith("http")) setAvatarPreview(avatar); }}>{avatar}</button>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
-            <Link className="profile-edit-entry" to="/edit-profile" aria-label="编辑资料" onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
+            <Link className="profile-edit-entry" to="/edit-profile" aria-label={t("profile.edit")} onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : participant ? (
-          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label="编辑个人资料" onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
-            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={(event) => { event.stopPropagation(); if (participant.avatar.startsWith("http")) setAvatarPreview(participant.avatar); }}>{participant.avatar}</button>
-            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>投票者身份 · 已保存在当前浏览器</span></div>
-            <Link className="profile-edit-entry" to="/edit-profile" aria-label="编辑资料" onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
+          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label={t("profile.edit")} onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label={t("profile.previewAvatar")} onClick={(event) => { event.stopPropagation(); if (participant.avatar.startsWith("http")) setAvatarPreview(participant.avatar); }}>{participant.avatar}</button>
+            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>{t("profile.voterSaved")}</span></div>
+            <Link className="profile-edit-entry" to="/edit-profile" aria-label={t("profile.edit")} onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : (
           <div className="profile-summary profile-summary-empty">
@@ -61,7 +61,7 @@ export function SettingsPage() {
       <div ref={pollsRef} id="my-polls" style={{ scrollMarginTop: 80 }}>
         <MyPollsSection showCreateButton={false} personalPageStyle />
       </div>
-      {avatarPreview && <Modal title="头像预览" onClose={() => setAvatarPreview(null)}><img className="profile-avatar-preview" src={avatarPreview} alt="头像大图" /></Modal>}
+      {avatarPreview && <Modal title={t("profile.previewAvatar")} onClose={() => setAvatarPreview(null)}><img className="profile-avatar-preview" src={avatarPreview} alt={t("profile.previewAvatar")} /></Modal>}
     </PageShell>
   );
 }

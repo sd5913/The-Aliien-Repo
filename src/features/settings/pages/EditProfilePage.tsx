@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant, } from "../../auth/utils/useParticipant";
@@ -13,6 +14,7 @@ function limitNickname(value: string) {
 }
 
 export function EditProfilePage() {
+  const { t } = useLocale();
   const navigate = useNavigate();
   const { user, loading: accountLoading } = useAccount();
   const participant = useParticipant();
@@ -38,7 +40,7 @@ export function EditProfilePage() {
         setAvatar(profile?.avatar_url || (typeof user.user_metadata.avatar === "string" ? user.user_metadata.avatar : ""));
       }).catch((error) => {
         console.error("BothPls: could not load profile.", error);
-        setFeedback("资料加载失败，请稍后重试。");
+        setFeedback(t("profile.failed"));
       });
     } else if (participant) {
       setNickname(participant.nickname);
@@ -51,15 +53,15 @@ export function EditProfilePage() {
   const uploadAvatar = async (file: File) => {
     setFeedback("");
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setFeedback("头像格式不支持，请重新选择 JPG、PNG 或 WebP 图片。");
+      setFeedback(t("image.format"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setFeedback("头像不能超过 5 MB，请重新选择。");
+      setFeedback(t("profile.avatarTooLarge"));
       return;
     }
     try {
-      if (!user) throw new Error("请先登录正式账号后再上传头像。");
+      if (!user) throw new Error(t("profile.avatarAccountRequired"));
       const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
       const { error } = await supabase.storage.from("poll-images").upload(path, file, { upsert: false, contentType: file.type });
       if (error) throw error;
@@ -67,7 +69,7 @@ export function EditProfilePage() {
       setAvatar(publicUrl);
     } catch (error) {
       console.error("BothPls: avatar upload failed.", error);
-      setFeedback("头像上传失败，请重试。已填写的资料不会清空。");
+      setFeedback(t("image.uploadFailed"));
     }
   };
 
@@ -75,11 +77,11 @@ export function EditProfilePage() {
     event.preventDefault();
     const cleanNickname = nickname.trim();
     if (!cleanNickname) {
-      setFeedback("昵称不能为空。");
+      setFeedback(t("profile.nicknameRequired"));
       return;
     }
     if (Array.from(cleanNickname).length > 20) {
-      setFeedback("昵称最多 20 个字符。");
+      setFeedback(t("profile.nicknameTooLong", { count: 20 }));
       return;
     }
     setSaving(true);
@@ -106,23 +108,23 @@ export function EditProfilePage() {
       navigate("/settings", { replace: true });
     } catch (error) {
       console.error("BothPls: could not save profile.", error);
-      setFeedback("资料保存失败，请重试。已填写的资料不会清空。");
+      setFeedback(t("settings.saveFailed"));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <PageShell title="编辑资料" showHeaderTitle backTo="/settings" showNavigation={false}>
+    <PageShell title={t("profile.edit")} showHeaderTitle backTo="/settings" showNavigation={false}>
       <form className="settings-card profile-form" onSubmit={submit}>
-        <label className="field-label">头像</label>
+        <label className="field-label">{t("guest.avatar")}</label>
         <div className="avatar-picker-row">
           {avatar && avatar.startsWith("http") ? (
-            <img className="profile-avatar" src={avatar} alt="当前头像" />
+            <img className="profile-avatar" src={avatar} alt={t("profile.currentAvatar", { avatar: avatar || "🌷" })} />
           ) : (
-            <div className="profile-avatar" aria-label={`当前头像 ${avatar || "🌷"}`}>{avatar || "🌷"}</div>
+            <div className="profile-avatar" aria-label={t("profile.currentAvatar", { avatar: avatar || "🌷" })}>{avatar || "🌷"}</div>
           )}
-          <label className="button-soft" htmlFor="edit-profile-avatar">选择图片</label>
+          <label className="button-soft" htmlFor="edit-profile-avatar">{t("profile.chooseAvatar")}</label>
           <input
             id="edit-profile-avatar"
             type="file"
@@ -135,27 +137,27 @@ export function EditProfilePage() {
             }}
           />
         </div>
-        <label className="field-label" htmlFor="edit-profile-nickname">昵称 <span className="optional">必填</span></label>
+        <label className="field-label" htmlFor="edit-profile-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label>
         <input
           id="edit-profile-nickname"
           className="text-input"
           value={nickname}
           maxLength={20}
           required
-          placeholder="输入昵称"
+          placeholder={t("profile.nicknameHint")}
           onChange={(event) => setNickname(limitNickname(event.target.value))}
         />
-        <label className="field-label" htmlFor="edit-profile-bio">简介 <span className="optional">可选</span></label>
+        <label className="field-label" htmlFor="edit-profile-bio">{t("profile.bio")} <span className="optional">{t("common.optional")}</span></label>
         <textarea
           id="edit-profile-bio"
           className="text-input profile-bio-input"
           value={bio}
-          placeholder="简单介绍一下自己"
+          placeholder={t("profile.bioHint")}
           onChange={(event) => setBio(event.target.value)}
         />
         {feedback && <p className="settings-feedback" role="alert">{feedback}</p>}
         <button className="purple-button button-full" type="submit" disabled={saving}>
-          {saving ? "保存中…" : "保存资料"}
+          {saving ? t("common.saving") : t("profile.save")}
         </button>
       </form>
     </PageShell>

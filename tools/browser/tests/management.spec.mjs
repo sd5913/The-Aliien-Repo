@@ -17,7 +17,7 @@ test('ending requires confirmation and cancel never calls the API', async ({ pag
 test('copy publishes a new open poll with fresh option IDs and opens sharing', async ({ page }) => {
   const state = await mockApp(page, { closed: true });
   await page.goto(`/create?copy=${pollId}`);
-  await expect(page.getByLabel('投票標題')).toHaveValue('浏览器测试投票');
+  await expect(page.getByLabel('投票标题')).toHaveValue('浏览器测试投票');
   await page.getByRole('button', { name: '建立投票', exact: false }).click();
   await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toBeVisible();
   const saved = state.calls.find((call) => call.name === 'save_poll').body.p_poll;

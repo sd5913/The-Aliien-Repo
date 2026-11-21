@@ -47,11 +47,11 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
         {image ? <img src={image} alt={t("share.alt", { title: poll.title, count: poll.options.length })} /> : <p role="status">{t(ready ? "share.renderFailed" : "share.rendering")}</p>}
       </div>
       <div className="share-dialog-actions">
-        <button className="purple-button" onClick={() => void copy()}>复制链接 ↗</button>
-        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || "投票"}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}><AppIcon name="chevronDown" size={16} /> 下载图片</a>
+        <button className="purple-button" onClick={() => void copy()}>{t("share.copy")}</button>
+        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || t("share.filename")}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}><AppIcon name="chevronDown" size={16} /> {t("share.download")}</a>
       </div>
-      <input className="share-selectable-url" aria-label="投票分享链接" value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
-      <p className="share-dialog-note">把票根发给朋友，听听大家怎么选</p>
+      <input className="share-selectable-url" aria-label={t("share.publicLink")} value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
+      <p className="share-dialog-note">{t("share.note")}</p>
       {toastMessage && <Toast message={t(toastMessage)} onClose={() => { setToast(""); clearFeedback(); }} />}
     </div>
   </dialog>;
