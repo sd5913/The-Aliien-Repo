@@ -4,6 +4,7 @@ import type { Poll } from "../../../types/poll";
 import { copyPollLink, pollUrl, renderShareTicket } from "../utils/share";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { canSharePoll } from "../utils/voting";
+import { AppIcon } from "../../../components/ui/AppIcon";
 
 const ShareContext = createContext<(poll: Poll) => void>(() => {});
 export const useSharePoll = () => useContext(ShareContext);
@@ -40,7 +41,7 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
       </div>
       <div className="share-dialog-actions">
         <button className="purple-button" onClick={() => void copy()}>复制链接 ↗</button>
-        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || "投票"}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}>↓ 下载图片</a>
+        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || "投票"}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}><AppIcon name="chevronDown" size={16} /> 下载图片</a>
       </div>
       <input className="share-selectable-url" aria-label="投票分享链接" value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
       <p className="share-dialog-note">把票根发给朋友，听听大家怎么选</p>

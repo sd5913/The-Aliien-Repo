@@ -11,6 +11,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { signInWithApple, signInWithGitHub } from "../../auth/services/auth";
 import { fetchProfile } from "../services/profiles";
 import { supabase } from "../../../lib/supabase/client";
+import { AppIcon } from "../../../components/ui/AppIcon";
 
 export function SettingsPreferencesPage() {
   const { settings, error } = useUserSettings();
@@ -113,12 +114,12 @@ export function SettingsPreferencesPage() {
           <><button className="settings-row-button" type="button" onClick={() => void bind("github")}>GitHub 登录</button><button className="settings-row-button" type="button" onClick={() => void bind("apple")}>Apple 登录</button></>
         )}
         {user && <>
-          <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <span>→</span></button>
+          <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <AppIcon name="chevronRight" size={18} /></button>
           <div className="settings-row-static"><strong>{t("settings.binding")}</strong><span>{identities.length ? `${t("settings.binding.current")}：${identities.join(" / ")}` : t("settings.binding.current")}</span></div>
           <button className="settings-row-button danger-text" type="button" onClick={() => setConfirmDelete(true)}>{t("settings.deleteAccount")}</button>
         </>}
         {participant && !user && <>
-          <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <span>→</span></button>
+          <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <AppIcon name="chevronRight" size={18} /></button>
           <div className="settings-row-static"><strong>{t("settings.binding")}</strong><span>软登录</span></div>
           <button className="settings-row-button" type="button" onClick={() => void bind("github")}>GitHub · {t("settings.binding.upgrade")}</button>
           <button className="settings-row-button" type="button" onClick={() => void bind("apple")}>Apple · {t("settings.binding.upgrade")}</button>
@@ -129,14 +130,14 @@ export function SettingsPreferencesPage() {
 
       <section className="settings-card">
         <div className="settings-section-heading"><h2>{t("settings.general")}</h2></div>
-        <button className="settings-row-button" type="button" onClick={() => setLanguageOpen(true)}><strong>{t("settings.language")}</strong><span>{locale === "zh-CN" ? "中文" : "English"}　→</span></button>
-        {isIOS && <button className="settings-row-button" type="button" onClick={() => void requestNotificationPermission()}>{t("settings.notifications")} <span>→</span></button>}
+        <button className="settings-row-button" type="button" onClick={() => setLanguageOpen(true)}><strong>{t("settings.language")}</strong><span>{locale === "zh-CN" ? "中文" : "English"} <AppIcon name="chevronRight" size={18} /></span></button>
+        {isIOS && <button className="settings-row-button" type="button" onClick={() => void requestNotificationPermission()}>{t("settings.notifications")} <AppIcon name="chevronRight" size={18} /></button>}
       </section>
 
       <section className="settings-card">
         <div className="settings-section-heading"><h2>{t("settings.about")}</h2></div>
         <div className="settings-row-static"><strong>{t("settings.version")}</strong><span>1.4.0</span></div>
-        <button className="settings-row-button" type="button" onClick={() => void openChangelog()}>{t("settings.changelog")} <span>→</span></button>
+        <button className="settings-row-button" type="button" onClick={() => void openChangelog()}>{t("settings.changelog")} <AppIcon name="chevronRight" size={18} /></button>
       </section>
       {confirmClear && <Modal title={t("settings.clearLocal")} onClose={() => setConfirmClear(false)} actions={<><button className="button-soft" type="button" onClick={() => setConfirmClear(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={clearLocalData}>{t("settings.confirm")}</button></>}><p>{t("settings.clearConfirm")}</p></Modal>}
       {languageOpen && <Modal title={t("settings.language")} onClose={() => setLanguageOpen(false)}><div className="language-options" role="radiogroup" aria-label={t("settings.language")}><button className={`settings-row-button${locale === "zh-CN" ? " language-selected" : ""}`} type="button" role="radio" aria-checked={locale === "zh-CN"} onClick={() => setLocale("zh-CN")}>中文（简体）<span>{locale === "zh-CN" ? "✓" : ""}</span></button><button className={`settings-row-button${locale === "en-US" ? " language-selected" : ""}`} type="button" role="radio" aria-checked={locale === "en-US"} onClick={() => setLocale("en-US")}>English<span>{locale === "en-US" ? "✓" : ""}</span></button></div></Modal>}
