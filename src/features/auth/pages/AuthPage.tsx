@@ -29,7 +29,7 @@ export function AuthPage() {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [pending, setPending] = useState<"email" | "github" | "apple" | null>(null);
-  const [providerError, setProviderError] = useState(() => {
+  const [providerError, setProviderError] = useState<MessageKey | "">(() => {
     const fragment = new URLSearchParams(hash.slice(1));
     return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key))
       ? "auth.notCompleted"
@@ -65,7 +65,7 @@ export function AuthPage() {
     const cleanEmail = email.trim();
     const cleanNickname = nickname.trim();
     if (!cleanEmail) {
-      setFeedback("请填写邮箱。");
+      setFeedback("auth.emailRequired");
       return;
     }
     setPending("email");
@@ -73,7 +73,7 @@ export function AuthPage() {
     try {
       const result = await sendMagicLink(cleanEmail, mode === "register" ? cleanNickname : undefined, returnTo);
       if (result.error) throw result.error;
-      setFeedback("邮箱链接已发送，请打开邮箱完成登录或注册。链接只能使用一次，有效期为一小时。");
+      setFeedback("auth.sent");
     } catch (error) {
       setFeedback(getAuthErrorKey(error instanceof Error ? error.message : ""));
     } finally {
@@ -104,7 +104,7 @@ export function AuthPage() {
       const { data, error } = await signInWithApple(returnTo);
       if (error || !data.url) throw new Error("Apple OAuth did not start");
     } catch {
-      setProviderError("无法使用 Apple 登录，请稍后重试。");
+      setProviderError("auth.appleFailed");
       setPending(null);
     }
   };
@@ -113,8 +113,8 @@ export function AuthPage() {
     <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">{t("auth.browse")}</Link>}>
       <section className="auth-page">
         <span className="eyebrow">WELCOME TO BOTHPLS</span>
-        <h1>{mode === "login" ? "欢迎回来！" : "加入 BothPls"}</h1>
-        <p className="auth-subtitle">{mode === "login" ? "选择 Apple、邮箱或 GitHub 登录，继续和朋友一起做决定。" : "选择喜欢的方式创建账号，把每次选择都变得更轻松。"}</p>
+        <h1>{t(mode === "login" ? "auth.welcome" : "auth.join")}</h1>
+        <p className="auth-subtitle">{t(mode === "login" ? "auth.loginIntro" : "auth.registerIntro")}</p>
 
         <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}>
           <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button>
@@ -122,14 +122,14 @@ export function AuthPage() {
         </div>
 
         <form className="auth-form" onSubmit={submit}>
-          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">昵称 <span className="optional">可选</span></label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder="朋友们会这样称呼你" autoComplete="nickname" /></>}
-          <label className="field-label" htmlFor="auth-email">邮箱</label>
+          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("common.optional")}</span></label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
+          <label className="field-label" htmlFor="auth-email">{t("common.email")}</label>
           <input id="auth-email" className="text-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" />
-          <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{pending === "email" ? "发送中…" : "继续使用邮箱"}</button>
-          <p className="auth-mode-prompt">{mode === "register" ? "已有账户？" : "还没有账户？"} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{mode === "register" ? "去登录" : "去注册"}</button></p>
+          <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{t(pending === "email" ? "auth.sending" : "auth.continueEmail")}</button>
+          <p className="auth-mode-prompt">{t(mode === "register" ? "auth.haveAccount" : "auth.noAccount")} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{t(mode === "register" ? "auth.goLogin" : "auth.goRegister")}</button></p>
         </form>
 
-        <div className="auth-divider" aria-hidden="true">或</div>
+        <div className="auth-divider" aria-hidden="true">{t("auth.or")}</div>
         <AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={submitApple} />
         <button className="auth-github button-full" type="button" onClick={submitGitHub} disabled={pending !== null}>
           {pending === "github" ? t("auth.githubPending") : t("auth.github")}

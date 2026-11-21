@@ -20,7 +20,7 @@ test('image upload previews the photo and removal only clears the form reference
 test('non-image files fail without making an upload request', async ({ page }) => {
   const state = await mockApp(page);
   await page.goto('/create');
-  await page.getByLabel('選項 1 的圖片檔案', { exact: true }).setInputFiles({ name: 'bad.txt', mimeType: 'text/plain', buffer: Buffer.from('not a photo') });
-  await expect(page.getByRole('alert')).toContainText('請選擇 JPG');
+  await page.getByLabel('选项 1 的图片档案', { exact: true }).setInputFiles({ name: 'bad.txt', mimeType: 'text/plain', buffer: Buffer.from('not a photo') });
+  await expect(page.getByRole('alert')).toContainText('请选择 JPG');
   expect(state.calls.some((call) => call.name === 'image_upload')).toBe(false);
 });

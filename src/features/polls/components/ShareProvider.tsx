@@ -52,7 +52,7 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
       </div>
       <input className="share-selectable-url" aria-label="投票分享链接" value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
       <p className="share-dialog-note">把票根发给朋友，听听大家怎么选</p>
-      {(toast || feedback) && <Toast message={toast || feedback} onClose={() => { setToast(""); clearFeedback(); }} />}
+      {toastMessage && <Toast message={t(toastMessage)} onClose={() => { setToast(""); clearFeedback(); }} />}
     </div>
   </dialog>;
 }

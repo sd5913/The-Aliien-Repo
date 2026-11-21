@@ -13,7 +13,7 @@ export function Modal({ title, children, onClose, actions }: ModalProps) {
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <button type="button" className="modal-close" aria-label="关闭" onClick={onClose}>×</button>
+        <button type="button" className="modal-close" aria-label={t("common.close")} onClick={onClose}>×</button>
         <span className="modal-sparkle" aria-hidden="true">✦</span>
         <h2 id="modal-title">{title}</h2>
         <div className="modal-content">{children}</div>

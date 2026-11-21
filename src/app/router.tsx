@@ -11,7 +11,6 @@ import { AuthPage } from "../features/auth/pages/AuthPage";
 
 
 import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
-import { RouteFallback } from "./RouteFallback";
 import { RequireAccount } from "../features/auth/components/AccountProvider";
 
 export const router = createBrowserRouter([

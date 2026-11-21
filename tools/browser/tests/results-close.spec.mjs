@@ -34,7 +34,7 @@ for (const closed of [false, true]) {
       await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
       await closeToHome(page);
       if (identity === 'owner' || identity === 'other-account') {
-        await expect(page.getByRole('link', { name: '个人中心 →' })).toBeVisible();
+        await expect(page.getByRole('link', { name: /个人中心/ })).toBeVisible();
       }
     });
   }

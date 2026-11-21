@@ -8,9 +8,9 @@ Instead of making a decision alone, users can share their options with friends a
 
 ### App language
 
-Open **Profile → Settings → Language** to choose **繁體中文（香港）**, **English**, or **한국어**. Traditional Chinese is the default on this branch. The choice is saved in the current browser and applies to the interface and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
+Open **Profile → Settings → Language** to choose **中文（简体）**, **English**, or **한국어**. Simplified Chinese is the default. The choice is saved in the current browser and applies to localized interface text and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
 
-The screenshots below are historical examples. Search crawlers that read only the static HTML see the Traditional Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
+The screenshots below are historical examples. Search crawlers that read only the static HTML see the Simplified Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
 
 | Main Page | Create poll | My Page |
 | --- | --- | --- |

@@ -1,5 +1,3 @@
-import { useLocale } from "../../../i18n/LocaleProvider";
-import type { MessageKey } from "../../../i18n/catalog";
 import { Link } from "react-router-dom";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
@@ -11,7 +9,6 @@ import type { UserSettings } from "../services/settings";
 const avatars = ["🌷", "🐰", "🧸", "🍑", "🐱", "☁️"];
 
 export function ProfileSettingsSection() {
-  const { t } = useLocale();
   const { settings, loading, error, save } = useUserSettings();
   const { user } = useAccount();
   const participant = useParticipant();

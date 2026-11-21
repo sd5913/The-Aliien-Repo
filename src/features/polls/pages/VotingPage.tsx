@@ -77,12 +77,12 @@ export function VotingPage() {
     if (!saveDraft(draftKey, { activeId, selectedId, comment })) setDraftNotice("poll.draftUnavailable");
   }, [draftReady, draftKey, activeId, selectedId, comment]);
 
-  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在加载投票…</p></PageShell>;
-  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
-  if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
+  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
+  if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>{t("poll.missing")}</h2><p>{t("poll.missingDetails")}</p><Link className="purple-button" to="/">{t("common.home")}</Link></div></PageShell>;
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
-  if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在确认登录状态…</p></PageShell>;
+  if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("auth.checking")}</p></PageShell>;
   if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || "正在准备投票身份…"}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>重试</button>}</PageShell>;
   if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
 
@@ -114,8 +114,8 @@ export function VotingPage() {
     } catch (error) {
       console.error("Could not save vote.", error);
       if (error instanceof Error && /POLL_CLOSED|投票已结束|INVALID_DEADLINE/.test(error.message)) {
-        setToast("投票已结束，不能再提交或修改选择");
-      } else setToast("投票保存失败，草稿已保留，请稍后重试");
+        setToast("vote.closed");
+      } else setToast("vote.saveFailed");
     } finally { setSaving(false); }
   };
 
@@ -129,11 +129,11 @@ export function VotingPage() {
   };
 
   return (
-    <PageShell showNavigation={false} backTo={returnTo} title="帮朋友做选择">
-      <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
-      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>分享投票</button>}
-      {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
-      {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
+    <PageShell showNavigation={false} backTo={returnTo} title={t("vote.help")}>
+      <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{participants(poll.votes.length)}</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
+      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>{t("poll.share")}</button>}
+      {!open && <div className="notice-banner">{t("vote.closed")}</div>}
+      {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
         setActiveId(nextId);
         if (nextId !== activeOption?.id) {
@@ -169,13 +169,13 @@ export function VotingPage() {
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? t("vote.picked", { letter: letter(selectedIndex) }) : t("vote.select", { letter: letter(activeIndex) })}</span>
         </div>
       </section>
-      <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
-      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
-      {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
-      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{saving ? "提交中…" : existingVote ? "提交修改" : "提交我的选择"}</button>
-      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
-      {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
-      {toast && <Toast message={toast} onClose={() => setToast("")} />}
+      <label className="field-label comment-input-label" htmlFor="vote-comment">{t("vote.leaveComment")} <span className="optional">{t("common.optional")}</span></label>
+      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
+      {existingVote && open && <p className="field-hint">{t("vote.alreadyVoted")}</p>}
+      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{t(saving ? "vote.submitting" : existingVote ? "vote.update" : "vote.submit")}</button>
+      <p className="vote-cup-note">{t("vote.editable")}</p>
+      {confirmCommentDelete && <Modal title={t("comment.deleteQuestion")} onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>{t("vote.deleteAndSubmit")}</button></>}><p>{t("vote.deleteDetails")}</p></Modal>}
+      {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}
     </PageShell>
   );
 }

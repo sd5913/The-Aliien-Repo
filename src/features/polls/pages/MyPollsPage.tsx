@@ -1,5 +1,4 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
-import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
 import { canSharePoll, isPollOwner } from "../utils/voting";
@@ -7,7 +6,7 @@ import { useSharePoll } from "../components/ShareProvider";
 import { PollOptionPreviews } from "../components/PollOptionPreviews";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { isPollOpen } from "../../../components/ui/StatusPill";
@@ -34,6 +33,7 @@ function MyPollCard({
   onEnd: (poll: Poll) => void;
   onVisibilityChange: (poll: Poll, isPublic: boolean) => void;
 }) {
+  const { t, locale, votes } = useLocale();
   const { user: accountUser } = useAccount();
   const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
@@ -190,13 +190,14 @@ function MyPollCard({
 }
 
 export function MyPollsSection({ showCreateButton = true, personalPageStyle = false }: { showCreateButton?: boolean; personalPageStyle?: boolean }) {
-  const [filter, setFilter] = useState<Filter>("全部");
+  const { t } = useLocale();
+  const [filter, setFilter] = useState<Filter>("all");
   const { user: accountUser } = useAccount();
   const participant = useParticipant();
   const identityQuery = accountUser
-    ? { owned: true as const, ownedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+    ? { owned: true as const, ownedFilter: filter === "all" ? undefined : filter }
     : participant
-      ? { voted: true as const, votedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+      ? { voted: true as const, votedFilter: filter === "all" ? undefined : filter }
       : { owned: true as const, ownedFilter: undefined };
   const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, refresh, removePoll, updatePoll } = usePolls(identityQuery);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -256,7 +257,7 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
   return (
     <section className={personalPageStyle ? "settings-my-polls" : undefined}>
       <div className="page-heading my-heading"><div><span className="eyebrow">收集每一个小想法</span><h1>我的投票</h1></div>{showCreateButton && <Link to="/create" className="purple-button create-shortcut">＋ 创建投票</Link>}</div>
-      <div className="filter-tabs" role="tablist">{(["全部", "进行中", "已结束"] as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{tab}</button>)}</div>
+      <div className="filter-tabs" role="tablist">{(Object.keys(filters) as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{t(filters[tab])}</button>)}</div>
       {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p> : filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} onVisibilityChange={(item, value) => void changeVisibility(item, value)} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{ownedPolls.length ? "这里暂时没有这类投票" : "还没有投票哦"}</h3><p>创建一个小问题，邀请朋友帮你选。</p>{showCreateButton && <Link to="/create" className="purple-button">＋ 创建投票</Link>}</div>}
       {hasMore && <div ref={loadMoreRef} className="my-poll-load-more"><button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "正在加载更多…" : "加载更多投票"}</button></div>}
       {syncError && <p className="settings-feedback" role="alert">加载更多失败，请点击“加载更多投票”重试。</p>}

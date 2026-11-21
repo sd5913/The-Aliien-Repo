@@ -1,6 +1,6 @@
 :root {
-  --font-cjk-display: "Noto Sans HK";
-  --font-cjk-body: "Noto Sans HK";
+  --font-cjk-display: "Noto Sans SC";
+  --font-cjk-body: "Noto Sans SC";
   font-family: var(--font-body);
   color: #5b21b6;
   background: #f3f4f6;
@@ -23,10 +23,6 @@
 /* Language changes only families; the type scale and pairing stay shared.
    Latin faces come first, so CJK fonts never replace Latin letters/digits.
    Explicit lang scopes also support mixed-language content within a page. */
-:where([lang]):lang(zh-HK) {
-  --font-cjk-display: "Noto Sans HK";
-  --font-cjk-body: "Noto Sans HK";
-}
 :where([lang]):lang(ko) {
   --font-cjk-display: "Pretendard";
   --font-cjk-body: "Pretendard";

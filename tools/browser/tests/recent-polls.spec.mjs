@@ -65,7 +65,7 @@ test('personal page loads owned polls in pages and filters on the server', async
   await page.getByRole('button', { name: '載入更多投票' }).scrollIntoViewIfNeeded();
   await expect(page.locator('.my-poll-card')).toHaveCount(25);
   expect(state.requests.filter((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('offset') === '12').length).toBeGreaterThan(0);
-  await page.getByRole('tab', { name: '已結束' }).click();
+  await page.getByRole('tab', { name: '已结束' }).click();
   await expect(page.locator('.my-poll-card')).toHaveCount(2);
   expect(state.requests.some((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('or')?.includes('status.eq.closed'))).toBe(true);
 });
