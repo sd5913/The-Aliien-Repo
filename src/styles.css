@@ -206,7 +206,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .home-recent-empty .empty-art svg { width: 52px; height: 52px; }
 .home-recent-empty h3 { margin: 0 0 8px; color: #4c1d95; }
 .home-recent-empty p { max-width: 260px; margin: 0; font-size: var(--type-caption); line-height: 1.6; }
-.home-square { padding-top: 34px; }
+.home-square { padding-top: 0; }
 .home-square-description { max-width: 470px; margin: 8px 0 0; color: #7952a5; font-size: var(--type-caption); line-height: 1.6; }
 .my-poll-visibility { margin: 3px 0 0; color: #6d43a0; font-size: 11px; }
 .legacy-visibility-review { position: relative; z-index: 1; margin-top: 8px; padding: 9px; border: 1px solid #decaf4; border-radius: 12px; background: #faf4ff; }

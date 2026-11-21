@@ -30,7 +30,7 @@ export function HomePage() {
   const participant = useParticipant();
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const recent = accountUser || participant ? polls : [];
-  const [tab, setTab] = useState<"recent" | "square">("recent");
+  const [tab, setTab] = useState<"recent" | "square">("square");
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -84,12 +84,12 @@ export function HomePage() {
         const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
         if (!keys.includes(event.key)) return;
         event.preventDefault();
-        const next = event.key === "Home" ? "recent" : event.key === "End" ? "square" : tab === "recent" ? "square" : "recent";
+        const next = event.key === "Home" ? "square" : event.key === "End" ? "recent" : tab === "recent" ? "square" : "recent";
         setTab(next); setExpandedPollId(null);
         event.currentTarget.querySelector<HTMLButtonElement>(next === "recent" ? "#home-recent-tab" : "#home-square-tab")?.focus();
       }}>
-        <button id="home-recent-tab" type="button" role="tab" aria-selected={tab === "recent"} aria-controls="home-recent-panel" tabIndex={tab === "recent" ? 0 : -1} className={tab === "recent" ? "active" : ""} onClick={() => { setTab("recent"); setExpandedPollId(null); }}>最近</button>
         <button id="home-square-tab" type="button" role="tab" aria-selected={tab === "square"} aria-controls="home-square-panel" tabIndex={tab === "square" ? 0 : -1} className={tab === "square" ? "active" : ""} onClick={() => { setTab("square"); setExpandedPollId(null); }}>广场</button>
+        <button id="home-recent-tab" type="button" role="tab" aria-selected={tab === "recent"} aria-controls="home-recent-panel" tabIndex={tab === "recent" ? 0 : -1} className={tab === "recent" ? "active" : ""} onClick={() => { setTab("recent"); setExpandedPollId(null); }}>最近</button>
       </div>
       <section className="home-recent" id="home-recent-panel" role="tabpanel" aria-labelledby="home-recent-tab" hidden={tab !== "recent"}>
         <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div></div>
