@@ -29,7 +29,8 @@ export function HomePage() {
   const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const recent = polls;
+  const recent = accountUser || participant ? polls : [];
+  const [tab, setTab] = useState<"recent" | "square">("recent");
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -79,13 +80,24 @@ export function HomePage() {
           <article className="step-card"><span className="step-number">03</span><span className="step-icon"><AppIcon name="heart" size={26} /></span><h3>查看结果</h3><p>投票和评论，帮你理清思路。</p></article>
         </div>
       </section>
-      <section className="home-recent">
+      <div className="filter-tabs home-poll-tabs" role="tablist" aria-label="投票列表" onKeyDown={(event) => {
+        const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+        if (!keys.includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === "Home" ? "recent" : event.key === "End" ? "square" : tab === "recent" ? "square" : "recent";
+        setTab(next); setExpandedPollId(null);
+        event.currentTarget.querySelector<HTMLButtonElement>(next === "recent" ? "#home-recent-tab" : "#home-square-tab")?.focus();
+      }}>
+        <button id="home-recent-tab" type="button" role="tab" aria-selected={tab === "recent"} aria-controls="home-recent-panel" tabIndex={tab === "recent" ? 0 : -1} className={tab === "recent" ? "active" : ""} onClick={() => { setTab("recent"); setExpandedPollId(null); }}>最近</button>
+        <button id="home-square-tab" type="button" role="tab" aria-selected={tab === "square"} aria-controls="home-square-panel" tabIndex={tab === "square" ? 0 : -1} className={tab === "square" ? "active" : ""} onClick={() => { setTab("square"); setExpandedPollId(null); }}>广场</button>
+      </div>
+      <section className="home-recent" id="home-recent-panel" role="tabpanel" aria-labelledby="home-recent-tab" hidden={tab !== "recent"}>
         <div className="section-title-row"><div><span className="eyebrow">一起做决定</span><h2>最近投票</h2></div></div>
         {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请稍后重试。<RetryIconButton onClick={() => void refresh()} /></p> : recent.length ? <><div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div>{syncError && <p className="settings-feedback" role="status">投票加载失败，请稍后重试。<RetryIconButton onClick={() => void refresh()} /></p>}</> : (
-          <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>还没有最近投票</h3><p>创建投票或参与一次投票后，会显示在这里。</p></div>
+          <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>还没有最近投票</h3><p>创建投票或参与一次投票后，会显示在这里。</p><Link to="/create" className="purple-button">发起一个投票</Link></div>
         )}
       </section>
-      <section className="home-recent home-square">
+      <section className="home-recent home-square" id="home-square-panel" role="tabpanel" aria-labelledby="home-square-tab" hidden={tab !== "square"}>
         <div className="section-title-row"><div><span className="eyebrow">发现大家的选择</span><h2>广场</h2><p className="home-square-description">公开投票会展示在这里，让更多人一起参与。仅通过链接分享的投票不会进入广场。</p></div></div>
         {squareLoading ? <p className="empty-inline">正在加载广场…</p> : squareError ? <p className="settings-feedback" role="alert">广场加载失败，请稍后重试。<RetryIconButton onClick={() => void refreshSquare()} /></p> : squarePolls.length ? <><div className="poll-card-list">{squarePolls.map((poll) => <PollCard key={poll.id} poll={poll} surface="square" to={pollPath(poll.id, "vote", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div>{squareSyncError && <p className="settings-feedback" role="status">广场加载失败，请稍后重试。<RetryIconButton onClick={() => void refreshSquare()} /></p>}</> : <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>广场还没有公开投票</h3><p>投票发起者选择公开后，会出现在这里。</p></div>}
       </section>

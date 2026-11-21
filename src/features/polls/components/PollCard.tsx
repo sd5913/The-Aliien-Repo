@@ -166,6 +166,7 @@ export function PollCard({
       >
         <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
+          {surface !== "square" && (owner || poll.participatedByCurrentIdentity) && <div className="poll-identity-badges">{owner && <span>我建的</span>}{poll.participatedByCurrentIdentity && <span>我投的</span>}</div>}
           <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
             <h3>{poll.title}</h3>
           </Link>
