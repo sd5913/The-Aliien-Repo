@@ -5,7 +5,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { isPollOpen } from "../../../components/ui/StatusPill";
 import type { Poll } from "../../../types/poll";
 
-export function OwnerPollActions({ poll, onEnd, onDelete }: { poll: Poll; onEnd: () => Promise<void>; onDelete: () => Promise<void> }) {
+export function OwnerPollActions({ poll, returnTo, onEnd, onDelete }: { poll: Poll; returnTo: "/" | "/settings"; onEnd: () => Promise<void>; onDelete: () => Promise<void> }) {
   const [mode, setMode] = useState<"menu" | "end" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -25,8 +25,8 @@ export function OwnerPollActions({ poll, onEnd, onDelete }: { poll: Poll; onEnd:
     <button className="settings-nav-button" aria-label="管理投票" onClick={() => setMode("menu")}>···</button>
     {mode === "menu" && <Modal title="管理投票" onClose={() => setMode(null)}>
       <div className="owner-action-menu">
-        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => navigate(`/create?id=${poll.id}`)}>编辑投票 / 截止时间</button>
-        <button className="button-soft" onClick={() => navigate(`/create?copy=${poll.id}`)}>复制为新投票</button>
+        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => navigate(`/create?id=${poll.id}&returnTo=${encodeURIComponent(returnTo)}`)}>编辑投票 / 截止时间</button>
+        <button className="button-soft" onClick={() => navigate(`/create?copy=${poll.id}&returnTo=${encodeURIComponent(returnTo)}`)}>复制为新投票</button>
         <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => setMode("end")}>结束投票</button>
         <button className="danger-button" onClick={() => setMode("delete")}>删除投票</button>
       </div>
