@@ -7,7 +7,7 @@ import { OwnerPollActions } from "../components/OwnerPollActions";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
-import { SandResults } from "../components/SandResults";
+import { LiquidResults } from "../components/LiquidResults";
 import { optionColors } from "../utils/optionColors";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
@@ -113,7 +113,7 @@ export function ResultsPage() {
       </div>
       {syncError && <p className="field-hint" role="status">结果更新暂时失败，已保留上次数据；网络恢复后会重试。</p>}
       {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? `平票 · ${leaderText} 并列领先` : `${leaderText} ${open ? "当前领先" : "获得最多选择"}`}</p>}
-      <SandResults options={poll.options} counts={counts} />
+      <LiquidResults options={poll.options} counts={counts} />
       <section className="results-card" aria-label="各选项票数">
         <div className="result-option-list">
           {poll.options.map((option, index) => {
@@ -123,7 +123,7 @@ export function ResultsPage() {
               : 0;
             return (
               <div className="result-option-row" key={option.id}>
-                {option.imageUrl ? <img className="result-option-image" src={option.imageUrl} alt="" /> : <span className="result-color" style={{ background: optionColors[index % optionColors.length] }} />}
+                {option.imageUrl && <img className="result-option-image" src={option.imageUrl} alt="" />}<span className="result-color" style={{ background: optionColors[index % optionColors.length] }} />
                 <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>
                   {count} 票 · {percent}%
