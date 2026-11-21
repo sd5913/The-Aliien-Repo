@@ -30,9 +30,7 @@ flowchart TD
     V --> B[Optional comment and submit]
     B --> R
     R -->|Change vote while open| V
-    R -->|Participant closes| X[Close tab / keep identity and go Home]
-    X -->|Go Home| H
-    R -->|Creator closes| BACK[Return to Home / Profile]
+    R -->|Close results: all identities, no confirmation| H
 ```
 
 Profile shows account details, soft identity, or an unsigned empty state without forcing login. Creator accounts and soft identities are separate.
@@ -68,7 +66,7 @@ Reaching the deadline also produces final results. Duplication excludes original
 | Comment management | Authors edit or delete their own comments; creators may delete; management remains available after closing without changing votes |
 | Closed | Final results and comments remain available; new or changed selections are prohibited |
 | Deleted | Original links show a missing-poll state with a return action |
-| Leaving results | Participants close the tab or keep their identity and go Home; blocked tab closure shows manual instructions |
+| Leaving results | All identities return directly to Home without confirmation or closing the browser tab; identity is retained. Loading, error and missing states use the same exit. |
 
 ## 4. Recovery and errors
 
