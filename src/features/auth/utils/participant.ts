@@ -13,7 +13,7 @@ export function readParticipant(): ParticipantProfile | null {
       const profile = value as Partial<ParticipantProfile>;
       return typeof profile.id === "string" && !!profile.id &&
         typeof profile.nickname === "string" && Array.from(profile.nickname.trim()).length >= 2 &&
-        Array.from(profile.nickname.trim()).length <= 12 &&
+        Array.from(profile.nickname.trim()).length <= 20 &&
         profile.participantReady === true && typeof profile.avatar === "string" &&
         typeof profile.participantToken === "string" && /^[a-f0-9]{64}$/.test(profile.participantToken);
     });
@@ -21,8 +21,8 @@ export function readParticipant(): ParticipantProfile | null {
 
 export async function saveParticipant(nickname: string, avatar: string): Promise<ParticipantProfile> {
   const clean = nickname.trim();
-  if (Array.from(clean).length < 2 || Array.from(clean).length > 12) {
-    throw new Error("昵称需要 2–12 个字符");
+  if (Array.from(clean).length < 2 || Array.from(clean).length > 20) {
+    throw new Error("昵称需要 2–20 个字符");
   }
   const existing = readParticipant();
   // Existing capability identities survive reloads and profile changes. Legacy

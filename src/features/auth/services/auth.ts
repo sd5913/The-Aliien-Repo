@@ -12,6 +12,13 @@ export function signInWithGitHub(returnTo = "/") {
   });
 }
 
+export function signInWithApple(returnTo = "/") {
+  return supabase.auth.signInWithOAuth({
+    provider: "apple",
+    options: { redirectTo: authCallbackUrl(returnTo) },
+  });
+}
+
 export async function sendMagicLink(email: string, nickname?: string, returnTo = "/") {
   return supabase.auth.signInWithOtp({
     email,

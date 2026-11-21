@@ -5,5 +5,3 @@ export function sandBoundary(fraction: number, x: number, tilt: number, phase: n
     .065 * Math.sin(2 * Math.PI * x + phase) + .38 * tilt * (x - .5)
   );
 }
-
-export const sandColors = ["#bca2e8", "#efc29b", "#a4c8df", "#deacc8", "#acd1bd"];

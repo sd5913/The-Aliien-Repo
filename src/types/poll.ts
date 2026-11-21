@@ -38,12 +38,15 @@ export interface Poll {
   description: string;
   createdAt: string;
   creatorId?: string;
+  isPublic?: boolean;
+  visibilityReviewedAt?: string | null;
   commentsPublic?: boolean;
   endsAt?: string;
   status: PollStatus;
   options: PollOption[];
   votes: Vote[];
   voteCount?: number;
+  participatedByCurrentIdentity?: boolean;
   comments: PollComment[];
 }
 

@@ -1,17 +1,50 @@
 import { test, expect } from '@playwright/test';
-import { mockApp } from './fixtures.mjs';
+import { mockApp, pollId } from './fixtures.mjs';
 
-test('home limits recent polls and requests counts without loading comments or ballots', async ({ page }) => {
-  const state = await mockApp(page);
+test('public square is visible to visitors, but viewing a poll does not put it in recent polls', async ({ page }) => {
+  const state = await mockApp(page, { accountId: null });
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  expect(state.requests.some((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('is_public') === 'eq.true')).toBe(true);
+  await page.goto(`/poll/${pollId}/results`);
   await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
+  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toHaveCount(0);
+});
 
-  const pollRequests = state.requests.filter((request) => request.path === '/rest/v1/polls');
-  expect(pollRequests.length).toBeGreaterThan(0);
-  expect(pollRequests.every((request) => new URLSearchParams(request.search).get('limit') === '5')).toBe(true);
-  expect(pollRequests.every((request) => new URLSearchParams(request.search).get('select')?.includes('votes(count)'))).toBe(true);
-  expect(state.requests.some((request) => request.path === '/rest/v1/votes')).toBe(false);
-  expect(state.requests.some((request) => request.path === '/rest/v1/poll_comments')).toBe(false);
+test('poll loading failures use the generic message and icon-only retry controls', async ({ page }) => {
+  await mockApp(page);
+  await page.route('**/rest/v1/polls*', (route) => route.fulfill({
+    status: 500,
+    contentType: 'application/json',
+    body: JSON.stringify({ message: 'database unavailable' }),
+  }));
+  await page.goto('/');
+  await expect(page.getByText('投票加载失败，请稍后重试。').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(1);
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(1);
+  await expect(page.getByText(/Supabase 配置/)).toHaveCount(0);
+});
+
+test('older polls stay out of the square until their owner chooses public', async ({ page }) => {
+  const state = await mockApp(page);
+  state.polls[0].is_public = false;
+  state.polls[0].visibility_reviewed_at = null;
+  await page.goto('/');
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '广场还没有公开投票' })).toBeVisible();
+  await expect(page.locator('.home-square .poll-card-list')).toHaveCount(0);
+  await page.goto('/settings');
+  await expect(page.getByText('这条旧投票目前不在广场展示。请选择是否公开。')).toBeVisible();
+  await page.getByRole('button', { name: '公开到广场' }).click();
+  await expect(page.getByText('投票已公开到广场')).toBeVisible();
+  await page.goto('/');
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
 });
 
 test('personal page loads owned polls in pages and filters on the server', async ({ page }) => {

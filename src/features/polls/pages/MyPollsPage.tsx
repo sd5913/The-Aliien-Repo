@@ -1,8 +1,10 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { isPollOwner } from "../utils/voting";
+import { useParticipant } from "../../auth/utils/useParticipant";
+import { canSharePoll, isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
+import { PollOptionPreviews } from "../components/PollOptionPreviews";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,6 +13,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
 import type { Poll } from "../../../types/poll";
+import { setPollVisibility } from "../services/polls";
 
 const filters = { all: "poll.all", active: "poll.open", ended: "poll.closed" } as const;
 type Filter = keyof typeof filters;
@@ -22,14 +25,17 @@ function MyPollCard({
   onExpand,
   onDelete,
   onEnd,
+  onVisibilityChange,
 }: {
   poll: Poll;
   expanded: boolean;
   onExpand: (expanded: boolean) => void;
   onDelete: (poll: Poll) => void;
   onEnd: (poll: Poll) => void;
+  onVisibilityChange: (poll: Poll, isPublic: boolean) => void;
 }) {
-  const { t, locale, votes } = useLocale();
+  const { user: accountUser } = useAccount();
+  const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;
@@ -44,7 +50,7 @@ function MyPollCard({
   const offset = dragOffset ?? (expanded ? -ACTION_WIDTH : 0);
 
   const openShare = useSharePoll();
-  const share = () => openShare(poll);
+  const share = () => { if (shareAllowed) openShare(poll); };
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -163,16 +169,7 @@ function MyPollCard({
         onPointerCancel={finishDrag}
         onClick={handleCardClick}
       >
-        <div className="my-poll-thumbnails" aria-hidden="true">
-          {[poll.options[0], poll.options[1]].map((option, index) => (
-            <img
-              key={option?.id ?? index}
-              src={option?.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`}
-              alt=""
-              draggable="false"
-            />
-          ))}
-        </div>
+        <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
           <Link className="my-poll-ticket-main" to={`/poll/${poll.id}/results`} state={{ returnTo: "/settings" }}>
             <h3>{poll.title}</h3>
@@ -180,10 +177,12 @@ function MyPollCard({
           <p className="my-poll-ticket-status">
             {isPollOpen(poll) ? t("poll.open") : t("poll.closed")} · {votes(poll.voteCount ?? poll.votes.length)}
           </p>
-          <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
-          <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
+          <p className="my-poll-deadline">截止时间：{deadline}</p>
+          <p className="my-poll-visibility">{poll.isPublic ? "公开 · 展示在广场" : "不公开 · 可通过链接分享"}</p>
+          {poll.visibilityReviewedAt === null && Date.parse(poll.createdAt) < Date.parse("2026-11-19T16:00:00Z") && <div className="legacy-visibility-review" onClick={(event) => event.stopPropagation()}><p>这条旧投票目前不在广场展示。请选择是否公开。</p><div><button type="button" onClick={() => onVisibilityChange(poll, false)}>保持不公开</button><button type="button" onClick={() => onVisibilityChange(poll, true)}>公开到广场</button></div></div>}
+          {shareAllowed && <button className="my-poll-share" onClick={share} aria-label="分享投票">
             <AppIcon name="share" size={20} />
-          </button>
+          </button>}
         </div>
       </article>
     </div>
@@ -191,15 +190,21 @@ function MyPollCard({
 }
 
 export function MyPollsSection({ showCreateButton = true, personalPageStyle = false }: { showCreateButton?: boolean; personalPageStyle?: boolean }) {
-  const { t } = useLocale();
-  const [filter, setFilter] = useState<Filter>("all");
-  const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, removePoll, updatePoll } = usePolls({ owned: true, ownedFilter: filter === "all" ? undefined : filter });
+  const [filter, setFilter] = useState<Filter>("全部");
+  const { user: accountUser } = useAccount();
+  const participant = useParticipant();
+  const identityQuery = accountUser
+    ? { owned: true as const, ownedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+    : participant
+      ? { voted: true as const, votedFilter: filter === "全部" ? undefined : filter === "进行中" ? "active" as const : "ended" as const }
+      : { owned: true as const, ownedFilter: undefined };
+  const { polls, loading, loadingMore, hasMore, loadMore, error, syncError, refresh, removePoll, updatePoll } = usePolls(identityQuery);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
-  const [toast, setToast] = useState<MessageKey | "">("");
-  const { user: accountUser } = useAccount();
+  const location = useLocation();
+  const [toast, setToast] = useState(typeof location.state?.toast === "string" ? location.state.toast : "");
   const ownedPolls = polls.filter((poll) => isPollOwner(poll, accountUser?.id ?? ""));
   const filtered = ownedPolls;
 
@@ -237,16 +242,27 @@ export function MyPollsSection({ showCreateButton = true, personalPageStyle = fa
     }
   };
 
+  const changeVisibility = async (poll: Poll, isPublic: boolean) => {
+    try {
+      await setPollVisibility(poll.id, isPublic);
+      await refresh();
+      setToast(isPublic ? "投票已公开到广场" : "投票已保持不公开，仍可复制链接分享");
+    } catch (error) {
+      console.error("Could not update poll visibility.", error);
+      setToast("可见性设置失败，请稍后重试");
+    }
+  };
+
   return (
     <section className={personalPageStyle ? "settings-my-polls" : undefined}>
-      <div className="page-heading my-heading"><div><span className="eyebrow">{t("poll.collection")}</span><h1>{t("poll.mine")}</h1></div>{showCreateButton && <Link to="/create" className="purple-button create-shortcut">{"＋ " + t("poll.create")}</Link>}</div>
-      <div className="filter-tabs" role="tablist">{(Object.keys(filters) as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{t(filters[tab])}</button>)}</div>
-      {loading ? <p className="empty-inline">{t("poll.loading")}</p> : error ? <p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p> : filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{ownedPolls.length ? t("poll.emptyFilter") : t("poll.empty")}</h3><p>{t("poll.emptyDetails")}</p>{showCreateButton && <Link to="/create" className="purple-button">{"＋ " + t("poll.create")}</Link>}</div>}
-      {hasMore && <div ref={loadMoreRef} className="my-poll-load-more"><button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? t("poll.moreLoading") : t("poll.more")}</button></div>}
-      {syncError && <p className="settings-feedback" role="alert">{t("poll.moreFailed")}</p>}
-      {ending && <Modal title={t("poll.endQuestion")} onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>{t("poll.endConfirm")}</button></>}><p>{t("poll.endDetails")}</p></Modal>}
-      {deleting && <Modal title={t("poll.deleteQuestion")} onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>{t("poll.keep")}</button><button className="danger-button" onClick={confirmDelete}>{t("poll.delete")}</button></>}><p>{t("poll.deleteDetails", { title: deleting.title })}</p></Modal>}
-      {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}
+      <div className="page-heading my-heading"><div><span className="eyebrow">收集每一个小想法</span><h1>我的投票</h1></div>{showCreateButton && <Link to="/create" className="purple-button create-shortcut">＋ 创建投票</Link>}</div>
+      <div className="filter-tabs" role="tablist">{(["全部", "进行中", "已结束"] as Filter[]).map((tab) => <button key={tab} role="tab" aria-selected={filter === tab} className={filter === tab ? "active" : ""} onClick={() => { setExpandedPollId(null); setFilter(tab); }}>{tab}</button>)}</div>
+      {loading ? <p className="empty-inline">正在加载投票…</p> : error ? <p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p> : filtered.length ? <div className="my-poll-list">{filtered.map((poll) => <MyPollCard key={poll.id} poll={poll} expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} onVisibilityChange={(item, value) => void changeVisibility(item, value)} />)}</div> : <div className="empty-state"><div className="empty-art">☁</div><h3>{ownedPolls.length ? "这里暂时没有这类投票" : "还没有投票哦"}</h3><p>创建一个小问题，邀请朋友帮你选。</p>{showCreateButton && <Link to="/create" className="purple-button">＋ 创建投票</Link>}</div>}
+      {hasMore && <div ref={loadMoreRef} className="my-poll-load-more"><button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? "正在加载更多…" : "加载更多投票"}</button></div>}
+      {syncError && <p className="settings-feedback" role="alert">加载更多失败，请点击“加载更多投票”重试。</p>}
+      {ending && <Modal title="确定结束这次投票吗？" onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>取消</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>确认结束</button></>}><p>结束后不能继续投票或修改选择，结果和评论将公开。</p></Modal>}
+      {deleting && <Modal title="确定删除这条投票吗？" onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>再想想</button><button className="danger-button" onClick={confirmDelete}>删除投票</button></>}><p>删除后「{deleting.title}」及其投票和评论将一并移除。</p></Modal>}
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </section>
   );
 }

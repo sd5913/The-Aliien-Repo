@@ -4,6 +4,9 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Toast } from "../../../components/ui/Toast";
 import type { Poll } from "../../../types/poll";
 import { copyPollLink, pollUrl, renderShareTicket } from "../utils/share";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { canSharePoll } from "../utils/voting";
+import { AppIcon } from "../../../components/ui/AppIcon";
 
 const ShareContext = createContext<(poll: Poll) => void>(() => {});
 export const useSharePoll = () => useContext(ShareContext);
@@ -44,23 +47,25 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
         {image ? <img src={image} alt={t("share.alt", { title: poll.title, count: poll.options.length })} /> : <p role="status">{t(ready ? "share.renderFailed" : "share.rendering")}</p>}
       </div>
       <div className="share-dialog-actions">
-        <button className="purple-button" onClick={() => void copy()}>{t("share.copy")}</button>
-        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || t("share.filename")}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}>{t("share.download")}</a>
+        <button className="purple-button" onClick={() => void copy()}>复制链接 ↗</button>
+        <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || "投票"}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}><AppIcon name="chevronDown" size={16} /> 下载图片</a>
       </div>
-      <input className="share-selectable-url" aria-label={t("share.publicLink")} value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
-      <p className="share-dialog-note">{t("share.note")}</p>
-      {toastMessage && <Toast message={t(toastMessage)} onClose={() => { setToast(""); clearFeedback(); }} />}
+      <input className="share-selectable-url" aria-label="投票分享链接" value={pollUrl(poll.id)} readOnly onFocus={(event) => event.target.select()} />
+      <p className="share-dialog-note">把票根发给朋友，听听大家怎么选</p>
+      {(toast || feedback) && <Toast message={toast || feedback} onClose={() => { setToast(""); clearFeedback(); }} />}
     </div>
   </dialog>;
 }
 
 export function ShareProvider({ children }: { children: ReactNode }) {
+  const { user, loading } = useAccount();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [toast, setToast] = useState<MessageKey | "">("");
   const open = (selected: Poll) => {
+    if (loading || !canSharePoll(selected, user?.id ?? "")) return;
     setPoll(selected);
     // Begin inside the click gesture: browsers require user activation for clipboard writes.
     void copyPollLink(selected.id).then(() => setToast("share.copied")).catch(() => setToast("share.autoCopyFailed"));
   };
-  return <ShareContext.Provider value={open}>{children}{poll && <ShareDialog key={poll.id} poll={poll} feedback={toast} clearFeedback={() => setToast("")} onClose={() => { setPoll(null); setToast(""); }} />}</ShareContext.Provider>;
+  return <ShareContext.Provider value={open}>{children}{poll && !loading && canSharePoll(poll, user?.id ?? "") && <ShareDialog key={poll.id} poll={poll} feedback={toast} clearFeedback={() => setToast("")} onClose={() => { setPoll(null); setToast(""); }} />}</ShareContext.Provider>;
 }

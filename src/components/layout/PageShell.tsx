@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import logoUrl from "../../../images/logo.png";
 import { BottomNav } from "./BottomNav";
+import { AppIcon } from "../ui/AppIcon";
 
 interface PageShellProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ export function PageShell({ children, title, showNavigation = true, backTo, show
   return (
     <div className={`app-shell${showNavigation ? " has-bottom-nav" : ""}`}>
       <header className="topbar">
-        {backTo && <Link className="back-link" to={backTo} aria-label={t("nav.back")}>←</Link>}
+        {backTo && <Link className="back-link" to={backTo} aria-label="返回"><AppIcon name="chevronLeft" size={20} /></Link>}
         {showHeaderTitle && title ? (
           <h1 className="page-header-title">{title}</h1>
         ) : (

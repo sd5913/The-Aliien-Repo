@@ -29,9 +29,9 @@ test('GitHub cancellation displays retry feedback and keeps email sign-in availa
     await route.fulfill({ status: 302, headers: { location: callback.href } });
   });
   await page.goto('/auth?returnTo=' + encodeURIComponent('//evil.test'));
-  await page.getByRole('button', { name: '以 GitHub 登入' }).click();
-  await expect(page.getByRole('alert')).toHaveText('未完成登入，請再試一次。');
-  await expect(page.getByRole('button', { name: '以 GitHub 登入' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: '發送登入連結' })).toBeEnabled();
+  await page.getByRole('button', { name: '使用 GitHub 登录' }).click();
+  await expect(page.getByRole('alert')).toHaveText('登录未完成，请重试。');
+  await expect(page.getByRole('button', { name: '使用 GitHub 登录' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '继续使用邮箱' })).toBeEnabled();
   await expect(page.getByText('Sensitive provider detail')).toHaveCount(0);
 });

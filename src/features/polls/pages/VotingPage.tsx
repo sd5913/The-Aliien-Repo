@@ -2,7 +2,10 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { readDraft, saveDraft, clearDraft, isVoteDraft } from "../utils/drafts";
 import { pollPath, pollReturnTo } from "../utils/navigation";
-import { readParticipant } from "../../auth/utils/participant";
+import { readParticipant, saveParticipant } from "../../auth/utils/participant";
+import { useParticipant } from "../../auth/utils/useParticipant";
+import { useAccount } from "../../auth/components/AccountProvider";
+import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -11,7 +14,8 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
-import { getVoter } from "../utils/voting";
+import { canSharePoll, getVoter } from "../utils/voting";
+import { optionColors } from "../utils/optionColors";
 
 export function VotingPage() {
   const { t, participants } = useLocale();
@@ -21,7 +25,13 @@ export function VotingPage() {
   const returnTo = pollReturnTo(location);
   const { polls, loading, error, updatePoll } = usePolls({ pollId: id });
   const poll = polls.find((item) => item.id === id);
-  const [voter] = useState(getVoter);
+  const { user: accountUser, loading: accountLoading } = useAccount();
+  const participant = useParticipant();
+  const voter = participant ?? getVoter();
+  const share = useSharePoll();
+  const [identityError, setIdentityError] = useState("");
+  const [identityRetry, setIdentityRetry] = useState(0);
+  const identityPending = useRef(false);
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
   const [draftReady, setDraftReady] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,8 +52,17 @@ export function VotingPage() {
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);
   useEffect(() => {
-    if (!poll || hydratedPollId.current === poll.id) return;
-    hydratedPollId.current = poll.id;
+    if (accountLoading || !accountUser || participant || identityPending.current) return;
+    identityPending.current = true;
+    const rawName = accountUser.user_metadata?.nickname ?? accountUser.email?.split("@")[0] ?? "投票朋友";
+    const name = Array.from(String(rawName).trim()).slice(0, 12).join("");
+    void saveParticipant(name.length >= 2 ? name : "投票朋友", "🐱")
+      .catch(() => setIdentityError("投票身份建立失败，请重试。"))
+      .finally(() => { identityPending.current = false; });
+  }, [accountLoading, accountUser, participant, identityRetry]);
+  useEffect(() => {
+    if (!poll || !participant || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
+    hydratedPollId.current = `${poll.id}:${voter.id}`;
     const draft = readDraft(draftKey, isVoteDraft);
     const savedOptionId = draft ? (poll.options.some((option) => option.id === draft.selectedId) ? draft.selectedId : "") : existingVote?.selectedOptionId ?? "";
     setActiveId(draft && poll.options.some((option) => option.id === draft.activeId) ? draft.activeId : savedOptionId);
@@ -51,18 +70,20 @@ export function VotingPage() {
     setComment(draft?.comment ?? existingComment?.text ?? "");
     if (draft) setDraftNotice("vote.restored");
     setDraftReady(true);
-  }, [poll, existingVote, existingComment, draftKey]);
+  }, [poll, participant, voter.id, existingVote, existingComment, draftKey]);
 
   useEffect(() => {
     if (!draftReady) return;
     if (!saveDraft(draftKey, { activeId, selectedId, comment })) setDraftNotice("poll.draftUnavailable");
   }, [draftReady, draftKey, activeId, selectedId, comment]);
 
-  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
-  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
-  if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>{t("poll.missing")}</h2><p>{t("poll.missingDetails")}</p><Link className="purple-button" to="/">{t("common.home")}</Link></div></PageShell>;
+  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在加载投票…</p></PageShell>;
+  if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
+  if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>没有找到这次投票</h2><p>这条投票可能已被删除。</p><Link className="purple-button" to="/">回到首页</Link></div></PageShell>;
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
+  if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">正在确认登录状态…</p></PageShell>;
+  if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || "正在准备投票身份…"}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>重试</button>}</PageShell>;
   if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
@@ -70,8 +91,7 @@ export function VotingPage() {
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
-  const selectionColors = ["#e6b477", "#9eacf0", "#e9a2be", "#8bc9af", "#be9be6"];
-  const selectionColor = selectionColors[Math.max(0, selectedIndex) % selectionColors.length];
+  const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
   const saveVote = async () => {
     if (saving) return;
     if (!isPollOpen(poll)) { navigate(pollPath(poll.id, "results", returnTo), { replace: true }); return; }
@@ -93,7 +113,9 @@ export function VotingPage() {
       navigate(pollPath(poll.id, "results", returnTo));
     } catch (error) {
       console.error("Could not save vote.", error);
-      setToast("vote.saveFailed");
+      if (error instanceof Error && /POLL_CLOSED|投票已结束|INVALID_DEADLINE/.test(error.message)) {
+        setToast("投票已结束，不能再提交或修改选择");
+      } else setToast("投票保存失败，草稿已保留，请稍后重试");
     } finally { setSaving(false); }
   };
 
@@ -107,10 +129,11 @@ export function VotingPage() {
   };
 
   return (
-    <PageShell showNavigation={false} backTo={returnTo} title={t("vote.help")}>
-      <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{participants(poll.votes.length)}</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
-      {!open && <div className="notice-banner">{t("vote.closed")}</div>}
-      {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
+    <PageShell showNavigation={false} backTo={returnTo} title="帮朋友做选择">
+      <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
+      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>分享投票</button>}
+      {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
+      {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
         setActiveId(nextId);
         if (nextId !== activeOption?.id) {
@@ -145,14 +168,14 @@ export function VotingPage() {
           </svg>
           <span className="vote-cup-label" aria-live="polite">{selectedOption ? t("vote.picked", { letter: letter(selectedIndex) }) : t("vote.select", { letter: letter(activeIndex) })}</span>
         </div>
-        <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{saving ? t("vote.submitting") : existingVote ? t("vote.update") : t("vote.submit")}</button>
       </section>
-      <p className="vote-cup-note">{t("vote.editable")}</p>
-      <label className="field-label comment-input-label" htmlFor="vote-comment">{t("vote.leaveComment")} <span className="optional">{t("common.optional")}</span></label>
-      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
-      {existingVote && open && <p className="field-hint">{t("vote.alreadyVoted")}</p>}
-      {confirmCommentDelete && <Modal title={t("comment.deleteQuestion")} onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>{t("vote.deleteAndSubmit")}</button></>}><p>{t("vote.deleteDetails")}</p></Modal>}
-      {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}
+      <label className="field-label comment-input-label" htmlFor="vote-comment">留句话吧 <span className="optional">可选</span></label>
+      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="说说你为什么喜欢它～" rows={2} maxLength={200} />
+      {existingVote && open && <p className="field-hint">你之前已经投过票，可以在截止前回来修改。</p>}
+      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{saving ? "提交中…" : existingVote ? "提交修改" : "提交我的选择"}</button>
+      <p className="vote-cup-note">提交后仍可修改，投票结束前有效</p>
+      {confirmCommentDelete && <Modal title="确定删除这条评论吗？" onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>取消</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>删除并提交</button></>}><p>评论将被删除，本次投票选择仍会保留。</p></Modal>}
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </PageShell>
   );
 }

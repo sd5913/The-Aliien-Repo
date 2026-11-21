@@ -9,7 +9,8 @@ create table if not exists public.polls (
   description text,
   status text not null default 'open' check (status in ('open', 'closed')),
   author_name text default 'Picksy friend',
-  is_public boolean not null default true,
+  is_public boolean not null default false,
+  visibility_reviewed_at timestamptz default now(),
   emoji text,
   created_at timestamptz not null default now(),
   closed_at timestamptz
@@ -41,9 +42,14 @@ create index if not exists idx_votes_poll on public.votes(poll_id);
 -- Production permission definitions (kept identical to the migration).
 -- Account ownership is authoritative. Legacy browser IDs are never claimed.
 alter table public.polls add column if not exists owner_id uuid references auth.users(id) on delete set null;
+alter table public.polls add column if not exists visibility_reviewed_at timestamptz default now();
 update public.polls p set owner_id = u.id from auth.users u
 where p.owner_id is null and p.author_name = u.id::text and not u.is_anonymous;
 create index if not exists polls_owner_id_idx on public.polls(owner_id);
+
+-- Polls created before 2026-11-20 local time require owner review.
+update public.polls set is_public = false, visibility_reviewed_at = null
+where created_at < timestamptz '2026-11-20 00:00:00+08' and visibility_reviewed_at is null;
 
 create schema if not exists private;
 revoke all on schema private from public;
@@ -121,6 +127,7 @@ begin
       select 1 from jsonb_array_elements(p_poll->'options') o where o->>'id' = v.ranking->>0
     )) then raise exception 'VOTED_OPTION_CANNOT_BE_REMOVED' using errcode = '22023'; end if;
     update public.polls set title = btrim(p_poll->>'title'), description = p_poll->>'description',
+      is_public = coalesce((p_poll->>'isPublic')::boolean, previous.is_public),
       status = p_poll->>'status', closed_at = case when p_poll->>'status' = 'closed' then clock_timestamp() else new_deadline end
     where id = target_poll_id;
   else
@@ -128,7 +135,7 @@ begin
       raise exception 'INVALID_DEADLINE' using errcode = '22023';
     end if;
     insert into public.polls(id,title,description,status,owner_id,author_name,is_public,closed_at)
-    values(target_poll_id,btrim(p_poll->>'title'),p_poll->>'description','open',actor,actor::text,true,new_deadline);
+    values(target_poll_id,btrim(p_poll->>'title'),p_poll->>'description','open',actor,actor::text,coalesce((p_poll->>'isPublic')::boolean,false),new_deadline);
   end if;
   if exists(select 1 from public.poll_options po join jsonb_array_elements(p_poll->'options') o
     on po.id = (o->>'id')::uuid where po.poll_id <> target_poll_id) then
@@ -168,6 +175,18 @@ begin
     where id = p_poll_id;
 end $$;
 
+create or replace function private.set_poll_visibility(p_poll_id uuid, p_public boolean) returns void
+language plpgsql security definer set search_path = '' as $$
+declare actor uuid := auth.uid();
+begin
+  if actor is null or not exists(select 1 from auth.users where id = actor and not is_anonymous) then
+    raise exception 'ACCOUNT_REQUIRED' using errcode = '42501'; end if;
+  if p_public is null then raise exception 'INVALID_VISIBILITY' using errcode = '22023'; end if;
+  update public.polls set is_public = p_public, visibility_reviewed_at = clock_timestamp()
+    where id = p_poll_id and owner_id = actor;
+  if not found then raise exception 'NOT_POLL_OWNER' using errcode = '42501'; end if;
+end $$;
+
 -- Soft login does not create an email account. A 256-bit browser capability
 -- authorizes only that participant's votes; it confers no poll-management rights.
 create or replace function private.register_participant(p_token text) returns uuid
@@ -192,7 +211,7 @@ begin
   ) then raise exception 'PARTICIPANT_REQUIRED' using errcode = '42501'; end if;
   -- Same lock as close/edit/delete, so a stale browser cannot race an ended poll.
   select * into target from public.polls where id = p_poll_id for update;
-  if not found or not target.is_public then raise exception 'POLL_NOT_FOUND' using errcode = '22023'; end if;
+  if not found then raise exception 'POLL_NOT_FOUND' using errcode = '22023'; end if;
   if target.status <> 'open' or (target.closed_at is not null and target.closed_at <= clock_timestamp()) then
     raise exception 'POLL_CLOSED' using errcode = '22023'; end if;
   if coalesce(jsonb_typeof(p_ranking),'') <> 'array' then raise exception 'SINGLE_OPTION_REQUIRED' using errcode = '22023'; end if;
@@ -209,6 +228,8 @@ create or replace function public.delete_poll(p_poll_id uuid) returns void
 language sql security invoker set search_path = '' as $$ select private.delete_poll(p_poll_id) $$;
 create or replace function public.close_poll(p_poll_id uuid) returns void
 language sql security invoker set search_path = '' as $$ select private.close_poll(p_poll_id) $$;
+create or replace function public.set_poll_visibility(p_poll_id uuid,p_public boolean) returns void
+language sql security invoker set search_path = '' as $$ select private.set_poll_visibility(p_poll_id,p_public) $$;
 create or replace function public.register_participant(p_token text) returns uuid
 language sql security invoker set search_path = '' as $$ select private.register_participant(p_token) $$;
 create or replace function public.submit_vote(p_poll_id uuid,p_voter_id uuid,p_token text,p_ranking jsonb) returns void
@@ -220,6 +241,8 @@ revoke all on function public.save_poll(jsonb),public.delete_poll(uuid),public.c
   public.register_participant(text),public.submit_vote(uuid,uuid,text,jsonb) from public,anon,authenticated;
 grant execute on function private.save_poll(jsonb),private.delete_poll(uuid),private.close_poll(uuid),
   public.save_poll(jsonb),public.delete_poll(uuid),public.close_poll(uuid) to authenticated;
+revoke all on function private.set_poll_visibility(uuid,boolean),public.set_poll_visibility(uuid,boolean) from public,anon,authenticated;
+grant execute on function private.set_poll_visibility(uuid,boolean),public.set_poll_visibility(uuid,boolean) to authenticated;
 grant execute on function private.register_participant(text),private.submit_vote(uuid,uuid,text,jsonb),
   public.register_participant(text),public.submit_vote(uuid,uuid,text,jsonb) to anon,authenticated;
 notify pgrst, 'reload schema';
@@ -229,7 +252,7 @@ create table public.poll_comments (
   id uuid primary key default gen_random_uuid(),
   poll_id uuid not null references public.polls(id) on delete cascade,
   voter_id uuid not null references private.soft_participants(id) on delete cascade,
-  nickname text not null check(char_length(btrim(nickname)) between 2 and 12),
+  nickname text not null check(char_length(btrim(nickname)) between 2 and 20),
   avatar text not null,
   body text not null check(char_length(btrim(body)) between 1 and 200),
   option_id uuid references public.poll_options(id) on delete set null,
@@ -256,14 +279,14 @@ begin
       and token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
   ) then raise exception 'PARTICIPANT_REQUIRED' using errcode='42501'; end if;
   return query select c.* from public.poll_comments c join public.polls p on p.id=c.poll_id
-    where c.voter_id=p_voter_id and p.is_public;
+    where c.voter_id=p_voter_id;
 end $$;
 
 create function private.submit_ballot(p_poll_id uuid,p_voter_id uuid,p_token text,p_ranking jsonb,
   p_comment text,p_nickname text,p_avatar text) returns void
 language plpgsql security definer set search_path='' as $$
 begin
-  if coalesce(char_length(btrim(p_nickname)),0) not between 2 and 12
+  if coalesce(char_length(btrim(p_nickname)),0) not between 2 and 20
     or char_length(coalesce(p_comment,'')) > 200
     or p_avatar is null or p_avatar not in ('🐱','🐰','🐻','🐼','🦊','🐨') then
     raise exception 'INVALID_COMMENT_PROFILE' using errcode='22023'; end if;
@@ -359,3 +382,85 @@ using(bucket_id='poll-images' and (storage.foldername(name))[1]=(select auth.uid
   and not coalesce(((select auth.jwt())->>'is_anonymous')::boolean,false));
 -- Bucket downloads are public so soft-login participants can see product images.
 -- No UPDATE/upsert policy: published URLs are immutable and safe to reuse in copies.
+
+-- A poll UUID is an unlisted link capability. The regular table policies still
+-- hide unlisted polls from list queries; this narrowly scoped RPC opens one poll.
+create or replace function private.get_poll_by_link(p_poll_id uuid, p_voter_id uuid default null, p_token text default null)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare target public.polls%rowtype; own_voter uuid;
+begin
+  select * into target from public.polls where id = p_poll_id;
+  if not found then return null; end if;
+  if p_voter_id is not null and p_token ~ '^[a-f0-9]{64}$' and exists(
+    select 1 from private.soft_participants where id = p_voter_id
+      and token_hash = encode(extensions.digest(p_token,'sha256'),'hex')
+  ) then own_voter := p_voter_id; end if;
+  return jsonb_build_object(
+    'poll', to_jsonb(target) || jsonb_build_object('poll_options',
+      coalesce((select jsonb_agg(to_jsonb(o) order by o.position) from public.poll_options o where o.poll_id=p_poll_id),'[]'::jsonb)),
+    'votes', coalesce((select jsonb_agg(to_jsonb(v)) from public.votes v where v.poll_id=p_poll_id),'[]'::jsonb),
+    'comments', coalesce((select jsonb_agg(to_jsonb(c) order by c.created_at) from public.poll_comments c
+      where c.poll_id=p_poll_id and (target.owner_id=auth.uid() or target.status='closed'
+        or (target.closed_at is not null and target.closed_at <= clock_timestamp()) or c.voter_id=own_voter)),'[]'::jsonb)
+  );
+end $$;
+create or replace function public.get_poll_by_link(p_poll_id uuid, p_voter_id uuid default null, p_token text default null)
+returns jsonb language sql security invoker set search_path = '' as $$
+  select private.get_poll_by_link(p_poll_id,p_voter_id,p_token)
+$$;
+revoke all on function private.get_poll_by_link(uuid,uuid,text),public.get_poll_by_link(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function private.get_poll_by_link(uuid,uuid,text),public.get_poll_by_link(uuid,uuid,text) to anon,authenticated;
+
+create or replace function private.my_voted_polls(p_voter_id uuid,p_token text) returns setof jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_token is null or p_token !~ '^[a-f0-9]{64}$' or not exists(
+    select 1 from private.soft_participants where id=p_voter_id
+      and token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
+  ) then raise exception 'PARTICIPANT_REQUIRED' using errcode='42501'; end if;
+  return query with latest_votes as (
+    select v.poll_id,max(v.created_at) as last_voted_at from public.votes v
+      where v.voter_id=p_voter_id::text group by v.poll_id
+  )
+  select to_jsonb(p) || jsonb_build_object(
+    'poll_options',coalesce((select jsonb_agg(to_jsonb(o) order by o.position) from public.poll_options o where o.poll_id=p.id),'[]'::jsonb),
+    'votes',jsonb_build_array(jsonb_build_object('count',(select count(*) from public.votes all_votes where all_votes.poll_id=p.id))),
+    'last_voted_at',latest_votes.last_voted_at
+  ) from latest_votes join public.polls p on p.id=latest_votes.poll_id
+    order by latest_votes.last_voted_at desc limit 5;
+end $$;
+create or replace function public.my_voted_polls(p_voter_id uuid,p_token text) returns setof jsonb
+language sql security invoker set search_path = '' as $$ select * from private.my_voted_polls(p_voter_id,p_token) $$;
+revoke all on function private.my_voted_polls(uuid,text),public.my_voted_polls(uuid,text) from public,anon,authenticated;
+grant execute on function private.my_voted_polls(uuid,text),public.my_voted_polls(uuid,text) to anon,authenticated;
+
+create or replace function private.submit_vote(p_poll_id uuid,p_voter_id uuid,p_token text,p_ranking jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+declare target public.polls%rowtype;
+begin
+  if p_token is null or p_token !~ '^[a-f0-9]{64}$' or not exists(
+    select 1 from private.soft_participants where id = p_voter_id
+      and token_hash = encode(extensions.digest(p_token,'sha256'),'hex')
+  ) then raise exception 'PARTICIPANT_REQUIRED' using errcode = '42501'; end if;
+  select * into target from public.polls where id = p_poll_id for update;
+  if not found then raise exception 'POLL_NOT_FOUND' using errcode = '22023'; end if;
+  if target.status <> 'open' or (target.closed_at is not null and target.closed_at <= clock_timestamp()) then
+    raise exception 'POLL_CLOSED' using errcode = '22023'; end if;
+  if coalesce(jsonb_typeof(p_ranking),'') <> 'array' then raise exception 'SINGLE_OPTION_REQUIRED' using errcode = '22023'; end if;
+  if jsonb_array_length(p_ranking) <> 1 or not exists(
+    select 1 from public.poll_options where poll_id = p_poll_id and id::text = p_ranking->>0
+  ) then raise exception 'INVALID_OPTION' using errcode = '22023'; end if;
+  insert into public.votes(poll_id,voter_id,ranking) values(p_poll_id,p_voter_id::text,p_ranking)
+    on conflict(poll_id,voter_id) do update set ranking = excluded.ranking,created_at = clock_timestamp();
+end $$;
+
+create or replace function private.own_comments(p_voter_id uuid,p_token text) returns setof public.poll_comments
+language plpgsql security definer set search_path='' as $$
+begin
+  if p_token is null or p_token !~ '^[a-f0-9]{64}$' or not exists(
+    select 1 from private.soft_participants where id=p_voter_id
+      and token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
+  ) then raise exception 'PARTICIPANT_REQUIRED' using errcode='42501'; end if;
+  return query select c.* from public.poll_comments c where c.voter_id=p_voter_id;
+end $$;
+notify pgrst, 'reload schema';
