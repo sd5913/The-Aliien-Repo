@@ -37,6 +37,44 @@ function rim(x: number) {
 
 const frameX = areaCoordinates(x => size - 2 * rim(x * size));
 
+// Round each cell before mapping it into the moving seams. The straight portions
+// stay close together while the corners pull back into curved pockets of space.
+function liquidPath(
+  point: (u: number, v: number) => readonly [number, number],
+  width: number,
+  height: number,
+) {
+  const insetX = Math.min(1.2 / width, .08);
+  const insetY = Math.min(1.2 / height, .08);
+  const cornerX = (.5 - insetX) * .74;
+  const cornerY = (.5 - insetY) * .74;
+  const corners = [
+    [1 - insetX - cornerX, insetY + cornerY],
+    [1 - insetX - cornerX, 1 - insetY - cornerY],
+    [insetX + cornerX, 1 - insetY - cornerY],
+    [insetX + cornerX, insetY + cornerY],
+  ];
+  const path = new Path2D();
+  path.moveTo(...point(insetX + cornerX, insetY));
+  for (const [index, [x, y]] of corners.entries()) {
+    const start = (index - 1) * Math.PI / 2;
+    const u = x + cornerX * Math.cos(start);
+    const v = y + cornerY * Math.sin(start);
+    const [previousX, previousY] = corners[(index + 3) % 4];
+    // Sample the intervening side so it follows the animated seam as well.
+    for (let i = 1; i <= 20; i++) {
+      const t = i / 20;
+      path.lineTo(...point(u + (previousX - x) * (1 - t), v + (previousY - y) * (1 - t)));
+    }
+    for (let i = 1; i <= 24; i++) {
+      const angle = start + i * Math.PI / 48;
+      path.lineTo(...point(x + cornerX * Math.cos(angle), y + cornerY * Math.sin(angle)));
+    }
+  }
+  path.closePath();
+  return path;
+}
+
 export function LiquidResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pressure = useRef(0);
@@ -89,31 +127,27 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
         for (const [column, item] of row.entries()) {
           const left = (v: number) => column === 0 ? 0 : seam(v);
           const right = (v: number) => column === 0 && row.length > 1 ? seam(v) : 1;
-          const path = new Path2D();
-          path.moveTo(...point(left(0), 0));
-          for (let i = 1; i <= steps; i++) path.lineTo(...point(left(0) + (right(0) - left(0)) * i / steps, 0));
-          for (let i = 1; i <= 48; i++) path.lineTo(...point(right(i / 48), i / 48));
-          for (let i = 1; i <= steps; i++) path.lineTo(...point(right(1) + (left(1) - right(1)) * i / steps, 1));
-          for (let i = 1; i <= 48; i++) path.lineTo(...point(left(1 - i / 48), 1 - i / 48));
-          path.closePath();
+          const center = (left(.5) + right(.5)) / 2;
+          const width = point(right(.5), .5)[0] - point(left(.5), .5)[0];
+          const height = point(center, 1)[1] - point(center, 0)[1];
+          const path = liquidPath((u, v) => {
+            const start = left(v);
+            return point(start + (right(v) - start) * u, v);
+          }, width, height);
           ctx.fillStyle = optionColors[item.index % optionColors.length];
           ctx.fill(path);
-          ctx.save();
-          ctx.clip(path);
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = "#ffffff88";
-          ctx.stroke(path);
-          const center = (left(.5) + right(.5)) / 2;
-          const [x, y] = point(center, .5);
-          if (point(right(.5), .5)[0] - point(left(.5), .5)[0] > 58 && point(center, 1)[1] - point(center, 0)[1] > 49) {
+          if (width > 58 && height > 49) {
+            const [x, y] = point(center, .5);
+            ctx.save();
+            ctx.clip(path);
             ctx.fillStyle = "#411b65";
             ctx.textAlign = "center";
             ctx.font = "600 13px sans-serif";
             ctx.fillText(String.fromCharCode(65 + item.index), x, y - 4);
             ctx.font = "700 20px sans-serif";
             ctx.fillText(Math.round(item.count / total * 100) + "%", x, y + 18);
+            ctx.restore();
           }
-          ctx.restore();
         }
       }
     }
