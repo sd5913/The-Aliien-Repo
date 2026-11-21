@@ -18,7 +18,10 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
   await page.addInitScript(({ user, token, storageKey }) => {
     if (user) localStorage.setItem(storageKey, JSON.stringify({ access_token: token,
       refresh_token: 'synthetic-refresh-token', expires_at: Math.floor(Date.now()/1000)+3600, expires_in: 3600, token_type: 'bearer', user }));
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => {} } });
+    window.shareClipboardWrites = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText: async (value) => { window.shareClipboardWrites.push(value); },
+    } });
   }, { user, token, storageKey });
   await page.route('**/*', async (route) => {
     const request = route.request(); const url = new URL(request.url());

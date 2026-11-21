@@ -18,7 +18,7 @@ for (const accountId of [null, owner, '10000000-0000-4000-8000-000000000099']) {
     await expect(square.locator('.swipe-actions')).toHaveCount(0);
     await expect(square.getByText('进行中 · 0 人参与', { exact: true })).toBeVisible();
     await square.getByRole('link', { name: '去投票' }).click();
-    await expect(page).toHaveURL(new RegExp(`/poll/${pollId}(?:/join)?\\?`));
+    await expect(page).toHaveURL(url => [`/poll/${pollId}`, `/poll/${pollId}/join`].includes(url.pathname) && url.searchParams.get("returnTo") === "/");
     await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toHaveCount(0);
   });
 }
@@ -64,11 +64,28 @@ test('owner retains sharing from their own recent card and voting page', async (
   await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toBeVisible();
 });
 
-test('unlisted poll sharing retains existing participant behavior', async ({ page }) => {
+test('taking a poll off the square does not give its participant a share entry', async ({ page }) => {
   const state = await mockApp(page, { accountId: null });
-  state.polls[0].is_public = false;
   await softLogin(page);
   await page.goto(`/poll/${pollId}`);
-  await page.getByRole('button', { name: '分享投票' }).click();
-  await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: '分享投票' })).toHaveCount(0);
+  state.polls[0].is_public = false;
+  await page.reload();
+  await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: '分享投票' })).toHaveCount(0);
+  await page.goto(`/poll/${pollId}/share`);
+  await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /分享|复制链接/ })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toHaveCount(0);
+});
+
+test('non-owner legacy share route and ended results have no sharing entry or clipboard writes', async ({ page }) => {
+  await mockApp(page, { accountId: null, closed: true });
+  await softLogin(page);
+  await page.goto(`/poll/${pollId}/share`);
+  await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /分享|复制链接/ })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toHaveCount(0);
+  expect(await page.evaluate(() => window.shareClipboardWrites)).toEqual([]);
 });
