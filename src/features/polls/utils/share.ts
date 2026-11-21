@@ -162,21 +162,26 @@ export async function renderShareTicket(poll: Poll) {
   // Draw modules directly into the exported PNG: no external QR service or image request.
   const qr = QRCode.create(url, { errorCorrectionLevel: "M" });
   const quietZone = 4;
-  const moduleSize = Math.max(1, Math.floor(180 / (qr.modules.size + quietZone * 2)));
-  const qrSize = (qr.modules.size + quietZone * 2) * moduleSize;
-  const qrX = width - margin - qrSize;
-  const qrY = height - 36 - qrSize;
+  const moduleCount = qr.modules.size + quietZone * 2;
+  const slotSize = moduleCount * Math.max(1, Math.floor(180 / moduleCount));
+  const qrSize = Math.max(moduleCount, Math.round(slotSize * 0.85));
+  const inset = Math.round((slotSize - qrSize) / 2);
+  const qrX = width - margin - slotSize + inset;
+  const qrY = height - 36 - slotSize + inset;
+  const moduleEdge = (index: number) => Math.round((index + quietZone) * qrSize / moduleCount);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(qrX, qrY, qrSize, qrSize);
   ctx.fillStyle = "#241039";
   for (let row = 0; row < qr.modules.size; row++) {
     for (let col = 0; col < qr.modules.size; col++) {
       if (qr.modules.get(row, col)) {
-        ctx.fillRect(qrX + (col + quietZone) * moduleSize, qrY + (row + quietZone) * moduleSize, moduleSize, moduleSize);
+        const x = moduleEdge(col);
+        const y = moduleEdge(row);
+        ctx.fillRect(qrX + x, qrY + y, moduleEdge(col + 1) - x, moduleEdge(row + 1) - y);
       }
     }
   }
-  const linkWidth = contentWidth - qrSize - 24;
+  const linkWidth = contentWidth - slotSize - 24;
   ctx.fillStyle = "#5b21b6";
   text("扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;

@@ -261,7 +261,22 @@ h1, h2, h3 { color: var(--deep-purple); }
 .my-poll-card[data-ticket-tone="1"] { --ticket-background: linear-gradient(115deg, #fbe0ee, #fceaf3 55%, #eee2fb); --ticket-line: #edbad8; }
 .my-poll-card[data-ticket-tone="2"] { --ticket-background: linear-gradient(115deg, #e9e0fc, #e7eafa 55%, #d6ebfc); --ticket-line: #c3c1f1; }
 .my-poll-card::before { position: absolute; top: 9px; bottom: 9px; left: var(--ticket-seam); width: 3px; transform: translateX(-50%); background: radial-gradient(circle, var(--ticket-line) 1.25px, transparent 1.6px) center / 3px 6px repeat-y; content: ""; pointer-events: none; }
-.my-poll-card::after { position: absolute; inset: 5px 8px; border: 1px solid var(--ticket-line); border-radius: 2px; opacity: .65; content: ""; pointer-events: none; }
+.my-poll-card::after {
+  position: absolute;
+  inset: 5px 8px;
+  border: 1px solid var(--ticket-line);
+  border-radius: 2px;
+  opacity: .65;
+  content: "";
+  pointer-events: none;
+  --seam-gap-start: calc(var(--ticket-seam) - 12px);
+  --seam-gap-end: calc(var(--ticket-seam) + 12px);
+  mask-image: linear-gradient(90deg, #000 var(--seam-gap-start), transparent var(--seam-gap-start) var(--seam-gap-end), #000 var(--seam-gap-end));
+  /* Include the horizontal insets and card border to align with the notch centers. */
+  mask-size: calc(100% + 18px) 100%;
+  mask-position: center;
+  mask-repeat: no-repeat;
+}
 .settings-my-polls .swipe-card { background: transparent; box-shadow: none; }
 .my-poll-thumbnails { display: flex; flex: 0 0 40%; align-items: center; gap: 7px; padding-right: 10px; }
 .my-poll-thumbnails img { width: 54px; height: 66px; flex: 0 1 54px; border-radius: 12px; object-fit: cover; background: linear-gradient(145deg, #fbcfe8, #c4b5fd 55%, #bfdbfe); }
