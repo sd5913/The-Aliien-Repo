@@ -252,7 +252,7 @@ create table public.poll_comments (
   id uuid primary key default gen_random_uuid(),
   poll_id uuid not null references public.polls(id) on delete cascade,
   voter_id uuid not null references private.soft_participants(id) on delete cascade,
-  nickname text not null check(char_length(btrim(nickname)) between 2 and 12),
+  nickname text not null check(char_length(btrim(nickname)) between 2 and 20),
   avatar text not null,
   body text not null check(char_length(btrim(body)) between 1 and 200),
   option_id uuid references public.poll_options(id) on delete set null,
@@ -286,7 +286,7 @@ create function private.submit_ballot(p_poll_id uuid,p_voter_id uuid,p_token tex
   p_comment text,p_nickname text,p_avatar text) returns void
 language plpgsql security definer set search_path='' as $$
 begin
-  if coalesce(char_length(btrim(p_nickname)),0) not between 2 and 12
+  if coalesce(char_length(btrim(p_nickname)),0) not between 2 and 20
     or char_length(coalesce(p_comment,'')) > 200
     or p_avatar is null or p_avatar not in ('🐱','🐰','🐻','🐼','🦊','🐨') then
     raise exception 'INVALID_COMMENT_PROFILE' using errcode='22023'; end if;

@@ -520,6 +520,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .avatar-option { width: 35px; height: 35px; border: 1px solid transparent; border-radius: 13px; background: #f3e8ff; font-size: 18px; cursor: pointer; }
 .avatar-option.selected { border-color: #a78bfa; background: #ede9fe; box-shadow: 0 0 0 2px #c4b5fd66; }
 .profile-form .text-input { min-height: 39px; margin-bottom: 10px; font-size: 11px; }
+.profile-bio-input { min-height: 76px; resize: vertical; }
 .profile-form .field-label { margin-bottom: 5px; font-size: 11px; }
 .profile-form .purple-button { min-height: 40px; margin-top: 2px; font-size: 11px; }
 .settings-helper { margin: 7px 0 8px; color: #a085bd; font-size: 10px; line-height: 1.5; }
@@ -542,6 +543,19 @@ h1, h2, h3 { color: var(--deep-purple); }
 .home-retry-icon svg { width: 15px; height: 15px; fill: currentColor; }
 .logout-button { width: 100%; min-height: 44px; margin-top: 20px; border: 1px solid #fecdd3; border-radius: 999px; color: #be123c; background: #fff1f2; font-size: 12px; font-weight: 700; cursor: pointer; }
 .logout-button:disabled { cursor: wait; opacity: .6; }
+.settings-row-button, .settings-row-static { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 0; border-top: 1px solid #f1e8f8; background: transparent; color: #5b21b6; text-align: left; font-size: 12px; font-weight: 700; }
+.settings-row-button:first-of-type { border-top: 0; }
+.settings-row-button span, .settings-row-static span { color: #9678ad; font-size: 10px; font-weight: 600; }
+.settings-row-static strong { color: #5b21b6; }
+.danger-text { color: #be123c; }
+.profile-avatar-button { border: 3px solid #fff; cursor: pointer; }
+.profile-summary-editable { cursor: pointer; }
+.profile-summary-editable:focus-visible { outline: 2px solid #a855f7; outline-offset: 3px; border-radius: 19px; }
+.profile-edit-entry { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ede9fe; }
+.profile-edit-entry .app-icon { width: 19px; height: 19px; }
+.profile-avatar-preview { display: block; width: 180px; max-width: 70vw; height: 180px; margin: 0 auto; border-radius: 24px; object-fit: cover; }
+.language-options .settings-row-button { padding: 0 8px; }
+.language-options .language-selected { color: #7c3aed; }
 
 .auth-page { position: relative; padding: 12px 4px 32px; }
 .auth-page > .eyebrow { display: block; margin-top: 25px; }
