@@ -1,6 +1,6 @@
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { Modal } from "../../../components/ui/Modal";
@@ -28,9 +28,23 @@ export function HomePage() {
   const [toast, setToast] = useState("");
   const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
+  const [bannerVisible, setBannerVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const recent = accountUser || participant ? polls : [];
   const [tab, setTab] = useState<"recent" | "square">("square");
+
+  useEffect(() => {
+    if (accountLoading || accountUser || bannerDismissed) return;
+    let closeTimer: number | undefined;
+    const showTimer = window.setTimeout(() => {
+      setBannerVisible(true);
+      closeTimer = window.setTimeout(() => setBannerVisible(false), 3000);
+    }, 2000);
+    return () => {
+      window.clearTimeout(showTimer);
+      if (closeTimer !== undefined) window.clearTimeout(closeTimer);
+    };
+  }, [accountLoading, accountUser, bannerDismissed]);
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -60,8 +74,8 @@ export function HomePage() {
 
   return (
     <PageShell>
-      {!accountLoading && !accountUser && !bannerDismissed && <aside className="home-auth-banner" aria-label="注册或登录提示">
-        <button className="home-auth-banner-close" type="button" aria-label="关闭注册提示" onClick={() => setBannerDismissed(true)}>×</button>
+      {!accountLoading && !accountUser && bannerVisible && !bannerDismissed && <aside className="home-auth-banner" aria-label="注册或登录提示">
+        <button className="home-auth-banner-close" type="button" aria-label="关闭注册提示" onClick={() => { setBannerVisible(false); setBannerDismissed(true); }}>×</button>
         <p>{participant ? "喜欢和朋友一起做选择？注册账号，发起自己的投票。" : "现在就加入 BothPls，和朋友一起做决定。"}</p>
         <Link to="/auth" className="home-auth-banner-link">注册或登录 <span aria-hidden="true">↗</span></Link>
       </aside>}

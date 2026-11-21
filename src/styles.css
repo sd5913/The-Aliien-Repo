@@ -131,7 +131,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .eyebrow { color: #a06ce0; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { color: var(--deep-purple); }
-.home-auth-banner { position: relative; margin: 8px 0 13px; padding: 17px 45px 17px 18px; border: 1px solid #d8b4fe; border-radius: 19px; background: linear-gradient(120deg, #f5e8ff, #ede9fe); box-shadow: var(--soft-shadow); }
+.home-auth-banner { position: absolute; z-index: 5; top: max(78px, calc(env(safe-area-inset-top) + 70px)); left: 16px; right: 16px; margin: 0; padding: 17px 45px 17px 18px; overflow: hidden; border: 1px solid #ffffffa8; border-radius: 22px; background: radial-gradient(ellipse at 18% 0%, rgba(255, 255, 255, .72), transparent 58%), linear-gradient(120deg, rgba(245, 232, 255, .6), rgba(237, 233, 254, .6)); box-shadow: inset 0 1px 2px #ffffffd9, inset 0 -7px 16px #a855f71a, 0 12px 30px #482b6b26; backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); }
 .home-auth-banner p { margin: 0 0 10px; color: #633296; font-size: 13px; font-weight: 600; line-height: 1.5; }
 .home-auth-banner-link { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 5px 12px; border: 1px solid #b88be8; border-radius: 10px; color: #6d28d9; font-size: 12px; font-weight: 700; }
 .home-auth-banner-close { position: absolute; top: 10px; right: 12px; width: 27px; height: 27px; border: 0; border-radius: 50%; background: #ffffffa8; color: #8759b2; font-size: 22px; line-height: 1; cursor: pointer; }
