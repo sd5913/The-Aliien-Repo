@@ -1,7 +1,7 @@
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { MyPollsSection } from "../../polls/pages/MyPollsPage";
@@ -13,6 +13,7 @@ export function SettingsPage() {
   const participant = useParticipant();
   const auth = useAccount();
   const location = useLocation();
+  const navigate = useNavigate();
   const pollsRef = useRef<HTMLDivElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -29,21 +30,23 @@ export function SettingsPage() {
   }, [location.hash]);
 
   return (
-    <PageShell title="个人" showHeaderTitle headerAction={<div style={{ display: "flex", gap: 8 }}>{!auth.loading && (user || participant) && <Link className="settings-nav-button" to="/edit-profile" aria-label="编辑资料"><AppIcon name="edit" size={21} /></Link>}<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link></div>}>
+    <PageShell title="个人" showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link>}>
       <section className="settings-profile-intro">
         <div className="settings-section-heading"></div>
         {user && error && <p className="settings-feedback" role="alert">个人资料加载失败，请稍后重试。</p>}
         {auth.loading ? (
           <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>正在确认登录状态…</span></div></div>
         ) : user ? (
-          <div className="profile-summary">
-            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={() => setAvatarPreview(typeof avatar === "string" && avatar.startsWith("http") ? avatar : null)}>{avatar}</button>
+          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label="编辑个人资料" onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={(event) => { event.stopPropagation(); if (typeof avatar === "string" && avatar.startsWith("http")) setAvatarPreview(avatar); }}>{avatar}</button>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
+            <Link className="profile-edit-entry" to="/edit-profile" aria-label="编辑资料" onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : participant ? (
-          <div className="profile-summary">
-            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={() => setAvatarPreview(participant.avatar.startsWith("http") ? participant.avatar : null)}>{participant.avatar}</button>
+          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label="编辑个人资料" onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label="预览头像" onClick={(event) => { event.stopPropagation(); if (participant.avatar.startsWith("http")) setAvatarPreview(participant.avatar); }}>{participant.avatar}</button>
             <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>投票者身份 · 已保存在当前浏览器</span></div>
+            <Link className="profile-edit-entry" to="/edit-profile" aria-label="编辑资料" onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : (
           <div className="profile-summary profile-summary-empty">

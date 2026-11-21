@@ -24,6 +24,7 @@ export function SettingsPreferencesPage() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
   const [changelog, setChangelog] = useState<string[]>([]);
   const locale = getLocale();
 
@@ -128,7 +129,7 @@ export function SettingsPreferencesPage() {
 
       <section className="settings-card">
         <div className="settings-section-heading"><h2>{t("settings.general")}</h2></div>
-        <div className="settings-row-static"><strong>{t("settings.language")}</strong><button className="button-soft" type="button" onClick={() => setLocale(locale === "zh-CN" ? "en-US" : "zh-CN")}>{locale === "zh-CN" ? "中文" : "English"}</button></div>
+        <button className="settings-row-button" type="button" onClick={() => setLanguageOpen(true)}><strong>{t("settings.language")}</strong><span>{locale === "zh-CN" ? "中文" : "English"}　→</span></button>
         {isIOS && <button className="settings-row-button" type="button" onClick={() => void requestNotificationPermission()}>{t("settings.notifications")} <span>→</span></button>}
       </section>
 
@@ -138,6 +139,7 @@ export function SettingsPreferencesPage() {
         <button className="settings-row-button" type="button" onClick={() => void openChangelog()}>{t("settings.changelog")} <span>→</span></button>
       </section>
       {confirmClear && <Modal title={t("settings.clearLocal")} onClose={() => setConfirmClear(false)} actions={<><button className="button-soft" type="button" onClick={() => setConfirmClear(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={clearLocalData}>{t("settings.confirm")}</button></>}><p>{t("settings.clearConfirm")}</p></Modal>}
+      {languageOpen && <Modal title={t("settings.language")} onClose={() => setLanguageOpen(false)}><div className="language-options" role="radiogroup" aria-label={t("settings.language")}><button className={`settings-row-button${locale === "zh-CN" ? " language-selected" : ""}`} type="button" role="radio" aria-checked={locale === "zh-CN"} onClick={() => setLocale("zh-CN")}>中文（简体）<span>{locale === "zh-CN" ? "✓" : ""}</span></button><button className={`settings-row-button${locale === "en-US" ? " language-selected" : ""}`} type="button" role="radio" aria-checked={locale === "en-US"} onClick={() => setLocale("en-US")}>English<span>{locale === "en-US" ? "✓" : ""}</span></button></div></Modal>}
       {confirmDelete && <Modal title={t("settings.deleteAccount")} onClose={() => { setConfirmDelete(false); setDeleteName(""); }} actions={<><button className="button-soft" type="button" onClick={() => setConfirmDelete(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={() => void deleteAccount()}>{t("settings.confirm")}</button></>}><p>{t("settings.deleteConfirm")}</p><input className="text-input" value={deleteName} onChange={(event) => setDeleteName(event.target.value)} placeholder={nickname} /></Modal>}
       {changelogOpen && <Modal title={t("settings.changelog")} onClose={() => setChangelogOpen(false)} actions={<button className="button-soft" type="button" onClick={() => setChangelogOpen(false)}>{t("settings.confirm")}</button>}><strong>1.4.0</strong>{changelog.length > 0 ? <ul>{changelog.map((item) => <li key={item}>{item}</li>)}</ul> : <p>暂无更新说明</p>}</Modal>}
       {error && <p className="settings-feedback" role="alert">设置加载失败，请检查 Supabase 配置后重试。</p>}

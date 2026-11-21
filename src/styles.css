@@ -549,7 +549,13 @@ h1, h2, h3 { color: var(--deep-purple); }
 .settings-row-static strong { color: #5b21b6; }
 .danger-text { color: #be123c; }
 .profile-avatar-button { border: 3px solid #fff; cursor: pointer; }
+.profile-summary-editable { cursor: pointer; }
+.profile-summary-editable:focus-visible { outline: 2px solid #a855f7; outline-offset: 3px; border-radius: 19px; }
+.profile-edit-entry { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ede9fe; }
+.profile-edit-entry .app-icon { width: 19px; height: 19px; }
 .profile-avatar-preview { display: block; width: 180px; max-width: 70vw; height: 180px; margin: 0 auto; border-radius: 24px; object-fit: cover; }
+.language-options .settings-row-button { padding: 0 8px; }
+.language-options .language-selected { color: #7c3aed; }
 
 .auth-page { position: relative; padding: 12px 4px 32px; }
 .auth-page > .eyebrow { display: block; margin-top: 25px; }
