@@ -12,7 +12,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
-import { getVoter } from "../utils/voting";
+import { canSharePoll, getVoter } from "../utils/voting";
 import { optionColors } from "../utils/optionColors";
 
 export function VotingPage() {
@@ -128,7 +128,7 @@ export function VotingPage() {
   return (
     <PageShell showNavigation={false} backTo={returnTo} title="帮朋友做选择">
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{poll.votes.length} 位朋友参与</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
-      <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>分享投票</button>
+      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>分享投票</button>}
       {!open && <div className="notice-banner">这次投票已结束，暂时不能提交或修改。</div>}
       {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {

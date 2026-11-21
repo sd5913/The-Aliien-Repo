@@ -32,6 +32,13 @@ export function isPollOwner(poll: Poll, voterId: string): boolean {
   return Boolean(voterId && poll.creatorId?.trim() === voterId);
 }
 
+// Public visibility permits discovery and participation, not redistribution.
+// Use the poll's visibility rather than navigation state so reloads, direct
+// links and recent/personal lists cannot restore a non-owner's share action.
+export function canSharePoll(poll: Poll, accountId: string): boolean {
+  return isPollOwner(poll, accountId) || poll.isPublic === false;
+}
+
 export function getBordaResults(poll: Poll): RankedOptionResult[] {
   const scores = new Map(poll.options.map((option) => [option.id, 0]));
   for (const vote of poll.votes) {

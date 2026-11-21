@@ -246,6 +246,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .my-poll-deadline { overflow: hidden; color: #9673b7; text-overflow: ellipsis; white-space: nowrap; }
 .my-poll-share { position: absolute; z-index: 2; right: -4px; top: 50%; transform: translateY(-50%); display: grid; width: 32px; height: 44px; place-items: center; padding: 5px; border: 0; border-radius: 12px; color: #7c3aed; background: transparent; cursor: pointer; }
 .my-poll-share:hover { background: #ffffff60; }
+.square-vote-link { display: inline-flex; align-items: center; gap: 4px; color: var(--deep-purple); font-size: 12px; font-weight: 600; }
 .my-poll-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .page-heading.create-heading { display: block; margin-bottom: 18px; }
