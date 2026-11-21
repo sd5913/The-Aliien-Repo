@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Poll } from "../../../types/poll";
 import { isPollOpen } from "../../../components/ui/StatusPill";
+import { PollOptionPreviews } from "./PollOptionPreviews";
 
 const ACTION_WIDTH = 192;
 
@@ -163,11 +164,7 @@ export function PollCard({
         onPointerCancel={finishDrag}
         onClick={handleCardClick}
       >
-        <div className="my-poll-thumbnails" aria-hidden="true">
-          {[poll.options[0], poll.options[1]].map((option, index) => (
-            <img key={option?.id ?? index} src={option?.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`} alt="" draggable="false" />
-          ))}
-        </div>
+        <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
           <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
             <h3>{poll.title}</h3>

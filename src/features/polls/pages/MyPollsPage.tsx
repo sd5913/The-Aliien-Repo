@@ -2,6 +2,7 @@ import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
 import { canSharePoll, isPollOwner } from "../utils/voting";
 import { useSharePoll } from "../components/ShareProvider";
+import { PollOptionPreviews } from "../components/PollOptionPreviews";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -165,16 +166,7 @@ function MyPollCard({
         onPointerCancel={finishDrag}
         onClick={handleCardClick}
       >
-        <div className="my-poll-thumbnails" aria-hidden="true">
-          {[poll.options[0], poll.options[1]].map((option, index) => (
-            <img
-              key={option?.id ?? index}
-              src={option?.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`}
-              alt=""
-              draggable="false"
-            />
-          ))}
-        </div>
+        <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
           <Link className="my-poll-ticket-main" to={`/poll/${poll.id}/results`} state={{ returnTo: "/settings" }}>
             <h3>{poll.title}</h3>
