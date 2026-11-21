@@ -5,6 +5,7 @@ test('public square is visible to visitors, but viewing a poll does not put it i
   const state = await mockApp(page, { accountId: null });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '还没有最近投票' })).toBeVisible();
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
   await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   expect(state.requests.some((request) => request.path === '/rest/v1/polls' && new URLSearchParams(request.search).get('is_public') === 'eq.true')).toBe(true);
   await page.goto(`/poll/${pollId}/results`);
@@ -23,7 +24,9 @@ test('poll loading failures use the generic message and icon-only retry controls
   }));
   await page.goto('/');
   await expect(page.getByText('投票加载失败，请稍后重试。').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(1);
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await expect(page.getByRole('button', { name: '重试加载' })).toHaveCount(1);
   await expect(page.getByText(/Supabase 配置/)).toHaveCount(0);
 });
 
@@ -32,6 +35,7 @@ test('older polls stay out of the square until their owner chooses public', asyn
   state.polls[0].is_public = false;
   state.polls[0].visibility_reviewed_at = null;
   await page.goto('/');
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
   await expect(page.getByRole('heading', { name: '广场还没有公开投票' })).toBeVisible();
   await expect(page.locator('.home-square .poll-card-list')).toHaveCount(0);
   await page.goto('/settings');
@@ -39,6 +43,7 @@ test('older polls stay out of the square until their owner chooses public', asyn
   await page.getByRole('button', { name: '公开到广场' }).click();
   await expect(page.getByText('投票已公开到广场')).toBeVisible();
   await page.goto('/');
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
   await expect(page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
 });
 

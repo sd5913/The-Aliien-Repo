@@ -206,7 +206,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .home-recent-empty .empty-art svg { width: 52px; height: 52px; }
 .home-recent-empty h3 { margin: 0 0 8px; color: #4c1d95; }
 .home-recent-empty p { max-width: 260px; margin: 0; font-size: var(--type-caption); line-height: 1.6; }
-.home-square { padding-top: 34px; }
+.home-square { padding-top: 0; }
 .home-square-description { max-width: 470px; margin: 8px 0 0; color: #7952a5; font-size: var(--type-caption); line-height: 1.6; }
 .my-poll-visibility { margin: 3px 0 0; color: #6d43a0; font-size: 11px; }
 .legacy-visibility-review { position: relative; z-index: 1; margin-top: 8px; padding: 9px; border: 1px solid #decaf4; border-radius: 12px; background: #faf4ff; }
@@ -245,6 +245,9 @@ h1, h2, h3 { color: var(--deep-purple); }
 .poll-preview-body::before { content: ""; position: absolute; inset: 35% 2px 2px; border-radius: 3px 3px 5px 5px; background: var(--option-liquid-color); opacity: .7; }
 .poll-preview-label { position: relative; width: 100%; min-width: 0; padding: 4px 2px; border: 1px solid #ede9fe; border-radius: 4px; background: #fffdf9fa; color: var(--deep-purple); font-size: 9px; line-height: 1.3; font-weight: 700; text-align: center; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .my-poll-ticket-copy { position: relative; align-self: stretch; min-width: 0; flex: 1; padding: 4px 25px 3px 13px; }
+.home-recent[hidden] { display: none; }
+.poll-identity-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; }
+.poll-identity-badges span { padding: 2px 6px; border-radius: 6px; background: #ffffffb3; color: var(--deep-purple); font-size: 10px; font-weight: 700; }
 .my-poll-ticket-main { display: block; color: inherit; text-decoration: none; }
 .my-poll-ticket-main h3 { display: -webkit-box; overflow: hidden; margin: 0 0 7px; font-size: 13px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .my-poll-ticket-status, .my-poll-deadline { margin: 0 0 5px; color: #7952a5; font-size: 10px; line-height: 1.35; }

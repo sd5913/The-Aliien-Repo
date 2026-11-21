@@ -11,10 +11,11 @@ for (const width of [320, 390, 430]) {
       ...base, id: `30000000-0000-4000-8000-00000000000${index + 1}`, position: index, label,
       image_url: index % 2 ? '' : null,
     }));
-    for (const path of ['/', '/settings']) {
+    for (const path of ['/', '/?square', '/settings']) {
       await page.goto(path);
+      if (path === '/?square') await page.getByRole('tab', { name: '广场', exact: true }).click();
       const groups = page.getByRole('group', { name: '选项预览' });
-      await expect(groups).toHaveCount(path === '/' ? 2 : 1);
+      await expect(groups).toHaveCount(1);
       for (const group of await groups.all()) {
         await expect(group.getByRole('img')).toHaveCount(2);
         await expect(group.getByRole('img', { name: `选项 A：${names[0]}`, exact: true })).toBeVisible();
@@ -36,7 +37,7 @@ for (const width of [320, 390, 430]) {
         }
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      if (path === '/') {
+      if (path === '/?square') {
         await expect(page.locator('.home-square').getByRole('button', { name: '分享投票' })).toHaveCount(0);
         await page.locator('.home-square .my-poll-card').screenshot({ path: info.outputPath('text-card.png') });
       }

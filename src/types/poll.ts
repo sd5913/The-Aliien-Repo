@@ -46,6 +46,7 @@ export interface Poll {
   options: PollOption[];
   votes: Vote[];
   voteCount?: number;
+  participatedByCurrentIdentity?: boolean;
   comments: PollComment[];
 }
 

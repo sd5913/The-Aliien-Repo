@@ -176,13 +176,13 @@ export async function fetchRecentPolls(participant?: ParticipantProfile | null, 
   if (votedResult.error) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
   const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
-  const recent = [...voted.map(toCard), ...ownedPage.polls]
+  const recent = [...new Map([...voted.map(toCard), ...ownedPage.polls].map((poll) => [poll.id, poll])).values()]
+    .map((poll) => ({ ...poll, participatedByCurrentIdentity: voteActivity.has(poll.id) }))
     .sort((a, b) => {
-      const aTimestamp = voteActivity.get(a.id) ?? a.createdAt;
-      const bTimestamp = voteActivity.get(b.id) ?? b.createdAt;
-      return Date.parse(bTimestamp) - Date.parse(aTimestamp);
+      const activity = (poll: Poll) => Math.max(Date.parse(poll.createdAt), Date.parse(voteActivity.get(poll.id) ?? poll.createdAt));
+      return activity(b) - activity(a) || b.id.localeCompare(a.id);
     });
-  return [...new Map(recent.map((poll) => [poll.id, poll])).values()].slice(0, 5);
+  return recent.slice(0, 5);
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {

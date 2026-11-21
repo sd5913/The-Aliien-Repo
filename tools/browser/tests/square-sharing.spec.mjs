@@ -12,6 +12,7 @@ for (const accountId of [null, owner, '10000000-0000-4000-8000-000000000099']) {
   test(`square cards only offer voting: ${accountId ?? 'guest'}`, async ({ page }) => {
     await mockApp(page, { accountId });
     await page.goto('/');
+    await page.getByRole('tab', { name: '广场', exact: true }).click();
     const square = page.locator('.home-square');
     await expect(square.getByRole('link', { name: '去投票' })).toBeVisible();
     await expect(square.getByRole('button', { name: '分享投票' })).toHaveCount(0);
