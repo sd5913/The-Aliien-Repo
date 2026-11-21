@@ -84,7 +84,7 @@ export function HomePage() {
         <h1>一个人难选？<br />我们一起选。</h1>
         <p>把纠结交给朋友，让每个小决定都变得好玩。</p>
         <Link to="/create" className="purple-button">发起一个投票 <span>↗</span></Link>
-        {accountUser ? <Link to="/settings" className="auth-quick-link">个人中心 →</Link> : participant ? <Link to="/settings" className="auth-quick-link"><span aria-hidden="true">{participant.avatar}</span> {participant.nickname} · 投票者</Link> : <Link to="/auth" className="auth-quick-link">登录 / 注册 →</Link>}
+        {accountUser ? <Link to="/settings" className="auth-quick-link">个人中心 <AppIcon name="chevronRight" size={15} /></Link> : participant ? <Link to="/settings" className="auth-quick-link"><span aria-hidden="true">{participant.avatar}</span> {participant.nickname} · 投票者</Link> : <Link to="/auth" className="auth-quick-link">登录 / 注册 <AppIcon name="chevronRight" size={15} /></Link>}
       </section>
       <section className="home-steps">
         <div className="section-title-row"><div><span className="eyebrow">简单三步</span><h2>把选择交给大家</h2></div></div>

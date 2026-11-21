@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import type { PollOption } from "../../../types/poll";
 import { Modal } from "../../../components/ui/Modal";
 import { optionColors } from "../utils/optionColors";
+import { AppIcon } from "../../../components/ui/AppIcon";
 
 export function OptionCarousel({ options, activeId, onBrowse }: { options: PollOption[]; activeId: string; onBrowse: (id: string) => void }) {
   const [index, setIndex] = useState(Math.max(0, options.findIndex((option) => option.id === activeId)));
@@ -42,8 +43,8 @@ export function OptionCarousel({ options, activeId, onBrowse }: { options: PollO
               </div>
             </div>
           </div> : option.imageUrl ? <img src={option.imageUrl} alt={option.name} /> : <div className="carousel-image-fallback">✦</div>}
-          <button className="carousel-arrow carousel-arrow-previous" aria-label="上一个选项" onClick={() => browseIndex(index - 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg></button>
-          <button className="carousel-arrow carousel-arrow-next" aria-label="下一个选项" onClick={() => browseIndex(index + 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg></button>
+          <button className="carousel-arrow carousel-arrow-previous" aria-label="上一个选项" onClick={() => browseIndex(index - 1)}><AppIcon name="chevronLeft" size={26} /></button>
+          <button className="carousel-arrow carousel-arrow-next" aria-label="下一个选项" onClick={() => browseIndex(index + 1)}><AppIcon name="chevronRight" size={26} /></button>
           <span className="carousel-count">{index + 1}/{options.length}</span>
           {!textOnly && <><span className="carousel-zoom-hint">点击图片放大</span>
           <button className="zoom-button" aria-label="放大图片" onClick={() => setLightbox(true)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3" /></svg></button></>}
