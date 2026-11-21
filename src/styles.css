@@ -109,12 +109,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-weight: 700;
 }
 .settings-language-select {
-  width: 100%;
-  max-width: none;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
   min-height: 44px;
   padding: 9px 12px;
   font-size: 14px;
 }
+.settings-language-row { justify-content: flex-start; gap: 12px; }
 @media (max-width: 359px) {
   .topbar { gap: 6px; padding-inline: 12px; }
   .page-header-title { font-size: 17px; }
