@@ -138,7 +138,7 @@ function MyPollCard({
 
   return (
     <div className={`swipe-card${expanded ? " swipe-card-expanded" : ""}`}>
-      <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
+      <div className="swipe-actions" style={{ clipPath: `inset(0 0 0 calc(100% + ${offset}px))`, transition: dragOffset === null ? undefined : "none" }} aria-label="投票操作" aria-hidden={!expanded}>
         <button className="swipe-action swipe-edit" disabled={!isPollOpen(poll)} tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
           <AppIcon name="edit" size={20} />
           <span>编辑</span>
