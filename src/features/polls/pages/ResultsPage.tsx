@@ -32,8 +32,6 @@ export function ResultsPage() {
     }
   }, [poll, accountUser?.id, location.search, openedShare, openShare]);
   const [voter] = useState(getVoter);
-  const [exitOpen, setExitOpen] = useState(false);
-  const [closeHint, setCloseHint] = useState(false);
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentFeedback, setCommentFeedback] = useState(location.state?.published ? "发布成功，分享给朋友来投票吧" : location.state?.saved ? "修改已保存" : "");
@@ -66,11 +64,10 @@ export function ResultsPage() {
     {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll}
       onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
       onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
-    {
-    (loading || error || !poll || isPollOwner(poll, accountUser?.id ?? "")) ? <Link className="results-close-button" to={returnTo} aria-label="关闭结果">
+    <Link className="results-close-button" to="/" aria-label="关闭结果">
       ×
-    </Link> : <button className="results-close-button" type="button" onClick={() => { setCloseHint(false); setExitOpen(true); }} aria-label="关闭结果">×</button>
-    }</>
+    </Link>
+    </>
   );
 
   if (loading)
@@ -175,10 +172,6 @@ export function ResultsPage() {
         <button className="danger-button" disabled={commentBusy} onClick={() => void confirmCommentDelete()}>{commentBusy ? "删除中…" : "删除评论"}</button>
       </>}><p>删除后无法恢复，投票选择和统计结果不会改变。</p></Modal>}
       {commentFeedback && <Toast message={commentFeedback} onClose={() => setCommentFeedback("")} />}
-      {exitOpen && <Modal title="本次投票已查看完毕" onClose={() => setExitOpen(false)} actions={<>
-        <button className="button-soft" type="button" onClick={() => { setCloseHint(true); window.close(); }}>关闭页面</button>
-        <Link className="purple-button" to="/">前往首页</Link>
-      </>}><p>你可以关闭本页，或保留当前身份前往首页。</p>{closeHint && <p role="status">如果页面未关闭，请使用浏览器关闭当前标签页，或点击“前往首页”。</p>}</Modal>}
     </PageShell>
   );
 }
