@@ -63,8 +63,8 @@ export function ParticipantLoginPage() {
   return (
     <main className="participant-page">
       <header className="participant-brand">
-        <Link to="/" aria-label="BothPls 首页"><img className="participant-logo" src={logoUrl} alt="" /><strong>BothPls</strong></Link>
-        <p>朋友帮选 · 一起投票</p>
+        <Link to="/" aria-label={`BothPls ${t("nav.home")}`}><img className="participant-logo" src={logoUrl} alt="" /><strong>BothPls</strong></Link>
+        <p>{t("guest.tagline")}</p>
       </header>
       <form className="participant-form" onSubmit={submit} noValidate>
         <section className="participant-ticket" aria-labelledby="participant-title">

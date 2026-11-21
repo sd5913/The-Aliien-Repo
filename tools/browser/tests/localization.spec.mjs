@@ -162,10 +162,10 @@ test('language persists from home to auth and updates metadata and validation', 
   await page.screenshot({ path: info.outputPath('home-en.png') });
   await page.getByRole('link', { name: /Sign in \/ Sign up/ }).click();
   await expect(page.getByRole('button', { name: 'Sign in with GitHub' })).toBeVisible();
-  await page.getByRole('button', { name: 'Send sign-in link' }).click();
+  await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('status')).toHaveText('Enter your email address.');
   await chooseLanguage(page, 'ko-KR');
-  await page.getByRole('button', { name: '로그인 링크 보내기' }).click();
+  await page.getByRole('button', { name: '이메일로 계속하기' }).click();
   await expect(page.getByRole('status')).toHaveText('이메일 주소를 입력해 주세요.');
   await expect(page).toHaveTitle('BothPls — 친구와 함께 골라요');
   await page.screenshot({ path: info.outputPath('auth-ko.png') });

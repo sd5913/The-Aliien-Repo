@@ -8,7 +8,9 @@ Instead of making a decision alone, users can share their options with friends a
 
 ### App language
 
-Open **Profile → Settings → Language** to choose **中文（简体）**, **English**, or **한국어**. Simplified Chinese is the default. The choice is saved in the current browser and applies to localized interface text and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
+Three languages are live: **中文（简体）** (default), **English**, and **한국어**. Japanese is planned but **not supported yet**.
+
+Open **个人 (Me) → the gear icon at the top right → 语言**. The choice is saved in the current browser and applies to localized interface text and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
 
 The screenshots below are historical examples. Search crawlers that read only the static HTML see the Simplified Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
 

@@ -150,16 +150,18 @@
 
 ### Multilingual Font Strategy
 
-BothPls 支持四种语言：English / 中文 / 한국어 / 日本語。所有语言共享同一套 Type Scale 和 Pairing Rules，仅 font-family 按语言切换。字体选择遵循 **Playful / toy-like** 美学方向 — 优先圆润、友好、现代的无衬线字体，与英文 Nunito 家族视觉协调。
+BothPls 已上线三种语言：简体中文 / English / 한국어；日本語为待办计划，当前界面尚未支持。所有已支持语言共享同一套 Type Scale 和 Pairing Rules，仅 font-family 按语言切换。字体选择遵循 **Playful / toy-like** 美学方向 — 优先圆润、友好、现代的无衬线字体，与英文 Nunito 家族视觉协调。
 
 > **核心原则：** 拉丁字母（英文、数字）始终使用 Nunito / Nunito Sans / DM Mono；CJK 字符（中文、日文汉字、韩文）使用各自语言专属字体。CSS font-family 栈自动降级 — 拉丁字符命中 Nunito，CJK 字符命中对应 CJK 字体，无需手动切换。
 
 | Language | Code | Display Font | Body Font | Numeric | Mood Match |
 |---|---|---|---|---|---|
-| English | `en` | Nunito | Nunito Sans | DM Mono | 圆润友好，品牌基线 |
-| 简体中文 | `zh-CN` | Noto Sans SC | Noto Sans SC | DM Mono | 现代清晰，字重齐全 |
-| 한국어 | `ko` | Pretendard | Pretendard | DM Mono | 韩国 UI 标准，跨平台一致 |
-| 日本語 | `ja` | M PLUS Rounded 1c | Noto Sans JP | DM Mono | 圆润标题 + 高可读正文 |
+| English | `en-US` | Nunito | Nunito Sans | DM Mono | 圆润友好，品牌基线 |
+| 简体中文（默认） | `zh-CN` | Noto Sans SC | Noto Sans SC | DM Mono | 现代清晰，字重齐全 |
+| 한국어 | `ko-KR` | Pretendard | Pretendard | DM Mono | 韩国 UI 标准，跨平台一致 |
+| 日本語（待办，未上线） | `ja` | M PLUS Rounded 1c | Noto Sans JP | DM Mono | 圆润标题 + 高可读正文 |
+
+> **语言状态：** 线上仅 `zh-CN` / `en-US` / `ko-KR` 三语；`ja` 相关字体与字号示例为后续规划，尚未接入界面。语言入口为 **个人 → 右上角齿轮 → 语言**。
 
 ---
 
@@ -199,7 +201,7 @@ BothPls 支持四种语言：English / 中文 / 한국어 / 日本語。所有�
 
 ---
 
-#### 日 — 日本語: M PLUS Rounded 1c + Noto Sans JP
+#### 日 — 日本語（待办，未上线）: M PLUS Rounded 1c + Noto Sans JP
 
 | Role | Font | Sample | Weights | Source |
 |---|---|---|---|---|
@@ -213,7 +215,7 @@ BothPls 支持四种语言：English / 中文 / 한국어 / 日本語。所有�
 
 ### Cross-Language Type Scale
 
-四种语言共享同一套字号阶梯。以下为各语言同尺寸对比：
+三种已上线语言（简体中文 / English / 한국어）共享同一套字号阶梯，日語列为待办参考。以下为各语言同尺寸对比：
 
 | Level | Size / Weight / Line-height | EN | 中文 | 한국어 | 日本語 |
 |---|---|---|---|---|---|
@@ -229,7 +231,7 @@ BothPls 支持四种语言：English / 中文 / 한국어 / 日本語。所有�
 | Stat L | 32px / 500 | 12 votes | 12 票 | 12표 | 12票 |
 | Stat M | 20px / 500 | 3 / 5 | — | — | — |
 
-> **Note:** 数字与百分比始终使用 DM Mono 等宽字体，四种语言共享。CJK 语言的"票"字单位（票 / 표 / 票）由各语言 body 字体渲染，数字部分由 DM Mono 渲染，font-family 栈自动分配。
+> **Note:** 数字与百分比始终使用 DM Mono 等宽字体，已上线三语共享。CJK 语言的"票"字单位（票 / 표 / 票）由各语言 body 字体渲染，数字部分由 DM Mono 渲染，font-family 栈自动分配。日本語列仅作后续规划，未接入界面。
 
 ---
 

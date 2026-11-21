@@ -1,0 +1,1526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file original="src/i18n/messages/ko-KR.ts" source-language="zh-CN" target-language="ko-KR" datatype="plaintext" tool-id="bothpls-yicat-prep">
+    <header>
+      <note from="bothpls">key 保存在 trans-unit/@resname；花括号占位符已转为 ph 标记，请连同标记一起复制。</note>
+    </header>
+    <body>
+      <trans-unit id="app.language" resname="app.language">
+        <source xml:lang="zh-CN">语言</source>
+        <target xml:lang="ko-KR">언어</target>
+      </trans-unit>
+      <trans-unit id="app.title" resname="app.title">
+        <source xml:lang="zh-CN">BothPls — 和朋友一起选</source>
+        <target xml:lang="ko-KR">BothPls — 친구와 함께 골라요</target>
+      </trans-unit>
+      <trans-unit id="app.description" resname="app.description">
+        <source xml:lang="zh-CN">难以抉择？开个 BothPls 投票，听听朋友的意见。</source>
+        <target xml:lang="ko-KR">고르기 어렵나요? BothPls에서 투표를 만들고 친구들의 의견을 들어보세요.</target>
+      </trans-unit>
+      <trans-unit id="app.pageMissing" resname="app.pageMissing">
+        <source xml:lang="zh-CN">找不到页面</source>
+        <target xml:lang="ko-KR">페이지를 찾을 수 없어요</target>
+      </trans-unit>
+      <trans-unit id="app.routeError" resname="app.routeError">
+        <source xml:lang="zh-CN">发生错误</source>
+        <target xml:lang="ko-KR">문제가 발생했어요</target>
+      </trans-unit>
+      <trans-unit id="app.routeHelp" resname="app.routeHelp">
+        <source xml:lang="zh-CN">请返回首页再试。</source>
+        <target xml:lang="ko-KR">홈으로 돌아가 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="nav.main" resname="nav.main">
+        <source xml:lang="zh-CN">主选单</source>
+        <target xml:lang="ko-KR">주 메뉴</target>
+      </trans-unit>
+      <trans-unit id="nav.home" resname="nav.home">
+        <source xml:lang="zh-CN">首页</source>
+        <target xml:lang="ko-KR">홈</target>
+      </trans-unit>
+      <trans-unit id="nav.brandHome" resname="nav.brandHome">
+        <source xml:lang="zh-CN">BothPls 首页</source>
+        <target xml:lang="ko-KR">BothPls 홈</target>
+      </trans-unit>
+      <trans-unit id="nav.back" resname="nav.back">
+        <source xml:lang="zh-CN">返回</source>
+        <target xml:lang="ko-KR">뒤로</target>
+      </trans-unit>
+      <trans-unit id="nav.profile" resname="nav.profile">
+        <source xml:lang="zh-CN">个人</source>
+        <target xml:lang="ko-KR">프로필</target>
+      </trans-unit>
+      <trans-unit id="common.close" resname="common.close">
+        <source xml:lang="zh-CN">关闭</source>
+        <target xml:lang="ko-KR">닫기</target>
+      </trans-unit>
+      <trans-unit id="common.cancel" resname="common.cancel">
+        <source xml:lang="zh-CN">取消</source>
+        <target xml:lang="ko-KR">취소</target>
+      </trans-unit>
+      <trans-unit id="common.save" resname="common.save">
+        <source xml:lang="zh-CN">保存</source>
+        <target xml:lang="ko-KR">저장</target>
+      </trans-unit>
+      <trans-unit id="common.saving" resname="common.saving">
+        <source xml:lang="zh-CN">保存中…</source>
+        <target xml:lang="ko-KR">저장 중…</target>
+      </trans-unit>
+      <trans-unit id="common.edit" resname="common.edit">
+        <source xml:lang="zh-CN">编辑</source>
+        <target xml:lang="ko-KR">수정</target>
+      </trans-unit>
+      <trans-unit id="common.delete" resname="common.delete">
+        <source xml:lang="zh-CN">删除</source>
+        <target xml:lang="ko-KR">삭제</target>
+      </trans-unit>
+      <trans-unit id="common.editShort" resname="common.editShort">
+        <source xml:lang="zh-CN">修改</source>
+        <target xml:lang="ko-KR">수정</target>
+      </trans-unit>
+      <trans-unit id="common.optional" resname="common.optional">
+        <source xml:lang="zh-CN">选填</source>
+        <target xml:lang="ko-KR">선택 사항</target>
+      </trans-unit>
+      <trans-unit id="common.notSet" resname="common.notSet">
+        <source xml:lang="zh-CN">未设置</source>
+        <target xml:lang="ko-KR">미설정</target>
+      </trans-unit>
+      <trans-unit id="common.retry" resname="common.retry">
+        <source xml:lang="zh-CN">重试</source>
+        <target xml:lang="ko-KR">다시 시도</target>
+      </trans-unit>
+      <trans-unit id="common.nickname" resname="common.nickname">
+        <source xml:lang="zh-CN">昵称</source>
+        <target xml:lang="ko-KR">닉네임</target>
+      </trans-unit>
+      <trans-unit id="common.email" resname="common.email">
+        <source xml:lang="zh-CN">邮箱</source>
+        <target xml:lang="ko-KR">이메일</target>
+      </trans-unit>
+      <trans-unit id="common.photos" resname="common.photos">
+        <source xml:lang="zh-CN">相册</source>
+        <target xml:lang="ko-KR">사진첩</target>
+      </trans-unit>
+      <trans-unit id="common.home" resname="common.home">
+        <source xml:lang="zh-CN">返回首页</source>
+        <target xml:lang="ko-KR">홈으로 돌아가기</target>
+      </trans-unit>
+      <trans-unit id="auth.checking" resname="auth.checking">
+        <source xml:lang="zh-CN">正在确认账号登录状态…</source>
+        <target xml:lang="ko-KR">로그인 상태 확인 중…</target>
+      </trans-unit>
+      <trans-unit id="auth.rateLimit" resname="auth.rateLimit">
+        <source xml:lang="zh-CN">登录链接发送次数过多，请稍后再试。</source>
+        <target xml:lang="ko-KR">로그인 링크를 너무 자주 요청했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailUnauthorized" resname="auth.emailUnauthorized">
+        <source xml:lang="zh-CN">这个邮箱地址未加入 Supabase 项目团队，暂时无法接收测试邮箱。</source>
+        <target xml:lang="ko-KR">이 이메일 주소는 Supabase 프로젝트 팀에 추가되어야 테스트 메일을 받을 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailFailed" resname="auth.emailFailed">
+        <source xml:lang="zh-CN">无法发送登录链接，请检查邮箱地址或稍后再试。</source>
+        <target xml:lang="ko-KR">로그인 링크를 보내지 못했어요. 이메일 주소를 확인하거나 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailInvalid" resname="auth.emailInvalid">
+        <source xml:lang="zh-CN">请输入有效的邮箱地址。</source>
+        <target xml:lang="ko-KR">올바른 이메일 주소를 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.notCompleted" resname="auth.notCompleted">
+        <source xml:lang="zh-CN">未完成登录，请再试一次。</source>
+        <target xml:lang="ko-KR">로그인을 완료하지 못했어요. 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.nameAndEmailRequired" resname="auth.nameAndEmailRequired">
+        <source xml:lang="zh-CN">请填写昵称和邮箱地址。</source>
+        <target xml:lang="ko-KR">닉네임과 이메일 주소를 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailRequired" resname="auth.emailRequired">
+        <source xml:lang="zh-CN">请填写邮箱地址。</source>
+        <target xml:lang="ko-KR">이메일 주소를 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.sent" resname="auth.sent">
+        <source xml:lang="zh-CN">登录链接已发送。请开启邮箱并按下链接。链接一小时内有效，只可使用一次。</source>
+        <target xml:lang="ko-KR">메일함에서 로그인 링크를 확인해 주세요. 링크는 한 시간 동안 유효하며 한 번만 사용할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="auth.githubFailed" resname="auth.githubFailed">
+        <source xml:lang="zh-CN">无法连接 GitHub，请稍后再试。</source>
+        <target xml:lang="ko-KR">GitHub에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.appleFailed" resname="auth.appleFailed">
+        <source xml:lang="zh-CN">无法使用 Apple 登录，请稍后再试。</source>
+        <target xml:lang="ko-KR">Apple로 로그인하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.browse" resname="auth.browse">
+        <source xml:lang="zh-CN">先逛逛</source>
+        <target xml:lang="ko-KR">둘러보기</target>
+      </trans-unit>
+      <trans-unit id="auth.eyebrow" resname="auth.eyebrow">
+        <source xml:lang="zh-CN">欢迎来到 BothPls</source>
+        <target xml:lang="ko-KR">BothPls에 오신 것을 환영해요</target>
+      </trans-unit>
+      <trans-unit id="auth.welcome" resname="auth.welcome">
+        <source xml:lang="zh-CN">欢迎回来！</source>
+        <target xml:lang="ko-KR">다시 만나서 반가워요!</target>
+      </trans-unit>
+      <trans-unit id="auth.join" resname="auth.join">
+        <source xml:lang="zh-CN">加入 BothPls</source>
+        <target xml:lang="ko-KR">BothPls 시작하기</target>
+      </trans-unit>
+      <trans-unit id="auth.loginIntro" resname="auth.loginIntro">
+        <source xml:lang="zh-CN">选择 Apple、邮箱或 GitHub 登录，继续和朋友一起做决定。</source>
+        <target xml:lang="ko-KR">Apple, 이메일 또는 GitHub로 로그인하고 친구들과 함께 결정해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.registerIntro" resname="auth.registerIntro">
+        <source xml:lang="zh-CN">选择喜欢的方式创建账号，把每次选择都变得更轻松。</source>
+        <target xml:lang="ko-KR">원하는 방식으로 계정을 만들고 함께 선택해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="auth.tabs" resname="auth.tabs">
+        <source xml:lang="zh-CN">登录或注册</source>
+        <target xml:lang="ko-KR">로그인 또는 가입</target>
+      </trans-unit>
+      <trans-unit id="auth.login" resname="auth.login">
+        <source xml:lang="zh-CN">登录</source>
+        <target xml:lang="ko-KR">로그인</target>
+      </trans-unit>
+      <trans-unit id="auth.register" resname="auth.register">
+        <source xml:lang="zh-CN">注册</source>
+        <target xml:lang="ko-KR">가입</target>
+      </trans-unit>
+      <trans-unit id="auth.nicknameHint" resname="auth.nicknameHint">
+        <source xml:lang="zh-CN">朋友会这样称呼你</source>
+        <target xml:lang="ko-KR">친구들이 부르는 이름</target>
+      </trans-unit>
+      <trans-unit id="auth.sending" resname="auth.sending">
+        <source xml:lang="zh-CN">发送中…</source>
+        <target xml:lang="ko-KR">보내는 중…</target>
+      </trans-unit>
+      <trans-unit id="auth.sendLink" resname="auth.sendLink">
+        <source xml:lang="zh-CN">发送登录链接</source>
+        <target xml:lang="ko-KR">로그인 링크 보내기</target>
+      </trans-unit>
+      <trans-unit id="auth.continueEmail" resname="auth.continueEmail">
+        <source xml:lang="zh-CN">继续使用邮箱</source>
+        <target xml:lang="ko-KR">이메일로 계속하기</target>
+      </trans-unit>
+      <trans-unit id="auth.haveAccount" resname="auth.haveAccount">
+        <source xml:lang="zh-CN">已有账户？</source>
+        <target xml:lang="ko-KR">이미 계정이 있나요?</target>
+      </trans-unit>
+      <trans-unit id="auth.noAccount" resname="auth.noAccount">
+        <source xml:lang="zh-CN">还没有账户？</source>
+        <target xml:lang="ko-KR">계정이 없나요?</target>
+      </trans-unit>
+      <trans-unit id="auth.goLogin" resname="auth.goLogin">
+        <source xml:lang="zh-CN">去登录</source>
+        <target xml:lang="ko-KR">로그인하기</target>
+      </trans-unit>
+      <trans-unit id="auth.goRegister" resname="auth.goRegister">
+        <source xml:lang="zh-CN">去注册</source>
+        <target xml:lang="ko-KR">가입하기</target>
+      </trans-unit>
+      <trans-unit id="auth.or" resname="auth.or">
+        <source xml:lang="zh-CN">或</source>
+        <target xml:lang="ko-KR">또는</target>
+      </trans-unit>
+      <trans-unit id="auth.githubPending" resname="auth.githubPending">
+        <source xml:lang="zh-CN">正在前往 GitHub…</source>
+        <target xml:lang="ko-KR">GitHub로 이동 중…</target>
+      </trans-unit>
+      <trans-unit id="auth.github" resname="auth.github">
+        <source xml:lang="zh-CN">以 GitHub 登录</source>
+        <target xml:lang="ko-KR">GitHub로 로그인</target>
+      </trans-unit>
+      <trans-unit id="auth.legal" resname="auth.legal">
+        <source xml:lang="zh-CN">邮箱登录链接只可使用一次。参与朋友的投票无需登录。</source>
+        <target xml:lang="ko-KR">이메일 로그인 링크는 한 번만 사용할 수 있어요. 계정 없이도 투표할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="auth.loginRegister" resname="auth.loginRegister">
+        <source xml:lang="zh-CN">登录 / 注册</source>
+        <target xml:lang="ko-KR">로그인 / 가입</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameGenerated" resname="guest.nicknameGenerated">
+        <source xml:lang="zh-CN">已产生昵称：<ph id="ph1" ctype="x-brace-placeholder">{name}</ph></source>
+        <target xml:lang="ko-KR">생성된 닉네임: <ph id="ph1" ctype="x-brace-placeholder">{name}</ph></target>
+      </trans-unit>
+      <trans-unit id="guest.invalidNickname" resname="guest.invalidNickname">
+        <source xml:lang="zh-CN">请输入 <ph id="ph1" ctype="x-brace-placeholder">{range}</ph> 个字符的昵称，或按骰子随机产生。</source>
+        <target xml:lang="ko-KR">닉네임을 <ph id="ph1" ctype="x-brace-placeholder">{range}</ph>자로 입력하거나 주사위를 눌러 만들어 보세요.</target>
+      </trans-unit>
+      <trans-unit id="guest.identityFailed" resname="guest.identityFailed">
+        <source xml:lang="zh-CN">暂时无法建立投票者身份，请检查网络并允许浏览器保存后再试。</source>
+        <target xml:lang="ko-KR">투표자 프로필을 만들지 못했어요. 인터넷 연결과 브라우저 저장 설정을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="guest.tagline" resname="guest.tagline">
+        <source xml:lang="zh-CN">朋友帮忙 · 一起投票</source>
+        <target xml:lang="ko-KR">고민될 땐 친구들과 투표해요</target>
+      </trans-unit>
+      <trans-unit id="guest.heading" resname="guest.heading">
+        <source xml:lang="zh-CN">以投票者身份参与</source>
+        <target xml:lang="ko-KR">투표에 참여하기</target>
+      </trans-unit>
+      <trans-unit id="guest.intro" resname="guest.intro">
+        <source xml:lang="zh-CN">设置一个临时身份，即可参与投票。</source>
+        <target xml:lang="ko-KR">임시 프로필을 만들면 투표할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="guest.avatar" resname="guest.avatar">
+        <source xml:lang="zh-CN">头像</source>
+        <target xml:lang="ko-KR">아바타</target>
+      </trans-unit>
+      <trans-unit id="profile.currentAvatar" resname="profile.currentAvatar">
+        <source xml:lang="zh-CN">目前头像：<ph id="ph1" ctype="x-brace-placeholder">{avatar}</ph></source>
+        <target xml:lang="ko-KR">현재 아바타: <ph id="ph1" ctype="x-brace-placeholder">{avatar}</ph></target>
+      </trans-unit>
+      <trans-unit id="guest.avatarChanged" resname="guest.avatarChanged">
+        <source xml:lang="zh-CN">已更换随机头像</source>
+        <target xml:lang="ko-KR">무작위 아바타를 골랐어요</target>
+      </trans-unit>
+      <trans-unit id="guest.randomAvatar" resname="guest.randomAvatar">
+        <source xml:lang="zh-CN">随机头像</source>
+        <target xml:lang="ko-KR">무작위 아바타</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameHint" resname="guest.nicknameHint">
+        <source xml:lang="zh-CN">输入昵称（<ph id="ph1" ctype="x-brace-placeholder">{range}</ph> 个字符）</source>
+        <target xml:lang="ko-KR">닉네임 입력 (<ph id="ph1" ctype="x-brace-placeholder">{range}</ph>자)</target>
+      </trans-unit>
+      <trans-unit id="guest.randomNickname" resname="guest.randomNickname">
+        <source xml:lang="zh-CN">随机昵称</source>
+        <target xml:lang="ko-KR">무작위 닉네임</target>
+      </trans-unit>
+      <trans-unit id="guest.joining" resname="guest.joining">
+        <source xml:lang="zh-CN">正在建立身份…</source>
+        <target xml:lang="ko-KR">프로필 만드는 중…</target>
+      </trans-unit>
+      <trans-unit id="guest.join" resname="guest.join">
+        <source xml:lang="zh-CN">参与投票</source>
+        <target xml:lang="ko-KR">참여하기</target>
+      </trans-unit>
+      <trans-unit id="guest.remembered" resname="guest.remembered">
+        <source xml:lang="zh-CN">无需注册 · 昵称和头像会保存在此浏览器</source>
+        <target xml:lang="ko-KR">가입 없이 참여할 수 있어요. 닉네임과 아바타는 이 브라우저에 저장돼요.</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameSun" resname="guest.nicknameSun">
+        <source xml:lang="zh-CN">小太阳</source>
+        <target xml:lang="ko-KR">작은햇살</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameCandy" resname="guest.nicknameCandy">
+        <source xml:lang="zh-CN">软糖</source>
+        <target xml:lang="ko-KR">말랑젤리</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameTea" resname="guest.nicknameTea">
+        <source xml:lang="zh-CN">奶茶</source>
+        <target xml:lang="ko-KR">밀크티</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameOrange" resname="guest.nicknameOrange">
+        <source xml:lang="zh-CN">小橘子</source>
+        <target xml:lang="ko-KR">작은귤</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameCloud" resname="guest.nicknameCloud">
+        <source xml:lang="zh-CN">云朵</source>
+        <target xml:lang="ko-KR">구름</target>
+      </trans-unit>
+      <trans-unit id="guest.nicknameRice" resname="guest.nicknameRice">
+        <source xml:lang="zh-CN">糯米团</source>
+        <target xml:lang="ko-KR">찹쌀떡</target>
+      </trans-unit>
+      <trans-unit id="home.eyebrow" resname="home.eyebrow">
+        <source xml:lang="zh-CN">朋友们好 ✨</source>
+        <target xml:lang="ko-KR">친구들, 반가워요 ✨</target>
+      </trans-unit>
+      <trans-unit id="home.headlineOne" resname="home.headlineOne">
+        <source xml:lang="zh-CN">一个人难选？</source>
+        <target xml:lang="ko-KR">혼자 고르기 어렵나요?</target>
+      </trans-unit>
+      <trans-unit id="home.headlineTwo" resname="home.headlineTwo">
+        <source xml:lang="zh-CN">我们一起选。</source>
+        <target xml:lang="ko-KR">함께 골라요.</target>
+      </trans-unit>
+      <trans-unit id="home.intro" resname="home.intro">
+        <source xml:lang="zh-CN">把纠结交给朋友，让每个小决定都变得好玩。</source>
+        <target xml:lang="ko-KR">친구들의 의견을 듣고 작은 결정도 즐겁게 내려 보세요.</target>
+      </trans-unit>
+      <trans-unit id="home.startPoll" resname="home.startPoll">
+        <source xml:lang="zh-CN">发起一个投票</source>
+        <target xml:lang="ko-KR">투표 시작하기</target>
+      </trans-unit>
+      <trans-unit id="home.profile" resname="home.profile">
+        <source xml:lang="zh-CN">个人中心</source>
+        <target xml:lang="ko-KR">내 프로필</target>
+      </trans-unit>
+      <trans-unit id="home.voter" resname="home.voter">
+        <source xml:lang="zh-CN">投票者</source>
+        <target xml:lang="ko-KR">투표자</target>
+      </trans-unit>
+      <trans-unit id="home.login" resname="home.login">
+        <source xml:lang="zh-CN">登录 / 注册 →</source>
+        <target xml:lang="ko-KR">로그인 / 가입 →</target>
+      </trans-unit>
+      <trans-unit id="home.steps" resname="home.steps">
+        <source xml:lang="zh-CN">简单三步</source>
+        <target xml:lang="ko-KR">간단한 세 단계</target>
+      </trans-unit>
+      <trans-unit id="home.chooseTogether" resname="home.chooseTogether">
+        <source xml:lang="zh-CN">把选择交给大家</source>
+        <target xml:lang="ko-KR">친구들의 의견 듣기</target>
+      </trans-unit>
+      <trans-unit id="home.stepOptions" resname="home.stepOptions">
+        <source xml:lang="zh-CN">加入选项</source>
+        <target xml:lang="ko-KR">선택지 추가</target>
+      </trans-unit>
+      <trans-unit id="home.stepOptionsDetails" resname="home.stepOptionsDetails">
+        <source xml:lang="zh-CN">把你正在考虑的选项加进来。</source>
+        <target xml:lang="ko-KR">고민 중인 선택지를 추가해요.</target>
+      </trans-unit>
+      <trans-unit id="home.stepShare" resname="home.stepShare">
+        <source xml:lang="zh-CN">分享给朋友</source>
+        <target xml:lang="ko-KR">친구에게 공유</target>
+      </trans-unit>
+      <trans-unit id="home.stepShareDetails" resname="home.stepShareDetails">
+        <source xml:lang="zh-CN">发出链接，听听大家的想法。</source>
+        <target xml:lang="ko-KR">링크를 보내고 친구들의 의견을 들어요.</target>
+      </trans-unit>
+      <trans-unit id="home.stepResults" resname="home.stepResults">
+        <source xml:lang="zh-CN">查看结果</source>
+        <target xml:lang="ko-KR">결과 확인</target>
+      </trans-unit>
+      <trans-unit id="home.stepResultsDetails" resname="home.stepResultsDetails">
+        <source xml:lang="zh-CN">参考投票和留言，帮你理清思路。</source>
+        <target xml:lang="ko-KR">투표와 댓글을 참고해 결정해요.</target>
+      </trans-unit>
+      <trans-unit id="home.decideTogether" resname="home.decideTogether">
+        <source xml:lang="zh-CN">一起做决定</source>
+        <target xml:lang="ko-KR">함께 결정하기</target>
+      </trans-unit>
+      <trans-unit id="home.recent" resname="home.recent">
+        <source xml:lang="zh-CN">最近投票</source>
+        <target xml:lang="ko-KR">최근 투표</target>
+      </trans-unit>
+      <trans-unit id="home.seeAll" resname="home.seeAll">
+        <source xml:lang="zh-CN">查看全部 →</source>
+        <target xml:lang="ko-KR">모두 보기 →</target>
+      </trans-unit>
+      <trans-unit id="home.createFirst" resname="home.createFirst">
+        <source xml:lang="zh-CN">开始建立</source>
+        <target xml:lang="ko-KR">투표 만들기</target>
+      </trans-unit>
+      <trans-unit id="home.retry" resname="home.retry">
+        <source xml:lang="zh-CN">重试加载</source>
+        <target xml:lang="ko-KR">다시 불러오기</target>
+      </trans-unit>
+      <trans-unit id="home.authPrompt" resname="home.authPrompt">
+        <source xml:lang="zh-CN">注册或登录提示</source>
+        <target xml:lang="ko-KR">가입 또는 로그인 안내</target>
+      </trans-unit>
+      <trans-unit id="home.closeAuthPrompt" resname="home.closeAuthPrompt">
+        <source xml:lang="zh-CN">关闭注册提示</source>
+        <target xml:lang="ko-KR">가입 안내 닫기</target>
+      </trans-unit>
+      <trans-unit id="home.authForVoter" resname="home.authForVoter">
+        <source xml:lang="zh-CN">喜欢和朋友一起做选择？注册账号，发起自己的投票。</source>
+        <target xml:lang="ko-KR">친구들과 함께 고르는 게 좋으신가요? 계정을 만들고 직접 투표를 시작해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="home.authForGuest" resname="home.authForGuest">
+        <source xml:lang="zh-CN">现在就加入 BothPls，和朋友一起做决定。</source>
+        <target xml:lang="ko-KR">BothPls에 가입하고 친구들과 함께 결정해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="home.pollList" resname="home.pollList">
+        <source xml:lang="zh-CN">投票列表</source>
+        <target xml:lang="ko-KR">투표 목록</target>
+      </trans-unit>
+      <trans-unit id="home.tabRecent" resname="home.tabRecent">
+        <source xml:lang="zh-CN">最近</source>
+        <target xml:lang="ko-KR">최근</target>
+      </trans-unit>
+      <trans-unit id="home.tabSquare" resname="home.tabSquare">
+        <source xml:lang="zh-CN">广场</source>
+        <target xml:lang="ko-KR">광장</target>
+      </trans-unit>
+      <trans-unit id="home.recentLoadFailed" resname="home.recentLoadFailed">
+        <source xml:lang="zh-CN">投票加载失败，请稍后重试。</source>
+        <target xml:lang="ko-KR">최근 투표를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="home.recentEmpty" resname="home.recentEmpty">
+        <source xml:lang="zh-CN">还没有最近投票</source>
+        <target xml:lang="ko-KR">최근 투표가 없어요</target>
+      </trans-unit>
+      <trans-unit id="home.recentEmptyDetails" resname="home.recentEmptyDetails">
+        <source xml:lang="zh-CN">创建投票或参与一次投票后，会显示在这里。</source>
+        <target xml:lang="ko-KR">만들거나 참여한 투표가 여기에 표시돼요.</target>
+      </trans-unit>
+      <trans-unit id="home.squareEyebrow" resname="home.squareEyebrow">
+        <source xml:lang="zh-CN">发现大家的选择</source>
+        <target xml:lang="ko-KR">다른 사람들의 선택 보기</target>
+      </trans-unit>
+      <trans-unit id="home.squareDescription" resname="home.squareDescription">
+        <source xml:lang="zh-CN">公开投票会展示在这里，让更多人一起参与。仅通过链接分享的投票不会进入广场。</source>
+        <target xml:lang="ko-KR">공개 투표가 여기에 표시돼요. 링크로만 공유한 투표는 광장에 나오지 않아요.</target>
+      </trans-unit>
+      <trans-unit id="home.squareLoading" resname="home.squareLoading">
+        <source xml:lang="zh-CN">正在加载广场…</source>
+        <target xml:lang="ko-KR">광장을 불러오는 중…</target>
+      </trans-unit>
+      <trans-unit id="home.squareLoadFailed" resname="home.squareLoadFailed">
+        <source xml:lang="zh-CN">广场加载失败，请稍后重试。</source>
+        <target xml:lang="ko-KR">광장을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="home.squareEmpty" resname="home.squareEmpty">
+        <source xml:lang="zh-CN">广场还没有公开投票</source>
+        <target xml:lang="ko-KR">아직 공개 투표가 없어요</target>
+      </trans-unit>
+      <trans-unit id="home.squareEmptyDetails" resname="home.squareEmptyDetails">
+        <source xml:lang="zh-CN">投票发起者选择公开后，会出现在这里。</source>
+        <target xml:lang="ko-KR">만든 사람이 투표를 공개하면 여기에 표시돼요.</target>
+      </trans-unit>
+      <trans-unit id="poll.createNav" resname="poll.createNav">
+        <source xml:lang="zh-CN">发起投票</source>
+        <target xml:lang="ko-KR">투표 만들기</target>
+      </trans-unit>
+      <trans-unit id="poll.create" resname="poll.create">
+        <source xml:lang="zh-CN">建立投票</source>
+        <target xml:lang="ko-KR">투표 만들기</target>
+      </trans-unit>
+      <trans-unit id="poll.edit" resname="poll.edit">
+        <source xml:lang="zh-CN">编辑投票</source>
+        <target xml:lang="ko-KR">투표 수정</target>
+      </trans-unit>
+      <trans-unit id="poll.copy" resname="poll.copy">
+        <source xml:lang="zh-CN">复制投票</source>
+        <target xml:lang="ko-KR">투표 복사</target>
+      </trans-unit>
+      <trans-unit id="poll.saveChanges" resname="poll.saveChanges">
+        <source xml:lang="zh-CN">保存修改</source>
+        <target xml:lang="ko-KR">변경 사항 저장</target>
+      </trans-unit>
+      <trans-unit id="poll.title" resname="poll.title">
+        <source xml:lang="zh-CN">投票标题</source>
+        <target xml:lang="ko-KR">투표 제목</target>
+      </trans-unit>
+      <trans-unit id="poll.titleHint" resname="poll.titleHint">
+        <source xml:lang="zh-CN">例如：周末穿哪件外套？</source>
+        <target xml:lang="ko-KR">예: 주말에 어떤 재킷을 입을까?</target>
+      </trans-unit>
+      <trans-unit id="poll.description" resname="poll.description">
+        <source xml:lang="zh-CN">说明</source>
+        <target xml:lang="ko-KR">설명</target>
+      </trans-unit>
+      <trans-unit id="poll.descriptionHint" resname="poll.descriptionHint">
+        <source xml:lang="zh-CN">补充一点背景，让朋友更了解你的想法。</source>
+        <target xml:lang="ko-KR">친구들이 이해할 수 있도록 간단히 설명해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.options" resname="poll.options">
+        <source xml:lang="zh-CN">选项</source>
+        <target xml:lang="ko-KR">선택지</target>
+      </trans-unit>
+      <trans-unit id="poll.optionalOption" resname="poll.optionalOption">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> · 选项（可选）</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> · 선택지 이름 (선택)</target>
+      </trans-unit>
+      <trans-unit id="poll.blankOptionLetter" resname="poll.blankOptionLetter">
+        <source xml:lang="zh-CN">留空则使用 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></source>
+        <target xml:lang="ko-KR">비워 두면 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> 사용</target>
+      </trans-unit>
+      <trans-unit id="poll.public" resname="poll.public">
+        <source xml:lang="zh-CN">公开投票</source>
+        <target xml:lang="ko-KR">공개 투표</target>
+      </trans-unit>
+      <trans-unit id="poll.publicHelp" resname="poll.publicHelp">
+        <source xml:lang="zh-CN">公开后会显示在广场；不公开时也可通过分享链接邀请朋友参与。</source>
+        <target xml:lang="ko-KR">공개하면 광장에 표시돼요. 비공개 투표도 링크로 공유할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.visibilityPublic" resname="poll.visibilityPublic">
+        <source xml:lang="zh-CN">公开 · 展示在广场</source>
+        <target xml:lang="ko-KR">공개 · 광장에 표시</target>
+      </trans-unit>
+      <trans-unit id="poll.visibilityPrivate" resname="poll.visibilityPrivate">
+        <source xml:lang="zh-CN">不公开 · 可通过链接分享</source>
+        <target xml:lang="ko-KR">비공개 · 링크로 공유</target>
+      </trans-unit>
+      <trans-unit id="poll.legacyReview" resname="poll.legacyReview">
+        <source xml:lang="zh-CN">这条旧投票目前不在广场展示。请选择是否公开。</source>
+        <target xml:lang="ko-KR">이 오래된 투표는 현재 광장에 표시되지 않아요. 공개 여부를 선택해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.keepPrivate" resname="poll.keepPrivate">
+        <source xml:lang="zh-CN">保持不公开</source>
+        <target xml:lang="ko-KR">비공개 유지</target>
+      </trans-unit>
+      <trans-unit id="poll.publishSquare" resname="poll.publishSquare">
+        <source xml:lang="zh-CN">公开到广场</source>
+        <target xml:lang="ko-KR">광장에 공개</target>
+      </trans-unit>
+      <trans-unit id="poll.visibilityPublicToast" resname="poll.visibilityPublicToast">
+        <source xml:lang="zh-CN">投票已公开到广场</source>
+        <target xml:lang="ko-KR">투표가 광장에 공개됐어요</target>
+      </trans-unit>
+      <trans-unit id="poll.visibilityPrivateToast" resname="poll.visibilityPrivateToast">
+        <source xml:lang="zh-CN">投票已保持不公开，仍可复制链接分享</source>
+        <target xml:lang="ko-KR">투표는 비공개로 유지돼요. 링크로 계속 공유할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.visibilityFailed" resname="poll.visibilityFailed">
+        <source xml:lang="zh-CN">可见性设置失败，请稍后重试</source>
+        <target xml:lang="ko-KR">공개 설정을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.optionName" resname="poll.optionName">
+        <source xml:lang="zh-CN">选项名称</source>
+        <target xml:lang="ko-KR">선택지 이름</target>
+      </trans-unit>
+      <trans-unit id="poll.indexedOptionName" resname="poll.indexedOptionName">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 名称</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 이름</target>
+      </trans-unit>
+      <trans-unit id="poll.optionHint" resname="poll.optionHint">
+        <source xml:lang="zh-CN">例如：奶油白针织衫</source>
+        <target xml:lang="ko-KR">예: 크림색 니트</target>
+      </trans-unit>
+      <trans-unit id="poll.deleteOption" resname="poll.deleteOption">
+        <source xml:lang="zh-CN">删除选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 삭제</target>
+      </trans-unit>
+      <trans-unit id="poll.addOption" resname="poll.addOption">
+        <source xml:lang="zh-CN">加入选项</source>
+        <target xml:lang="ko-KR">선택지 추가</target>
+      </trans-unit>
+      <trans-unit id="poll.deadline" resname="poll.deadline">
+        <source xml:lang="zh-CN">截止时间</source>
+        <target xml:lang="ko-KR">마감 시간</target>
+      </trans-unit>
+      <trans-unit id="poll.deadlineValue" resname="poll.deadlineValue">
+        <source xml:lang="zh-CN">截止时间：<ph id="ph1" ctype="x-brace-placeholder">{date}</ph></source>
+        <target xml:lang="ko-KR">마감: <ph id="ph1" ctype="x-brace-placeholder">{date}</ph></target>
+      </trans-unit>
+      <trans-unit id="poll.noDeadline" resname="poll.noDeadline">
+        <source xml:lang="zh-CN">不设置</source>
+        <target xml:lang="ko-KR">마감 없음</target>
+      </trans-unit>
+      <trans-unit id="poll.hoursLater" resname="poll.hoursLater">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 小时后</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>시간 후</target>
+      </trans-unit>
+      <trans-unit id="poll.daysLater" resname="poll.daysLater">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 日后</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>일 후</target>
+      </trans-unit>
+      <trans-unit id="poll.keepDeadline" resname="poll.keepDeadline">
+        <source xml:lang="zh-CN">保留原有截止时间</source>
+        <target xml:lang="ko-KR">기존 마감 시간 유지</target>
+      </trans-unit>
+      <trans-unit id="poll.titleRequired" resname="poll.titleRequired">
+        <source xml:lang="zh-CN">请先填写投票标题。</source>
+        <target xml:lang="ko-KR">투표 제목을 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.optionRequired" resname="poll.optionRequired">
+        <source xml:lang="zh-CN">请为每个选项填写名称。</source>
+        <target xml:lang="ko-KR">모든 선택지의 이름을 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.saveFailed" resname="poll.saveFailed">
+        <source xml:lang="zh-CN">保存失败，请检查网络后再试。已保留填写的内容。</source>
+        <target xml:lang="ko-KR">투표를 저장하지 못했어요. 입력 내용은 남아 있어요. 연결을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.restored" resname="poll.restored">
+        <source xml:lang="zh-CN">已还原上次未提交的草稿</source>
+        <target xml:lang="ko-KR">제출하지 않은 초안을 복원했어요</target>
+      </trans-unit>
+      <trans-unit id="poll.draftUnavailable" resname="poll.draftUnavailable">
+        <source xml:lang="zh-CN">此浏览器无法保存草稿，请保持此页开启。</source>
+        <target xml:lang="ko-KR">이 브라우저에서 초안을 저장할 수 없어요. 이 페이지를 닫지 마세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.loading" resname="poll.loading">
+        <source xml:lang="zh-CN">正在加载投票…</source>
+        <target xml:lang="ko-KR">투표 불러오는 중…</target>
+      </trans-unit>
+      <trans-unit id="poll.loadFailed" resname="poll.loadFailed">
+        <source xml:lang="zh-CN">无法载入投票，请检查 Supabase 设置后再试。</source>
+        <target xml:lang="ko-KR">투표를 불러오지 못했어요. Supabase 설정을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.missing" resname="poll.missing">
+        <source xml:lang="zh-CN">没有找到这次投票</source>
+        <target xml:lang="ko-KR">투표를 찾을 수 없어요</target>
+      </trans-unit>
+      <trans-unit id="poll.missingDetails" resname="poll.missingDetails">
+        <source xml:lang="zh-CN">这个投票可能已被删除。</source>
+        <target xml:lang="ko-KR">삭제된 투표일 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.editUnavailable" resname="poll.editUnavailable">
+        <source xml:lang="zh-CN">无法编辑这个投票</source>
+        <target xml:lang="ko-KR">이 투표를 수정할 수 없어요</target>
+      </trans-unit>
+      <trans-unit id="poll.closedEdit" resname="poll.closedEdit">
+        <source xml:lang="zh-CN">投票已结束，内容不能再修改。</source>
+        <target xml:lang="ko-KR">이미 종료된 투표는 내용을 수정할 수 없어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.ownerEdit" resname="poll.ownerEdit">
+        <source xml:lang="zh-CN">只有发起人可修改投票内容。</source>
+        <target xml:lang="ko-KR">투표를 만든 사람만 수정할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.backToPoll" resname="poll.backToPoll">
+        <source xml:lang="zh-CN">返回投票</source>
+        <target xml:lang="ko-KR">투표로 돌아가기</target>
+      </trans-unit>
+      <trans-unit id="poll.open" resname="poll.open">
+        <source xml:lang="zh-CN">进行中</source>
+        <target xml:lang="ko-KR">진행 중</target>
+      </trans-unit>
+      <trans-unit id="poll.closed" resname="poll.closed">
+        <source xml:lang="zh-CN">已结束</source>
+        <target xml:lang="ko-KR">종료</target>
+      </trans-unit>
+      <trans-unit id="poll.all" resname="poll.all">
+        <source xml:lang="zh-CN">全部</source>
+        <target xml:lang="ko-KR">전체</target>
+      </trans-unit>
+      <trans-unit id="poll.actions" resname="poll.actions">
+        <source xml:lang="zh-CN">投票操作</source>
+        <target xml:lang="ko-KR">투표 메뉴</target>
+      </trans-unit>
+      <trans-unit id="poll.manage" resname="poll.manage">
+        <source xml:lang="zh-CN">管理投票</source>
+        <target xml:lang="ko-KR">투표 관리</target>
+      </trans-unit>
+      <trans-unit id="poll.editDeadline" resname="poll.editDeadline">
+        <source xml:lang="zh-CN">编辑投票 / 截止时间</source>
+        <target xml:lang="ko-KR">투표·마감 시간 수정</target>
+      </trans-unit>
+      <trans-unit id="poll.copyNew" resname="poll.copyNew">
+        <source xml:lang="zh-CN">复制为新投票</source>
+        <target xml:lang="ko-KR">새 투표로 복사</target>
+      </trans-unit>
+      <trans-unit id="poll.share" resname="poll.share">
+        <source xml:lang="zh-CN">分享投票</source>
+        <target xml:lang="ko-KR">투표 공유</target>
+      </trans-unit>
+      <trans-unit id="poll.end" resname="poll.end">
+        <source xml:lang="zh-CN">结束投票</source>
+        <target xml:lang="ko-KR">투표 종료</target>
+      </trans-unit>
+      <trans-unit id="poll.endShort" resname="poll.endShort">
+        <source xml:lang="zh-CN">结束</source>
+        <target xml:lang="ko-KR">종료</target>
+      </trans-unit>
+      <trans-unit id="poll.endQuestion" resname="poll.endQuestion">
+        <source xml:lang="zh-CN">确定结束这个投票？</source>
+        <target xml:lang="ko-KR">이 투표를 종료할까요?</target>
+      </trans-unit>
+      <trans-unit id="poll.endConfirm" resname="poll.endConfirm">
+        <source xml:lang="zh-CN">确认结束</source>
+        <target xml:lang="ko-KR">종료 확인</target>
+      </trans-unit>
+      <trans-unit id="poll.endDetails" resname="poll.endDetails">
+        <source xml:lang="zh-CN">结束后将公开结果和留言，并停止接受新投票或修改。</source>
+        <target xml:lang="ko-KR">종료하면 결과와 댓글이 공개되며 더 이상 투표하거나 선택을 바꿀 수 없어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.ended" resname="poll.ended">
+        <source xml:lang="zh-CN">投票已结束</source>
+        <target xml:lang="ko-KR">투표를 종료했어요</target>
+      </trans-unit>
+      <trans-unit id="poll.endFailed" resname="poll.endFailed">
+        <source xml:lang="zh-CN">无法结束投票，请稍后再试。</source>
+        <target xml:lang="ko-KR">투표를 종료하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.delete" resname="poll.delete">
+        <source xml:lang="zh-CN">删除投票</source>
+        <target xml:lang="ko-KR">투표 삭제</target>
+      </trans-unit>
+      <trans-unit id="poll.deleteQuestion" resname="poll.deleteQuestion">
+        <source xml:lang="zh-CN">确定删除这个投票？</source>
+        <target xml:lang="ko-KR">이 투표를 삭제할까요?</target>
+      </trans-unit>
+      <trans-unit id="poll.deleteConfirm" resname="poll.deleteConfirm">
+        <source xml:lang="zh-CN">确认删除</source>
+        <target xml:lang="ko-KR">삭제 확인</target>
+      </trans-unit>
+      <trans-unit id="poll.deleteDetails" resname="poll.deleteDetails">
+        <source xml:lang="zh-CN">删除后，「<ph id="ph1" ctype="x-brace-placeholder">{title}</ph>」的投票和留言也会一并移除。</source>
+        <target xml:lang="ko-KR">‘<ph id="ph1" ctype="x-brace-placeholder">{title}</ph>’을(를) 삭제하면 투표 기록과 댓글도 사라져요.</target>
+      </trans-unit>
+      <trans-unit id="poll.deletePermanent" resname="poll.deletePermanent">
+        <source xml:lang="zh-CN">投票、选票及留言将一并删除，此操作无法复原。</source>
+        <target xml:lang="ko-KR">투표, 투표 기록, 댓글이 삭제되며 복구할 수 없어요.</target>
+      </trans-unit>
+      <trans-unit id="poll.deleted" resname="poll.deleted">
+        <source xml:lang="zh-CN">投票已删除</source>
+        <target xml:lang="ko-KR">투표를 삭제했어요</target>
+      </trans-unit>
+      <trans-unit id="poll.deleteFailed" resname="poll.deleteFailed">
+        <source xml:lang="zh-CN">删除失败，请稍后再试。</source>
+        <target xml:lang="ko-KR">투표를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.keep" resname="poll.keep">
+        <source xml:lang="zh-CN">再想想</source>
+        <target xml:lang="ko-KR">투표 유지</target>
+      </trans-unit>
+      <trans-unit id="poll.processing" resname="poll.processing">
+        <source xml:lang="zh-CN">处理中…</source>
+        <target xml:lang="ko-KR">처리 중…</target>
+      </trans-unit>
+      <trans-unit id="poll.actionFailed" resname="poll.actionFailed">
+        <source xml:lang="zh-CN">操作失败，请检查网络或权限后再试。</source>
+        <target xml:lang="ko-KR">처리하지 못했어요. 연결 상태나 권한을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.empty" resname="poll.empty">
+        <source xml:lang="zh-CN">暂时未有投票</source>
+        <target xml:lang="ko-KR">아직 투표가 없어요</target>
+      </trans-unit>
+      <trans-unit id="poll.emptyDetails" resname="poll.emptyDetails">
+        <source xml:lang="zh-CN">开个投票，请朋友帮你选。</source>
+        <target xml:lang="ko-KR">투표를 만들고 친구들에게 골라 달라고 해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.emptyFilter" resname="poll.emptyFilter">
+        <source xml:lang="zh-CN">暂时未有这类投票</source>
+        <target xml:lang="ko-KR">이 상태의 투표가 아직 없어요</target>
+      </trans-unit>
+      <trans-unit id="poll.collection" resname="poll.collection">
+        <source xml:lang="zh-CN">记下每个小点子</source>
+        <target xml:lang="ko-KR">작은 고민을 하나씩 모아요</target>
+      </trans-unit>
+      <trans-unit id="poll.mine" resname="poll.mine">
+        <source xml:lang="zh-CN">我的投票</source>
+        <target xml:lang="ko-KR">내 투표</target>
+      </trans-unit>
+      <trans-unit id="poll.moreLoading" resname="poll.moreLoading">
+        <source xml:lang="zh-CN">正在载入更多…</source>
+        <target xml:lang="ko-KR">더 불러오는 중…</target>
+      </trans-unit>
+      <trans-unit id="poll.more" resname="poll.more">
+        <source xml:lang="zh-CN">载入更多投票</source>
+        <target xml:lang="ko-KR">투표 더 불러오기</target>
+      </trans-unit>
+      <trans-unit id="poll.moreFailed" resname="poll.moreFailed">
+        <source xml:lang="zh-CN">无法载入更多投票，请按「载入更多投票」再试。</source>
+        <target xml:lang="ko-KR">투표를 더 불러오지 못했어요. ‘투표 더 불러오기’를 눌러 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="poll.count" resname="poll.count">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 票</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>표</target>
+      </trans-unit>
+      <trans-unit id="poll.countOne" resname="poll.countOne">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 票</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>표</target>
+      </trans-unit>
+      <trans-unit id="poll.createdByMe" resname="poll.createdByMe">
+        <source xml:lang="zh-CN">我建的</source>
+        <target xml:lang="ko-KR">내가 만든 투표</target>
+      </trans-unit>
+      <trans-unit id="poll.votedByMe" resname="poll.votedByMe">
+        <source xml:lang="zh-CN">我投的</source>
+        <target xml:lang="ko-KR">내가 참여한 투표</target>
+      </trans-unit>
+      <trans-unit id="poll.squareParticipants" resname="poll.squareParticipants">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 人参与</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>명 참여</target>
+      </trans-unit>
+      <trans-unit id="poll.squareVote" resname="poll.squareVote">
+        <source xml:lang="zh-CN">去投票</source>
+        <target xml:lang="ko-KR">투표하기</target>
+      </trans-unit>
+      <trans-unit id="poll.preview" resname="poll.preview">
+        <source xml:lang="zh-CN">选项预览</source>
+        <target xml:lang="ko-KR">선택지 미리보기</target>
+      </trans-unit>
+      <trans-unit id="poll.previewOption" resname="poll.previewOption">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph>：<ph id="ph2" ctype="x-brace-placeholder">{name}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph>: <ph id="ph2" ctype="x-brace-placeholder">{name}</ph></target>
+      </trans-unit>
+      <trans-unit id="image.previous" resname="image.previous">
+        <source xml:lang="zh-CN">上一个选项</source>
+        <target xml:lang="ko-KR">이전 선택지</target>
+      </trans-unit>
+      <trans-unit id="image.optionLetter" resname="image.optionLetter">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></target>
+      </trans-unit>
+      <trans-unit id="image.swipeText" resname="image.swipeText">
+        <source xml:lang="zh-CN">左右滑动，看看其他选项</source>
+        <target xml:lang="ko-KR">좌우로 밀어 다른 선택지 보기</target>
+      </trans-unit>
+      <trans-unit id="image.next" resname="image.next">
+        <source xml:lang="zh-CN">下一个选项</source>
+        <target xml:lang="ko-KR">다음 선택지</target>
+      </trans-unit>
+      <trans-unit id="image.zoomHint" resname="image.zoomHint">
+        <source xml:lang="zh-CN">按图片放大</source>
+        <target xml:lang="ko-KR">이미지를 눌러 확대</target>
+      </trans-unit>
+      <trans-unit id="image.zoom" resname="image.zoom">
+        <source xml:lang="zh-CN">放大图片</source>
+        <target xml:lang="ko-KR">이미지 확대</target>
+      </trans-unit>
+      <trans-unit id="image.option" resname="image.option">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph></target>
+      </trans-unit>
+      <trans-unit id="image.view" resname="image.view">
+        <source xml:lang="zh-CN">查看选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 보기</target>
+      </trans-unit>
+      <trans-unit id="image.preview" resname="image.preview">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 图片预览</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 이미지 미리보기</target>
+      </trans-unit>
+      <trans-unit id="image.gallery" resname="image.gallery">
+        <source xml:lang="zh-CN">从相册选择选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 的图片</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 사진 선택</target>
+      </trans-unit>
+      <trans-unit id="image.camera" resname="image.camera">
+        <source xml:lang="zh-CN">为选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 拍照</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 사진 촬영</target>
+      </trans-unit>
+      <trans-unit id="image.take" resname="image.take">
+        <source xml:lang="zh-CN">拍照</source>
+        <target xml:lang="ko-KR">촬영</target>
+      </trans-unit>
+      <trans-unit id="image.remove" resname="image.remove">
+        <source xml:lang="zh-CN">移除</source>
+        <target xml:lang="ko-KR">제거</target>
+      </trans-unit>
+      <trans-unit id="image.removeFor" resname="image.removeFor">
+        <source xml:lang="zh-CN">移除选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 的图片</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 이미지 제거</target>
+      </trans-unit>
+      <trans-unit id="image.addInfo" resname="image.addInfo">
+        <source xml:lang="zh-CN">添加选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 信息</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 정보 추가</target>
+      </trans-unit>
+      <trans-unit id="image.addTitle" resname="image.addTitle">
+        <source xml:lang="zh-CN">添加抉择信息</source>
+        <target xml:lang="ko-KR">선택지 정보 추가</target>
+      </trans-unit>
+      <trans-unit id="image.chooseEmoji" resname="image.chooseEmoji">
+        <source xml:lang="zh-CN">选择 emoji</source>
+        <target xml:lang="ko-KR">이모지 선택</target>
+      </trans-unit>
+      <trans-unit id="image.chooseEmojiOption" resname="image.chooseEmojiOption">
+        <source xml:lang="zh-CN">选择 <ph id="ph1" ctype="x-brace-placeholder">{emoji}</ph></source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{emoji}</ph> 선택</target>
+      </trans-unit>
+      <trans-unit id="image.removeCurrent" resname="image.removeCurrent">
+        <source xml:lang="zh-CN">移除当前内容</source>
+        <target xml:lang="ko-KR">현재 내용 제거</target>
+      </trans-unit>
+      <trans-unit id="image.file" resname="image.file">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 的图片档案</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 이미지 파일</target>
+      </trans-unit>
+      <trans-unit id="image.cameraFile" resname="image.cameraFile">
+        <source xml:lang="zh-CN">选项 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 的相机档案</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{index}</ph> 카메라 파일</target>
+      </trans-unit>
+      <trans-unit id="image.uploading" resname="image.uploading">
+        <source xml:lang="zh-CN">上传中…</source>
+        <target xml:lang="ko-KR">업로드 중…</target>
+      </trans-unit>
+      <trans-unit id="image.uploadFailed" resname="image.uploadFailed">
+        <source xml:lang="zh-CN">图片上传失败，请检查网络后再试。</source>
+        <target xml:lang="ko-KR">이미지를 올리지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="image.format" resname="image.format">
+        <source xml:lang="zh-CN">请选择 JPG、PNG 或 WebP 图片。</source>
+        <target xml:lang="ko-KR">JPG, PNG 또는 WebP 이미지를 선택해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="image.originalSize" resname="image.originalSize">
+        <source xml:lang="zh-CN">原图不得大于 <ph id="ph1" ctype="x-brace-placeholder">{size}</ph>。</source>
+        <target xml:lang="ko-KR">원본 이미지는 <ph id="ph1" ctype="x-brace-placeholder">{size}</ph> 이하여야 해요.</target>
+      </trans-unit>
+      <trans-unit id="image.processing" resname="image.processing">
+        <source xml:lang="zh-CN">无法处理图片，请试用另一张。</source>
+        <target xml:lang="ko-KR">이미지를 처리하지 못했어요. 다른 이미지를 선택해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="image.compressedSize" resname="image.compressedSize">
+        <source xml:lang="zh-CN">压缩后的图片仍大于 <ph id="ph1" ctype="x-brace-placeholder">{size}</ph>，请选择较小的图片。</source>
+        <target xml:lang="ko-KR">압축한 이미지가 여전히 <ph id="ph1" ctype="x-brace-placeholder">{size}</ph>보다 커요. 더 작은 이미지를 골라 주세요.</target>
+      </trans-unit>
+      <trans-unit id="vote.restored" resname="vote.restored">
+        <source xml:lang="zh-CN">已还原上次未提交的选择和留言</source>
+        <target xml:lang="ko-KR">제출하지 않은 선택과 댓글을 복원했어요</target>
+      </trans-unit>
+      <trans-unit id="vote.chooseFirst" resname="vote.chooseFirst">
+        <source xml:lang="zh-CN">先选一个你喜欢的选项吧</source>
+        <target xml:lang="ko-KR">먼저 마음에 드는 선택지를 골라 주세요</target>
+      </trans-unit>
+      <trans-unit id="vote.saveFailed" resname="vote.saveFailed">
+        <source xml:lang="zh-CN">未能保存投票，草稿已保留，请稍后再试</source>
+        <target xml:lang="ko-KR">투표를 저장하지 못했어요. 초안은 남아 있으니 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="vote.help" resname="vote.help">
+        <source xml:lang="zh-CN">帮朋友做选择</source>
+        <target xml:lang="ko-KR">친구의 선택 돕기</target>
+      </trans-unit>
+      <trans-unit id="vote.defaultNickname" resname="vote.defaultNickname">
+        <source xml:lang="zh-CN">投票朋友</source>
+        <target xml:lang="ko-KR">투표 친구</target>
+      </trans-unit>
+      <trans-unit id="vote.preparingIdentity" resname="vote.preparingIdentity">
+        <source xml:lang="zh-CN">正在准备投票身份…</source>
+        <target xml:lang="ko-KR">투표자 신분을 준비하는 중…</target>
+      </trans-unit>
+      <trans-unit id="vote.people" resname="vote.people">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 位朋友参与</source>
+        <target xml:lang="ko-KR">친구 <ph id="ph1" ctype="x-brace-placeholder">{count}</ph>명 참여</target>
+      </trans-unit>
+      <trans-unit id="vote.person" resname="vote.person">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 位朋友参与</source>
+        <target xml:lang="ko-KR">친구 <ph id="ph1" ctype="x-brace-placeholder">{count}</ph>명 참여</target>
+      </trans-unit>
+      <trans-unit id="vote.closed" resname="vote.closed">
+        <source xml:lang="zh-CN">投票已结束，不能提交或修改选择。</source>
+        <target xml:lang="ko-KR">투표가 종료되어 선택을 제출하거나 수정할 수 없어요.</target>
+      </trans-unit>
+      <trans-unit id="vote.selectAria" resname="vote.selectAria">
+        <source xml:lang="zh-CN">选择当前选项 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph>：<ph id="ph2" ctype="x-brace-placeholder">{name}</ph></source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> 선택: <ph id="ph2" ctype="x-brace-placeholder">{name}</ph></target>
+      </trans-unit>
+      <trans-unit id="vote.selected" resname="vote.selected">
+        <source xml:lang="zh-CN">✓ 已选择 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></source>
+        <target xml:lang="ko-KR">✓ <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> 선택됨</target>
+      </trans-unit>
+      <trans-unit id="vote.select" resname="vote.select">
+        <source xml:lang="zh-CN">选择 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> 선택</target>
+      </trans-unit>
+      <trans-unit id="vote.picked" resname="vote.picked">
+        <source xml:lang="zh-CN">已选 <ph id="ph1" ctype="x-brace-placeholder">{letter}</ph></source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> 선택됨</target>
+      </trans-unit>
+      <trans-unit id="vote.submitting" resname="vote.submitting">
+        <source xml:lang="zh-CN">提交中…</source>
+        <target xml:lang="ko-KR">제출 중…</target>
+      </trans-unit>
+      <trans-unit id="vote.update" resname="vote.update">
+        <source xml:lang="zh-CN">提交修改</source>
+        <target xml:lang="ko-KR">변경 사항 제출</target>
+      </trans-unit>
+      <trans-unit id="vote.submit" resname="vote.submit">
+        <source xml:lang="zh-CN">提交我的选择</source>
+        <target xml:lang="ko-KR">투표 제출</target>
+      </trans-unit>
+      <trans-unit id="vote.editable" resname="vote.editable">
+        <source xml:lang="zh-CN">提交后仍可修改，直至投票结束。</source>
+        <target xml:lang="ko-KR">투표가 끝나기 전까지 선택을 바꿀 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="vote.leaveComment" resname="vote.leaveComment">
+        <source xml:lang="zh-CN">留个言吧</source>
+        <target xml:lang="ko-KR">댓글 남기기</target>
+      </trans-unit>
+      <trans-unit id="vote.commentHint" resname="vote.commentHint">
+        <source xml:lang="zh-CN">说说你为甚么喜欢这个选项。</source>
+        <target xml:lang="ko-KR">이 선택지가 마음에 드는 이유를 알려 주세요.</target>
+      </trans-unit>
+      <trans-unit id="vote.alreadyVoted" resname="vote.alreadyVoted">
+        <source xml:lang="zh-CN">你已投票，可在截止前回来修改。</source>
+        <target xml:lang="ko-KR">이미 투표했어요. 마감 전까지 돌아와 수정할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="vote.deleteAndSubmit" resname="vote.deleteAndSubmit">
+        <source xml:lang="zh-CN">删除并提交</source>
+        <target xml:lang="ko-KR">삭제하고 제출</target>
+      </trans-unit>
+      <trans-unit id="vote.deleteDetails" resname="vote.deleteDetails">
+        <source xml:lang="zh-CN">留言将会删除，本次投票的选择仍会保留。</source>
+        <target xml:lang="ko-KR">댓글은 삭제되고 이번에 고른 선택지는 유지돼요.</target>
+      </trans-unit>
+      <trans-unit id="results.heading" resname="results.heading">
+        <source xml:lang="zh-CN">投票结果</source>
+        <target xml:lang="ko-KR">투표 결과</target>
+      </trans-unit>
+      <trans-unit id="results.close" resname="results.close">
+        <source xml:lang="zh-CN">关闭结果</source>
+        <target xml:lang="ko-KR">결과 닫기</target>
+      </trans-unit>
+      <trans-unit id="results.published" resname="results.published">
+        <source xml:lang="zh-CN">投票已发布，快分享给朋友吧</source>
+        <target xml:lang="ko-KR">투표를 만들었어요. 친구들에게 공유해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="results.saved" resname="results.saved">
+        <source xml:lang="zh-CN">已保存修改</source>
+        <target xml:lang="ko-KR">변경 사항을 저장했어요</target>
+      </trans-unit>
+      <trans-unit id="results.proportions" resname="results.proportions">
+        <source xml:lang="zh-CN">结果按得票比例显示</source>
+        <target xml:lang="ko-KR">득표 비율에 따라 결과가 표시돼요</target>
+      </trans-unit>
+      <trans-unit id="results.syncFailed" resname="results.syncFailed">
+        <source xml:lang="zh-CN">暂时无法更新结果，已保留上次的资料。网络恢复后会再试。</source>
+        <target xml:lang="ko-KR">결과를 새로 불러오지 못했어요. 이전 결과를 표시하고 연결이 복구되면 다시 시도할게요.</target>
+      </trans-unit>
+      <trans-unit id="results.tie" resname="results.tie">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{leaders}</ph> 并列领先</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{leaders}</ph> 공동 선두</target>
+      </trans-unit>
+      <trans-unit id="results.leading" resname="results.leading">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{leader}</ph> 目前领先</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{leader}</ph> 현재 선두</target>
+      </trans-unit>
+      <trans-unit id="results.winner" resname="results.winner">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{leader}</ph> 得票最多</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{leader}</ph> 최다 득표</target>
+      </trans-unit>
+      <trans-unit id="results.breakdown" resname="results.breakdown">
+        <source xml:lang="zh-CN">各选项得票</source>
+        <target xml:lang="ko-KR">선택지별 득표수</target>
+      </trans-unit>
+      <trans-unit id="results.empty" resname="results.empty">
+        <source xml:lang="zh-CN">未有人投票，分享链接邀请朋友参与吧。</source>
+        <target xml:lang="ko-KR">아직 투표한 사람이 없어요. 링크를 공유해 친구들을 초대해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="results.emptyParticipant" resname="results.emptyParticipant">
+        <source xml:lang="zh-CN">还没有人投票，来提交你的选择吧。</source>
+        <target xml:lang="ko-KR">아직 투표가 없어요. 첫 번째로 선택해 보세요.</target>
+      </trans-unit>
+      <trans-unit id="results.shareResult" resname="results.shareResult">
+        <source xml:lang="zh-CN">分享结果</source>
+        <target xml:lang="ko-KR">결과 공유</target>
+      </trans-unit>
+      <trans-unit id="results.resultLinkCopied" resname="results.resultLinkCopied">
+        <source xml:lang="zh-CN">结果链接已复制</source>
+        <target xml:lang="ko-KR">결과 링크를 복사했어요</target>
+      </trans-unit>
+      <trans-unit id="results.resultLinkCopyFailed" resname="results.resultLinkCopyFailed">
+        <source xml:lang="zh-CN">复制失败，请从地址栏复制结果链接</source>
+        <target xml:lang="ko-KR">링크를 복사하지 못했어요. 주소 표시줄에서 복사해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="results.locked" resname="results.locked">
+        <source xml:lang="zh-CN">🔒 投票已结束，不能提交或修改选择</source>
+        <target xml:lang="ko-KR">🔒 투표가 종료되어 선택을 제출하거나 수정할 수 없어요</target>
+      </trans-unit>
+      <trans-unit id="results.changeVote" resname="results.changeVote">
+        <source xml:lang="zh-CN">修改我的投票</source>
+        <target xml:lang="ko-KR">내 투표 수정</target>
+      </trans-unit>
+      <trans-unit id="results.join" resname="results.join">
+        <source xml:lang="zh-CN">参与投票</source>
+        <target xml:lang="ko-KR">투표하기</target>
+      </trans-unit>
+      <trans-unit id="results.done" resname="results.done">
+        <source xml:lang="zh-CN">已看完投票结果</source>
+        <target xml:lang="ko-KR">투표 결과를 확인했어요</target>
+      </trans-unit>
+      <trans-unit id="results.closePage" resname="results.closePage">
+        <source xml:lang="zh-CN">关闭此页</source>
+        <target xml:lang="ko-KR">페이지 닫기</target>
+      </trans-unit>
+      <trans-unit id="results.goHome" resname="results.goHome">
+        <source xml:lang="zh-CN">前往首页</source>
+        <target xml:lang="ko-KR">홈으로 이동</target>
+      </trans-unit>
+      <trans-unit id="results.exitDetails" resname="results.exitDetails">
+        <source xml:lang="zh-CN">你可以关闭此页，或保留目前身份并前往首页。</source>
+        <target xml:lang="ko-KR">이 페이지를 닫거나 현재 프로필을 유지한 채 홈으로 돌아갈 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="results.exitHint" resname="results.exitHint">
+        <source xml:lang="zh-CN">如果此页未关闭，请关闭浏览器分页，或按「前往首页」。</source>
+        <target xml:lang="ko-KR">페이지가 닫히지 않으면 브라우저 탭을 닫거나 ‘홈으로 이동’을 눌러 주세요.</target>
+      </trans-unit>
+      <trans-unit id="results.sandAria" resname="results.sandAria">
+        <source xml:lang="zh-CN">流沙图显示投票结果：<ph id="ph1" ctype="x-brace-placeholder">{options}</ph></source>
+        <target xml:lang="ko-KR">모래 차트 투표 결과: <ph id="ph1" ctype="x-brace-placeholder">{options}</ph></target>
+      </trans-unit>
+      <trans-unit id="results.sandOption" resname="results.sandOption">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> <ph id="ph2" ctype="x-brace-placeholder">{name}</ph>：<ph id="ph3" ctype="x-brace-placeholder">{percent}</ph></source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{letter}</ph> <ph id="ph2" ctype="x-brace-placeholder">{name}</ph>: <ph id="ph3" ctype="x-brace-placeholder">{percent}</ph></target>
+      </trans-unit>
+      <trans-unit id="results.sandEmptyAria" resname="results.sandEmptyAria">
+        <source xml:lang="zh-CN">暂时未有投票，流沙图未有资料</source>
+        <target xml:lang="ko-KR">아직 투표가 없어 모래 차트가 비어 있어요</target>
+      </trans-unit>
+      <trans-unit id="results.sandEmpty" resname="results.sandEmpty">
+        <source xml:lang="zh-CN">等待第一票</source>
+        <target xml:lang="ko-KR">첫 번째 표를 기다리는 중</target>
+      </trans-unit>
+      <trans-unit id="comment.heading" resname="comment.heading">
+        <source xml:lang="zh-CN">留言</source>
+        <target xml:lang="ko-KR">댓글</target>
+      </trans-unit>
+      <trans-unit id="comment.count" resname="comment.count">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 则</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph>개</target>
+      </trans-unit>
+      <trans-unit id="comment.empty" resname="comment.empty">
+        <source xml:lang="zh-CN">暂时未有留言，朋友的想法会显示在这里。</source>
+        <target xml:lang="ko-KR">아직 댓글이 없어요. 친구들의 의견이 여기에 표시돼요.</target>
+      </trans-unit>
+      <trans-unit id="comment.anonymous" resname="comment.anonymous">
+        <source xml:lang="zh-CN">匿名朋友</source>
+        <target xml:lang="ko-KR">익명 친구</target>
+      </trans-unit>
+      <trans-unit id="comment.edit" resname="comment.edit">
+        <source xml:lang="zh-CN">修改留言</source>
+        <target xml:lang="ko-KR">댓글 수정</target>
+      </trans-unit>
+      <trans-unit id="comment.editBy" resname="comment.editBy">
+        <source xml:lang="zh-CN">修改 <ph id="ph1" ctype="x-brace-placeholder">{name}</ph> 的留言</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{name}</ph> 님의 댓글 수정</target>
+      </trans-unit>
+      <trans-unit id="comment.deleteBy" resname="comment.deleteBy">
+        <source xml:lang="zh-CN">删除 <ph id="ph1" ctype="x-brace-placeholder">{name}</ph> 的留言</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{name}</ph> 님의 댓글 삭제</target>
+      </trans-unit>
+      <trans-unit id="comment.saveFailed" resname="comment.saveFailed">
+        <source xml:lang="zh-CN">无法保存留言，请检查网络或权限后再试。</source>
+        <target xml:lang="ko-KR">댓글을 저장하지 못했어요. 연결 상태나 권한을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="comment.deleteFailed" resname="comment.deleteFailed">
+        <source xml:lang="zh-CN">删除失败，请检查网络或权限后再试。</source>
+        <target xml:lang="ko-KR">댓글을 삭제하지 못했어요. 연결 상태나 권한을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="comment.deleted" resname="comment.deleted">
+        <source xml:lang="zh-CN">留言已删除，投票选择维持不变</source>
+        <target xml:lang="ko-KR">댓글을 삭제했어요. 투표 기록은 그대로예요.</target>
+      </trans-unit>
+      <trans-unit id="comment.updated" resname="comment.updated">
+        <source xml:lang="zh-CN">留言已更新，投票选择维持不变</source>
+        <target xml:lang="ko-KR">댓글을 수정했어요. 투표 기록은 그대로예요.</target>
+      </trans-unit>
+      <trans-unit id="comment.afterClose" resname="comment.afterClose">
+        <source xml:lang="zh-CN">投票结束后将公开留言</source>
+        <target xml:lang="ko-KR">투표가 끝나면 댓글이 공개돼요</target>
+      </trans-unit>
+      <trans-unit id="comment.ownerOnly" resname="comment.ownerOnly">
+        <source xml:lang="zh-CN">只限发起人查看 · 投票结束后公开</source>
+        <target xml:lang="ko-KR">만든 사람만 볼 수 있어요 · 투표 종료 후 공개</target>
+      </trans-unit>
+      <trans-unit id="comment.reasons" resname="comment.reasons">
+        <source xml:lang="zh-CN">听听大家的理由</source>
+        <target xml:lang="ko-KR">친구들이 고른 이유</target>
+      </trans-unit>
+      <trans-unit id="comment.deleteQuestion" resname="comment.deleteQuestion">
+        <source xml:lang="zh-CN">确定删除这则留言？</source>
+        <target xml:lang="ko-KR">이 댓글을 삭제할까요?</target>
+      </trans-unit>
+      <trans-unit id="comment.deleting" resname="comment.deleting">
+        <source xml:lang="zh-CN">删除中…</source>
+        <target xml:lang="ko-KR">삭제 중…</target>
+      </trans-unit>
+      <trans-unit id="comment.delete" resname="comment.delete">
+        <source xml:lang="zh-CN">删除留言</source>
+        <target xml:lang="ko-KR">댓글 삭제</target>
+      </trans-unit>
+      <trans-unit id="comment.deleteDetails" resname="comment.deleteDetails">
+        <source xml:lang="zh-CN">删除后无法复原，投票选择和统计结果维持不变。</source>
+        <target xml:lang="ko-KR">삭제한 댓글은 복구할 수 없어요. 투표 기록과 결과는 그대로예요.</target>
+      </trans-unit>
+      <trans-unit id="share.renderFailed" resname="share.renderFailed">
+        <source xml:lang="zh-CN">图片制作失败，请关闭后再试。你仍可复制链接。</source>
+        <target xml:lang="ko-KR">이미지를 만들지 못했어요. 창을 닫고 다시 시도해 주세요. 링크는 복사할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="share.copied" resname="share.copied">
+        <source xml:lang="zh-CN">链接已复制</source>
+        <target xml:lang="ko-KR">링크를 복사했어요</target>
+      </trans-unit>
+      <trans-unit id="share.copyFailed" resname="share.copyFailed">
+        <source xml:lang="zh-CN">无法复制，请长按下方链接手动复制</source>
+        <target xml:lang="ko-KR">링크를 복사하지 못했어요. 아래 링크를 길게 눌러 직접 복사해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="share.autoCopyFailed" resname="share.autoCopyFailed">
+        <source xml:lang="zh-CN">无法复制，请在此窗口再试或手动复制链接</source>
+        <target xml:lang="ko-KR">링크를 복사하지 못했어요. 여기서 다시 시도하거나 링크를 직접 복사해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="share.eyebrow" resname="share.eyebrow">
+        <source xml:lang="zh-CN">请朋友帮忙</source>
+        <target xml:lang="ko-KR">친구에게 물어보기</target>
+      </trans-unit>
+      <trans-unit id="share.heading" resname="share.heading">
+        <source xml:lang="zh-CN">把选择分享出去</source>
+        <target xml:lang="ko-KR">투표 공유하기</target>
+      </trans-unit>
+      <trans-unit id="share.close" resname="share.close">
+        <source xml:lang="zh-CN">关闭分享</source>
+        <target xml:lang="ko-KR">공유 닫기</target>
+      </trans-unit>
+      <trans-unit id="share.alt" resname="share.alt">
+        <source xml:lang="zh-CN">「<ph id="ph1" ctype="x-brace-placeholder">{title}</ph>」的分享票根，有 <ph id="ph2" ctype="x-brace-placeholder">{count}</ph> 个选项</source>
+        <target xml:lang="ko-KR">‘<ph id="ph1" ctype="x-brace-placeholder">{title}</ph>’ 공유 티켓, 선택지 <ph id="ph2" ctype="x-brace-placeholder">{count}</ph>개</target>
+      </trans-unit>
+      <trans-unit id="share.rendering" resname="share.rendering">
+        <source xml:lang="zh-CN">正在制作分享票根…</source>
+        <target xml:lang="ko-KR">공유 티켓을 만드는 중…</target>
+      </trans-unit>
+      <trans-unit id="share.copy" resname="share.copy">
+        <source xml:lang="zh-CN">复制链接 ↗</source>
+        <target xml:lang="ko-KR">링크 복사 ↗</target>
+      </trans-unit>
+      <trans-unit id="share.filename" resname="share.filename">
+        <source xml:lang="zh-CN">投票</source>
+        <target xml:lang="ko-KR">투표</target>
+      </trans-unit>
+      <trans-unit id="share.download" resname="share.download">
+        <source xml:lang="zh-CN">↓ 下载图片</source>
+        <target xml:lang="ko-KR">↓ 이미지 다운로드</target>
+      </trans-unit>
+      <trans-unit id="share.publicLink" resname="share.publicLink">
+        <source xml:lang="zh-CN">公开投票链接</source>
+        <target xml:lang="ko-KR">공개 투표 링크</target>
+      </trans-unit>
+      <trans-unit id="share.note" resname="share.note">
+        <source xml:lang="zh-CN">把票根发给朋友，听听大家怎样选</source>
+        <target xml:lang="ko-KR">친구들에게 티켓을 보내고 어떤 선택을 하는지 확인해 보세요</target>
+      </trans-unit>
+      <trans-unit id="share.ticketBrand" resname="share.ticketBrand">
+        <source xml:lang="zh-CN">BothPls  /  请大家一起选</source>
+        <target xml:lang="ko-KR">BothPls  /  다 같이 골라요</target>
+      </trans-unit>
+      <trans-unit id="share.ticketScan" resname="share.ticketScan">
+        <source xml:lang="zh-CN">扫描二维码，帮我选一选</source>
+        <target xml:lang="ko-KR">스캔하고 골라 주세요</target>
+      </trans-unit>
+      <trans-unit id="share.ticketDetails" resname="share.ticketDetails">
+        <source xml:lang="zh-CN"><ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 个选项 · 参与只需昵称及头像</source>
+        <target xml:lang="ko-KR">선택지 <ph id="ph1" ctype="x-brace-placeholder">{count}</ph>개 · 닉네임과 아바타로 참여</target>
+      </trans-unit>
+      <trans-unit id="profile.heading" resname="profile.heading">
+        <source xml:lang="zh-CN">个人资料</source>
+        <target xml:lang="ko-KR">프로필 정보</target>
+      </trans-unit>
+      <trans-unit id="profile.settings" resname="profile.settings">
+        <source xml:lang="zh-CN">设置</source>
+        <target xml:lang="ko-KR">설정</target>
+      </trans-unit>
+      <trans-unit id="profile.signedIn" resname="profile.signedIn">
+        <source xml:lang="zh-CN">已登录</source>
+        <target xml:lang="ko-KR">로그인됨</target>
+      </trans-unit>
+      <trans-unit id="profile.signedOut" resname="profile.signedOut">
+        <source xml:lang="zh-CN">未登录</source>
+        <target xml:lang="ko-KR">로그아웃 상태</target>
+      </trans-unit>
+      <trans-unit id="profile.signInToView" resname="profile.signInToView">
+        <source xml:lang="zh-CN">登录后查看个人资料</source>
+        <target xml:lang="ko-KR">로그인하면 프로필을 볼 수 있어요</target>
+      </trans-unit>
+      <trans-unit id="profile.checking" resname="profile.checking">
+        <source xml:lang="zh-CN">正在确认登录状态…</source>
+        <target xml:lang="ko-KR">로그인 상태 확인 중…</target>
+      </trans-unit>
+      <trans-unit id="profile.voterAvatar" resname="profile.voterAvatar">
+        <source xml:lang="zh-CN">投票者头像</source>
+        <target xml:lang="ko-KR">투표자 아바타</target>
+      </trans-unit>
+      <trans-unit id="profile.voterSaved" resname="profile.voterSaved">
+        <source xml:lang="zh-CN">投票者身份 · 已保存在此浏览器</source>
+        <target xml:lang="ko-KR">투표자 프로필 · 이 브라우저에 저장됨</target>
+      </trans-unit>
+      <trans-unit id="profile.chooseAvatar" resname="profile.chooseAvatar">
+        <source xml:lang="zh-CN">选择头像</source>
+        <target xml:lang="ko-KR">아바타 선택</target>
+      </trans-unit>
+      <trans-unit id="profile.avatarHint" resname="profile.avatarHint">
+        <source xml:lang="zh-CN">选一个你喜欢的糖果头像</source>
+        <target xml:lang="ko-KR">마음에 드는 사탕 아바타를 골라 보세요</target>
+      </trans-unit>
+      <trans-unit id="profile.avatarOption" resname="profile.avatarOption">
+        <source xml:lang="zh-CN">选择头像 <ph id="ph1" ctype="x-brace-placeholder">{avatar}</ph></source>
+        <target xml:lang="ko-KR">아바타 <ph id="ph1" ctype="x-brace-placeholder">{avatar}</ph> 선택</target>
+      </trans-unit>
+      <trans-unit id="profile.nicknameHint" resname="profile.nicknameHint">
+        <source xml:lang="zh-CN">输入昵称</source>
+        <target xml:lang="ko-KR">닉네임 입력</target>
+      </trans-unit>
+      <trans-unit id="profile.emailLabel" resname="profile.emailLabel">
+        <source xml:lang="zh-CN">邮箱地址（登录账号）</source>
+        <target xml:lang="ko-KR">이메일 주소 (로그인 계정)</target>
+      </trans-unit>
+      <trans-unit id="profile.save" resname="profile.save">
+        <source xml:lang="zh-CN">保存个人资料</source>
+        <target xml:lang="ko-KR">프로필 저장</target>
+      </trans-unit>
+      <trans-unit id="profile.saved" resname="profile.saved">
+        <source xml:lang="zh-CN">已保存个人资料</source>
+        <target xml:lang="ko-KR">프로필을 저장했어요</target>
+      </trans-unit>
+      <trans-unit id="profile.needDetails" resname="profile.needDetails">
+        <source xml:lang="zh-CN">请填写昵称和邮箱地址。</source>
+        <target xml:lang="ko-KR">닉네임과 이메일 주소를 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="profile.nicknameTooLong" resname="profile.nicknameTooLong">
+        <source xml:lang="zh-CN">投票者昵称最多 <ph id="ph1" ctype="x-brace-placeholder">{count}</ph> 个字符。</source>
+        <target xml:lang="ko-KR">투표자 닉네임은 최대 <ph id="ph1" ctype="x-brace-placeholder">{count}</ph>자까지 입력할 수 있어요.</target>
+      </trans-unit>
+      <trans-unit id="profile.edit" resname="profile.edit">
+        <source xml:lang="zh-CN">编辑资料</source>
+        <target xml:lang="ko-KR">프로필 수정</target>
+      </trans-unit>
+      <trans-unit id="profile.previewAvatar" resname="profile.previewAvatar">
+        <source xml:lang="zh-CN">预览头像</source>
+        <target xml:lang="ko-KR">아바타 미리보기</target>
+      </trans-unit>
+      <trans-unit id="profile.required" resname="profile.required">
+        <source xml:lang="zh-CN">必填</source>
+        <target xml:lang="ko-KR">필수</target>
+      </trans-unit>
+      <trans-unit id="profile.bio" resname="profile.bio">
+        <source xml:lang="zh-CN">简介</source>
+        <target xml:lang="ko-KR">소개</target>
+      </trans-unit>
+      <trans-unit id="profile.bioHint" resname="profile.bioHint">
+        <source xml:lang="zh-CN">简单介绍一下自己</source>
+        <target xml:lang="ko-KR">자신을 간단히 소개해 주세요</target>
+      </trans-unit>
+      <trans-unit id="profile.nicknameRequired" resname="profile.nicknameRequired">
+        <source xml:lang="zh-CN">昵称不能为空。</source>
+        <target xml:lang="ko-KR">닉네임을 입력해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="profile.avatarTooLarge" resname="profile.avatarTooLarge">
+        <source xml:lang="zh-CN">头像不能超过 5 MB，请重新选择。</source>
+        <target xml:lang="ko-KR">아바타는 5MB를 넘을 수 없어요. 다른 파일을 선택해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="profile.avatarAccountRequired" resname="profile.avatarAccountRequired">
+        <source xml:lang="zh-CN">请先登录正式账号后再上传头像。</source>
+        <target xml:lang="ko-KR">아바타를 업로드하려면 정식 계정으로 로그인해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="profile.failed" resname="profile.failed">
+        <source xml:lang="zh-CN">无法载入个人资料，请稍后再试。</source>
+        <target xml:lang="ko-KR">프로필을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="profile.loadFailed" resname="profile.loadFailed">
+        <source xml:lang="zh-CN">无法载入个人资料，请检查 Supabase 设置后再试。</source>
+        <target xml:lang="ko-KR">프로필을 불러오지 못했어요. Supabase 설정을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="settings.permissions" resname="settings.permissions">
+        <source xml:lang="zh-CN">应用程式权限</source>
+        <target xml:lang="ko-KR">앱 권한</target>
+      </trans-unit>
+      <trans-unit id="settings.title" resname="settings.title">
+        <source xml:lang="zh-CN">设置</source>
+        <target xml:lang="ko-KR">설정</target>
+      </trans-unit>
+      <trans-unit id="settings.account" resname="settings.account">
+        <source xml:lang="zh-CN">账号</source>
+        <target xml:lang="ko-KR">계정</target>
+      </trans-unit>
+      <trans-unit id="settings.profile" resname="settings.profile">
+        <source xml:lang="zh-CN">个人资料</source>
+        <target xml:lang="ko-KR">프로필</target>
+      </trans-unit>
+      <trans-unit id="settings.binding" resname="settings.binding">
+        <source xml:lang="zh-CN">账号绑定</source>
+        <target xml:lang="ko-KR">계정 연동</target>
+      </trans-unit>
+      <trans-unit id="settings.binding.current" resname="settings.binding.current">
+        <source xml:lang="zh-CN">已绑定</source>
+        <target xml:lang="ko-KR">연동됨</target>
+      </trans-unit>
+      <trans-unit id="settings.binding.upgrade" resname="settings.binding.upgrade">
+        <source xml:lang="zh-CN">升级为正式账号</source>
+        <target xml:lang="ko-KR">정식 계정으로 전환</target>
+      </trans-unit>
+      <trans-unit id="settings.deleteAccount" resname="settings.deleteAccount">
+        <source xml:lang="zh-CN">注销账号</source>
+        <target xml:lang="ko-KR">계정 삭제</target>
+      </trans-unit>
+      <trans-unit id="settings.clearLocal" resname="settings.clearLocal">
+        <source xml:lang="zh-CN">清除本地数据</source>
+        <target xml:lang="ko-KR">이 기기의 데이터 지우기</target>
+      </trans-unit>
+      <trans-unit id="settings.general" resname="settings.general">
+        <source xml:lang="zh-CN">通用</source>
+        <target xml:lang="ko-KR">일반</target>
+      </trans-unit>
+      <trans-unit id="settings.notifications" resname="settings.notifications">
+        <source xml:lang="zh-CN">通知权限</source>
+        <target xml:lang="ko-KR">알림 권한</target>
+      </trans-unit>
+      <trans-unit id="settings.about" resname="settings.about">
+        <source xml:lang="zh-CN">关于</source>
+        <target xml:lang="ko-KR">정보</target>
+      </trans-unit>
+      <trans-unit id="settings.version" resname="settings.version">
+        <source xml:lang="zh-CN">当前版本</source>
+        <target xml:lang="ko-KR">현재 버전</target>
+      </trans-unit>
+      <trans-unit id="settings.changelog" resname="settings.changelog">
+        <source xml:lang="zh-CN">更新日志</source>
+        <target xml:lang="ko-KR">업데이트 내역</target>
+      </trans-unit>
+      <trans-unit id="settings.logout" resname="settings.logout">
+        <source xml:lang="zh-CN">退出登录</source>
+        <target xml:lang="ko-KR">로그아웃</target>
+      </trans-unit>
+      <trans-unit id="settings.cancel" resname="settings.cancel">
+        <source xml:lang="zh-CN">取消</source>
+        <target xml:lang="ko-KR">취소</target>
+      </trans-unit>
+      <trans-unit id="settings.confirm" resname="settings.confirm">
+        <source xml:lang="zh-CN">确认</source>
+        <target xml:lang="ko-KR">확인</target>
+      </trans-unit>
+      <trans-unit id="settings.clearConfirm" resname="settings.clearConfirm">
+        <source xml:lang="zh-CN">确认清除本地数据？</source>
+        <target xml:lang="ko-KR">이 기기의 데이터를 지울까요?</target>
+      </trans-unit>
+      <trans-unit id="settings.deleteConfirm" resname="settings.deleteConfirm">
+        <source xml:lang="zh-CN">输入昵称以确认注销账号</source>
+        <target xml:lang="ko-KR">계정 삭제를 확인하려면 닉네임을 입력하세요</target>
+      </trans-unit>
+      <trans-unit id="settings.nicknameMismatch" resname="settings.nicknameMismatch">
+        <source xml:lang="zh-CN">昵称不匹配，未注销账号。</source>
+        <target xml:lang="ko-KR">닉네임이 일치하지 않아 계정을 삭제하지 않았어요.</target>
+      </trans-unit>
+      <trans-unit id="settings.deleteFailed" resname="settings.deleteFailed">
+        <source xml:lang="zh-CN">注销账号失败，请稍后重试。</source>
+        <target xml:lang="ko-KR">계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="settings.bindFailed" resname="settings.bindFailed">
+        <source xml:lang="zh-CN">绑定授权失败，请重试。</source>
+        <target xml:lang="ko-KR">계정 연동에 실패했어요. 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="settings.providerLogin" resname="settings.providerLogin">
+        <source xml:lang="zh-CN">使用 <ph id="ph1" ctype="x-brace-placeholder">{provider}</ph> 登录</source>
+        <target xml:lang="ko-KR"><ph id="ph1" ctype="x-brace-placeholder">{provider}</ph>로 로그인</target>
+      </trans-unit>
+      <trans-unit id="settings.softLogin" resname="settings.softLogin">
+        <source xml:lang="zh-CN">软登录</source>
+        <target xml:lang="ko-KR">투표자 프로필</target>
+      </trans-unit>
+      <trans-unit id="settings.noChangelog" resname="settings.noChangelog">
+        <source xml:lang="zh-CN">暂无更新说明</source>
+        <target xml:lang="ko-KR">업데이트 내역이 없어요</target>
+      </trans-unit>
+      <trans-unit id="settings.permissionNote" resname="settings.permissionNote">
+        <source xml:lang="zh-CN">这里只保存偏好设置，无需授予装置权限。</source>
+        <target xml:lang="ko-KR">이 설정은 기기 권한을 요청하지 않고 환경설정만 저장해요.</target>
+      </trans-unit>
+      <trans-unit id="settings.camera" resname="settings.camera">
+        <source xml:lang="zh-CN">相机</source>
+        <target xml:lang="ko-KR">카메라</target>
+      </trans-unit>
+      <trans-unit id="settings.privacy" resname="settings.privacy">
+        <source xml:lang="zh-CN">私隐设置</source>
+        <target xml:lang="ko-KR">개인정보 설정</target>
+      </trans-unit>
+      <trans-unit id="settings.showNickname" resname="settings.showNickname">
+        <source xml:lang="zh-CN">在投票留言中显示昵称</source>
+        <target xml:lang="ko-KR">투표 댓글에 닉네임 표시</target>
+      </trans-unit>
+      <trans-unit id="settings.showNicknameHelp" resname="settings.showNicknameHelp">
+        <source xml:lang="zh-CN">关闭后，留言会以匿名朋友的身份显示。</source>
+        <target xml:lang="ko-KR">끄면 댓글 작성자가 ‘익명 친구’로 표시돼요.</target>
+      </trans-unit>
+      <trans-unit id="settings.storageNote" resname="settings.storageNote">
+        <source xml:lang="zh-CN">偏好会按目前身份保存在此浏览器，账号的昵称及头像则会同步至登录账号。</source>
+        <target xml:lang="ko-KR">환경설정은 현재 프로필에 대해 이 브라우저에 저장돼요. 계정 닉네임과 아바타는 로그인 계정에 동기화돼요.</target>
+      </trans-unit>
+      <trans-unit id="settings.updated" resname="settings.updated">
+        <source xml:lang="zh-CN">已更新偏好设置</source>
+        <target xml:lang="ko-KR">환경설정을 업데이트했어요</target>
+      </trans-unit>
+      <trans-unit id="settings.saveFailed" resname="settings.saveFailed">
+        <source xml:lang="zh-CN">保存失败，请稍后再试。</source>
+        <target xml:lang="ko-KR">저장하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="settings.loadFailed" resname="settings.loadFailed">
+        <source xml:lang="zh-CN">无法载入设置，请检查 Supabase 设置后再试。</source>
+        <target xml:lang="ko-KR">설정을 불러오지 못했어요. Supabase 설정을 확인한 뒤 다시 시도해 주세요.</target>
+      </trans-unit>
+      <trans-unit id="settings.signingOut" resname="settings.signingOut">
+        <source xml:lang="zh-CN">正在登出…</source>
+        <target xml:lang="ko-KR">로그아웃 중…</target>
+      </trans-unit>
+      <trans-unit id="settings.signOut" resname="settings.signOut">
+        <source xml:lang="zh-CN">登出账号并离开目前身份</source>
+        <target xml:lang="ko-KR">계정과 투표자 프로필 로그아웃</target>
+      </trans-unit>
+      <trans-unit id="settings.leaveVoter" resname="settings.leaveVoter">
+        <source xml:lang="zh-CN">离开投票者身份</source>
+        <target xml:lang="ko-KR">투표자 프로필 로그아웃</target>
+      </trans-unit>
+      <trans-unit id="settings.signOutFailed" resname="settings.signOutFailed">
+        <source xml:lang="zh-CN">登出失败，请稍后再试。</source>
+        <target xml:lang="ko-KR">로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

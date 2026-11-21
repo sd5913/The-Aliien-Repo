@@ -1,3 +1,4 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import english from "../assets/apple-sign-in-en_US.png";
 import korean from "../assets/apple-sign-in-ko_KR.png";
 import simplified from "../assets/apple-sign-in-zh_CN.png";
@@ -14,8 +15,8 @@ export function AppleWebSignInButton({ disabled, busy, onClick }: {
   busy: boolean;
   onClick: () => void;
 }) {
-  const locale = document.documentElement.lang;
-  const copy = artwork[locale as keyof typeof artwork] ?? artwork["zh-CN"];
+  const { locale } = useLocale();
+  const copy = artwork[locale] ?? artwork["zh-CN"];
   return (
     <button className="auth-apple-web button-full" type="button" aria-label={copy.label}
       aria-busy={busy} disabled={disabled} onClick={onClick}>
