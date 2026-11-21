@@ -1,6 +1,5 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
-import { LanguageSelect } from "../../../i18n/LanguageSelect";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Toast } from "../../../components/ui/Toast";
 import type { Poll } from "../../../types/poll";
@@ -44,7 +43,6 @@ function ShareDialog({ poll, onClose, feedback, clearFeedback }: { poll: Poll; o
       <div className="share-ticket-preview" aria-busy={!ready}>
         {image ? <img src={image} alt={t("share.alt", { title: poll.title, count: poll.options.length })} /> : <p role="status">{t(ready ? "share.renderFailed" : "share.rendering")}</p>}
       </div>
-      <div className="share-dialog-language"><LanguageSelect /></div>
       <div className="share-dialog-actions">
         <button className="purple-button" onClick={() => void copy()}>{t("share.copy")}</button>
         <a className={`button-soft${image ? "" : " is-disabled"}`} href={image || undefined} download={`BothPls-${poll.title.replace(/[<>:"/\\|?*]/g, "").slice(0, 50) || t("share.filename")}.png`} aria-disabled={!image} onClick={(event) => { if (!image) event.preventDefault(); }}>{t("share.download")}</a>

@@ -1,6 +1,5 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
-import { LanguageSelect } from "../../../i18n/LanguageSelect";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getRandomNickname } from "../../polls/utils/voting";
@@ -63,7 +62,6 @@ export function ParticipantLoginPage() {
   return (
     <main className="participant-page">
       <header className="participant-brand">
-        <div className="participant-language"><LanguageSelect /></div>
         <Link to="/" aria-label={t("nav.brandHome")}><span className="participant-chat" aria-hidden="true"><i /><i /></span><strong>BothPls</strong></Link>
         <p>{t("guest.tagline")}</p>
       </header>

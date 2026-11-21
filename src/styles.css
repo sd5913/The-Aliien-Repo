@@ -106,7 +106,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-size: 12px;
   font-weight: 700;
 }
-.participant-language, .share-dialog-language { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.settings-language-select {
+  width: 100%;
+  max-width: none;
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 14px;
+}
 @media (max-width: 359px) {
   .topbar { gap: 6px; padding-inline: 12px; }
   .page-header-title { font-size: 17px; }

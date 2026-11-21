@@ -8,7 +8,7 @@ Instead of making a decision alone, users can share their options with friends a
 
 ### App language
 
-Use the language menu at the top of BothPls to choose **繁體中文（香港）**, **English**, or **한국어**. Traditional Chinese is the default. The menu is also available on shared polls and the guest join screen. The choice is saved in the current browser and applies to the interface and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
+Open **Profile → Settings → Language** to choose **繁體中文（香港）**, **English**, or **한국어**. Traditional Chinese is the default on this branch. The choice is saved in the current browser and applies to the interface and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
 
 The screenshots below are historical examples. Search crawlers that read only the static HTML see the Traditional Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
 

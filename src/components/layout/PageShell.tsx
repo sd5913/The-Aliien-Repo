@@ -1,5 +1,4 @@
 import { useLocale } from "../../i18n/LocaleProvider";
-import { LanguageSelect } from "../../i18n/LanguageSelect";
 // Shared page frame with optional mobile navigation. / 共用页面框架及可选的移动端导航。
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -32,7 +31,6 @@ export function PageShell({ children, title, showNavigation = true, backTo, show
           </>
         )}
         <span className="topbar-spacer" />
-        <LanguageSelect />
         {headerAction}
       </header>
       <main className="page-content">{children}</main>

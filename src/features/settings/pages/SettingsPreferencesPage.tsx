@@ -1,4 +1,5 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
+import { LanguageSelect } from "../../../i18n/LanguageSelect";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { useParticipant } from "../../auth/utils/useParticipant";
@@ -51,6 +52,10 @@ export function SettingsPreferencesPage() {
   return (
     <PageShell title={t("profile.settings")} showHeaderTitle backTo="/settings">
       <ProfileSettingsSection />
+      <section className="settings-card">
+        <div className="settings-section-heading"><div><h2>{t("app.language")}</h2></div></div>
+        <LanguageSelect />
+      </section>
       <section className="settings-card">
         <div className="settings-section-heading"><div><h2>{t("settings.permissions")}</h2></div><span className="settings-heading-icon">✿</span></div>
         <p className="settings-helper">{t("settings.permissionNote")}</p>

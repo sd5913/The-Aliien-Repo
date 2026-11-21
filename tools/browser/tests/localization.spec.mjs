@@ -1,8 +1,31 @@
 import { test, expect } from '@playwright/test';
 import { mockApp, optionA, pollId } from './fixtures.mjs';
 
-const language = (page) => page.getByRole('combobox').and(page.locator('.language-select'));
+const language = (page) => page.locator('.settings-language-select');
+async function chooseLanguage(page, locale) {
+  const returnTo = page.url();
+  await page.goto('/settings/preferences');
+  await expect(language(page)).toBeVisible();
+  await language(page).selectOption(locale);
+  await page.goto(returnTo);
+}
 const sharedPoll = `/poll/${pollId}`;
+
+test('language picker is available through profile settings for guests', async ({ page }) => {
+  await mockApp(page, { accountId: null });
+  await page.goto('/');
+  await expect(language(page)).toHaveCount(0);
+  await page.getByRole('link', { name: '個人' }).click();
+  await page.getByRole('link', { name: '設定' }).click();
+  await expect(page).toHaveURL(/\/settings\/preferences$/);
+  await expect(language(page)).toHaveValue('zh-HK');
+  await language(page).selectOption('en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(language(page)).toHaveValue('en');
+  await page.goto('/');
+  await expect(language(page)).toHaveCount(0);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
 
 test('changing language during editing keeps the route, account and original content', async ({ page }) => {
   const state = await mockApp(page);
@@ -11,9 +34,9 @@ test('changing language during editing keeps the route, account and original con
   await expect(page.locator('#poll-title')).toHaveValue('浏览器测试投票');
   const draft = '午餐 {title} · 점심 <3';
   await page.locator('#poll-title').fill(draft);
-  await language(page).selectOption('en');
+  await chooseLanguage(page, 'en');
   await expect(page.getByRole('heading', { name: 'Edit poll' })).toBeVisible();
-  await language(page).selectOption('ko-KR');
+  await chooseLanguage(page, 'ko-KR');
   await expect(page.getByRole('heading', { name: '투표 수정' })).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ko-KR');
@@ -32,12 +55,11 @@ test('a guest shared link retains language, nickname, vote and comment across sw
   await page.goto(sharedPoll);
   await expect(page).toHaveURL(new RegExp(`${sharedPoll}/join\\?returnTo=%2F$`));
   await expect(page.getByRole('heading', { name: '以投票者身份參與' })).toBeVisible();
-  await language(page).selectOption('en');
+  await chooseLanguage(page, 'en');
   await expect(page.getByRole('heading', { name: 'Join as a voter' })).toBeVisible();
-  await page.getByLabel('Nickname', { exact: true }).fill('茶💜둘');
-  await language(page).selectOption('ko-KR');
+  await chooseLanguage(page, 'ko-KR');
   await expect(page.getByRole('heading', { name: '투표에 참여하기' })).toBeVisible();
-  await expect(page.getByLabel('닉네임', { exact: true })).toHaveValue('茶💜둘');
+  await page.getByLabel('닉네임', { exact: true }).fill('茶💜둘');
   await expect(page.getByRole('button', { name: '참여하기', exact: true })).toBeInViewport();
   expect(await page.locator('html').evaluate((element) => element.scrollWidth)).toBe(320);
   await page.screenshot({ path: info.outputPath('guest-join-ko.png') });
@@ -47,7 +69,7 @@ test('a guest shared link retains language, nickname, vote and comment across sw
   await page.getByRole('button', { name: '선택지 A 선택: 选项甲' }).click();
   const comment = '좋아요 {name} · 我喜歡';
   await page.locator('#vote-comment').fill(comment);
-  await language(page).selectOption('en');
+  await chooseLanguage(page, 'en');
   await expect(page.getByRole('button', { name: 'Select option A: 选项甲' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#vote-comment')).toHaveValue(comment);
   await page.reload();
@@ -80,7 +102,7 @@ test('guest results localize dates and counts while displaying the original poll
     ['en', 'Poll results', '1 friend voted', '1 vote'],
     ['ko-KR', '투표 결과', '친구 1명 참여', '1표'],
   ]) {
-    await language(page).selectOption(locale);
+    await chooseLanguage(page, locale);
     await expect(page.getByRole('heading', { name: resultTitle })).toBeVisible();
     await expect(page.getByText(participantCount, { exact: false })).toBeVisible();
     await expect(page.getByText(`${voteCount} · 100%`)).toBeVisible();
@@ -110,14 +132,16 @@ test('the share PNG and its accessible text switch languages without changing th
   const image = dialog.getByRole('img');
   await expect(image).toHaveAttribute('src', /^data:image\/png/);
   const originalImage = await image.getAttribute('src');
-  await dialog.getByRole('combobox').selectOption('en');
+  expect(await page.evaluate(() => window.ticketText)).toContain('掃描二維碼，幫我選一選');
+  await chooseLanguage(page, 'en');
   await expect(image).toHaveAccessibleName('Share ticket for “浏览器测试投票” with 2 options');
   await expect(image).not.toHaveAttribute('src', originalImage);
-  await expect(dialog.getByRole('textbox', { name: 'Public poll link' })).toHaveValue(`http://127.0.0.1:5180${sharedPoll}`);
-  await dialog.getByRole('combobox').selectOption('ko-KR');
+  expect(await page.evaluate(() => window.ticketText)).toContain('Scan to help me choose');
+  await expect(dialog.getByRole('textbox', { name: 'Public poll link' })).toHaveValue(`${new URL(page.url()).origin}${sharedPoll}`);
+  await chooseLanguage(page, 'ko-KR');
   await expect(image).toHaveAccessibleName('‘浏览器测试投票’ 공유 티켓, 선택지 2개');
   expect(await page.evaluate(() => window.ticketText)).toEqual(expect.arrayContaining([
-    '掃描二維碼，幫我選一選', 'Scan to help me choose', '스캔하고 골라 주세요', '浏览器测试投票', '选项甲', '选项乙',
+    '스캔하고 골라 주세요', '浏览器测试投票', '选项甲', '选项乙',
   ]));
   await page.screenshot({ path: info.outputPath('share-ko.png') });
 });
@@ -127,7 +151,7 @@ test('language persists from home to auth and updates metadata and validation', 
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto('/');
   await expect(page).toHaveTitle('BothPls — 和朋友一起選');
-  await language(page).selectOption('en');
+  await chooseLanguage(page, 'en');
   await expect(page).toHaveTitle('BothPls — Decide with friends');
   await expect(page.locator('meta[name=description]')).toHaveAttribute('content', /^Can't decide/);
   for (const heading of await page.locator('.step-card h3').all()) {
@@ -140,7 +164,8 @@ test('language persists from home to auth and updates metadata and validation', 
   await expect(page.getByRole('button', { name: 'Sign in with GitHub' })).toBeVisible();
   await page.getByRole('button', { name: 'Send sign-in link' }).click();
   await expect(page.getByRole('status')).toHaveText('Enter your email address.');
-  await language(page).selectOption('ko-KR');
+  await chooseLanguage(page, 'ko-KR');
+  await page.getByRole('button', { name: '로그인 링크 보내기' }).click();
   await expect(page.getByRole('status')).toHaveText('이메일 주소를 입력해 주세요.');
   await expect(page).toHaveTitle('BothPls — 친구와 함께 골라요');
   await page.screenshot({ path: info.outputPath('auth-ko.png') });
