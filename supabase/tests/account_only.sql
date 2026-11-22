@@ -3,7 +3,8 @@ begin;
 insert into auth.users(id,aud,role,email,is_anonymous) values
 ('10000000-0000-4000-8000-000000000001','authenticated','authenticated','one@example.invalid',false),
 ('10000000-0000-4000-8000-000000000002','authenticated','authenticated','two@example.invalid',false),
-('10000000-0000-4000-8000-000000000003','authenticated','authenticated','anon@example.invalid',true);
+('10000000-0000-4000-8000-000000000003','authenticated','authenticated','anon@example.invalid',true),
+('10000000-0000-4000-8000-000000000004','authenticated','authenticated','other@example.invalid',false);
 insert into public.polls(id,title,is_public,owner_id) values
 ('20000000-0000-4000-8000-000000000001','Account only',false,'10000000-0000-4000-8000-000000000001');
 insert into public.poll_options(id,poll_id,label) values
@@ -39,8 +40,13 @@ select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-00000000
 set local role authenticated;
 select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','','["30000000-0000-4000-8000-000000000001"]','Account comment','Account user','https://example.invalid/avatar.png');
 select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','','["30000000-0000-4000-8000-000000000001"]','Updated comment','Account user','🐱');
+reset role;
+-- Count the stored ballot as the test administrator. The poll is unlisted.
 do $$ begin
   assert (select count(*) from public.votes where poll_id='20000000-0000-4000-8000-000000000001')=1;
+end $$;
+set local role authenticated;
+do $$ begin
   assert (select count(*) from public.own_comments('10000000-0000-4000-8000-000000000002',''))=1;
   assert (select count(*) from public.my_voted_polls('10000000-0000-4000-8000-000000000002',''))=1;
   begin perform public.submit_vote('20000000-0000-4000-8000-000000000001','70000000-0000-4000-8000-000000000001',repeat('c',64),'["30000000-0000-4000-8000-000000000001"]'); raise exception 'old token identity adopted';
@@ -56,14 +62,17 @@ do $$ declare comment_id uuid; begin
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;
--- Obtain the comment id as the test administrator; other accounts still cannot mutate it.
-do $$ declare comment_id uuid; begin
-  select id into comment_id from public.poll_comments where poll_id='20000000-0000-4000-8000-000000000001';
+-- Capture the test row before switching to an unrelated account.
+select set_config('review.comment_id',(select id::text from public.poll_comments where poll_id='20000000-0000-4000-8000-000000000001'),true);
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000004","role":"authenticated"}',true);
+set local role authenticated;
+do $$ declare comment_id uuid := current_setting('review.comment_id')::uuid; begin
   begin perform private.update_comment(comment_id,'10000000-0000-4000-8000-000000000002','','hijack'); raise exception 'foreign edit allowed';
   exception when insufficient_privilege then null; end;
   begin perform private.delete_comment(comment_id,'10000000-0000-4000-8000-000000000002',''); raise exception 'foreign delete allowed';
   exception when insufficient_privilege then null; end;
 end $$;
+reset role;
 
 select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","is_anonymous":true}',true);
 set local role authenticated;
