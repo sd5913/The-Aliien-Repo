@@ -1,4 +1,5 @@
 // Reusable voting mode, status, scoring, and identity helpers. / 可复用的投票模式、状态、计分和身份工具。
+import type { MessageKey } from "../../../i18n/catalog";
 import type { Poll, PollOption, VoterIdentity, VotingMode } from "../../../types/poll";
 import { VOTER_STORAGE_KEY, readLocalJson, writeLocalJson } from "../../../lib/storage/localStorage";
 
@@ -64,7 +65,14 @@ export function getBordaResults(poll: Poll): RankedOptionResult[] {
   });
 }
 
-export function getRandomNickname(): string {
-  const names = ["小太阳", "软糖", "奶茶", "小橘子", "云朵", "糯米团"];
-  return `${names[Math.floor(Math.random() * names.length)]}${Math.floor(10 + Math.random() * 90)}`;
+const nicknameKeys = [
+  "guest.nicknameSun", "guest.nicknameCandy", "guest.nicknameTea",
+  "guest.nicknameOrange", "guest.nicknameCloud", "guest.nicknameRice",
+] as const satisfies readonly MessageKey[];
+
+export function getRandomNickname(translate: (key: MessageKey) => string, current: string): string {
+  const name = translate(nicknameKeys[Math.floor(Math.random() * nicknameKeys.length)]);
+  const suffix = Math.floor(10 + Math.random() * 90);
+  const suggested = `${name}${suffix}`;
+  return suggested === current ? `${name}${suffix === 99 ? 10 : suffix + 1}` : suggested;
 }

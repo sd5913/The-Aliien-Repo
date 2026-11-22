@@ -1,3 +1,5 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
+import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useSharePoll } from "../components/ShareProvider";
@@ -17,6 +19,7 @@ import type { PollComment } from "../../../types/poll";
 import { AppIcon } from "../../../components/ui/AppIcon";
 
 export function ResultsPage() {
+  const { t, locale, votes, participants, percent } = useLocale();
   const { id = "" } = useParams();
   const location = useLocation();
   const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls({ pollId: id });
@@ -34,15 +37,15 @@ export function ResultsPage() {
   const [voter] = useState(getVoter);
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
-  const [commentFeedback, setCommentFeedback] = useState(location.state?.published ? "发布成功，分享给朋友来投票吧" : location.state?.saved ? "修改已保存" : "");
+  const [commentFeedback, setCommentFeedback] = useState<MessageKey | "">(location.state?.published ? "results.published" : location.state?.saved ? "results.saved" : "");
   const shareResult = async () => {
     if (!poll || !isPollOwner(poll, accountUser?.id ?? "")) return;
     const url = `${window.location.origin}/poll/${encodeURIComponent(poll.id)}/results`;
     try {
       await navigator.clipboard.writeText(url);
-      setCommentFeedback("结果链接已复制");
+      setCommentFeedback("results.resultLinkCopied");
     } catch {
-      setCommentFeedback("复制失败，请从地址栏复制结果链接");
+      setCommentFeedback("results.resultLinkCopyFailed");
     }
   };
   const confirmCommentDelete = async () => {
@@ -51,9 +54,9 @@ export function ResultsPage() {
     try {
       await deleteComment(id, deletingComment.id);
       setDeletingComment(null);
-      setCommentFeedback("评论已删除，投票选择保持不变");
+      setCommentFeedback("comment.deleted");
     } catch {
-      setCommentFeedback("删除失败，请检查网络或权限后重试。");
+      setCommentFeedback("comment.deleteFailed");
     } finally {
       setCommentBusy(false);
     }
@@ -64,25 +67,25 @@ export function ResultsPage() {
     {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll}
       onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
       onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
-    <Link className="results-close-button" to="/" aria-label="关闭结果">
+    <Link className="results-close-button" to="/" aria-label={t("results.close")}>
       ×
     </Link>
     </>
   );
 
   if (loading)
-    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="empty-inline">正在加载投票…</p></PageShell>;
+    return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
 
   if (error)
-    return <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">投票加载失败，请稍后重试。</p></PageShell>;
+    return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
 
   if (!poll)
     return (
-      <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
+      <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}>
         <div className="empty-state">
-          <h2>没有找到这次投票</h2>
+          <h2>{t("poll.missing")}</h2>
           <Link to="/" className="purple-button">
-            回到首页
+            {t("common.home")}
           </Link>
         </div>
       </PageShell>
@@ -101,32 +104,30 @@ export function ResultsPage() {
 
   const highest = Math.max(0, ...counts.values());
   const leaders = poll.options.filter((option) => highest > 0 && counts.get(option.id) === highest);
-  const leaderText = leaders.map((option) => String.fromCharCode(65 + poll.options.indexOf(option))).join("、");
+  const leaderText = new Intl.ListFormat(locale).format(leaders.map((option) => String.fromCharCode(65 + poll.options.indexOf(option))));
 
   return (
-    <PageShell showNavigation={false} title="投票结果" showHeaderTitle headerAction={closeButton}>
+    <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}>
       <div className="results-redesign">
       <div className="results-heading">
         <StatusPill poll={poll} />
         <h1>{poll.title}</h1>
-        <p>{poll.votes.length} 位朋友参与 · 结果随投票比例变化</p>
+        <p>{participants(poll.votes.length)} · {t("results.proportions")}</p>
       </div>
-      {syncError && <p className="field-hint" role="status">结果更新暂时失败，已保留上次数据；网络恢复后会重试。</p>}
-      {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? `平票 · ${leaderText} 并列领先` : `${leaderText} ${open ? "当前领先" : "获得最多选择"}`}</p>}
+      {syncError && <p className="field-hint" role="status">{t("results.syncFailed")}</p>}
+      {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? t("results.tie", { leaders: leaderText }) : t(open ? "results.leading" : "results.winner", { leader: leaderText })}</p>}
       <LiquidResults options={poll.options} counts={counts} />
-      <section className="results-card" aria-label="各选项票数">
+      <section className="results-card" aria-label={t("results.breakdown")}>
         <div className="result-option-list">
           {poll.options.map((option, index) => {
             const count = counts.get(option.id) ?? 0;
-            const percent = validTotal
-              ? Math.round((count / validTotal) * 100)
-              : 0;
+            const ratio = validTotal ? count / validTotal : 0;
             return (
               <div className="result-option-row" key={option.id}>
                 {option.imageUrl && <img className="result-option-image" src={option.imageUrl} alt="" />}<span className="result-color" style={{ background: optionColors[index % optionColors.length] }} />
                 <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>
-                  {count} 票 · {percent}%
+                  {votes(count)} · {percent(ratio)}
                 </span>
               </div>
             );
@@ -134,44 +135,44 @@ export function ResultsPage() {
         </div>
         {!poll.votes.length && (
           <p className="empty-inline">
-            {owner ? "还没有人投票，分享链接邀请朋友来参与吧。" : "还没有人投票，来提交你的选择吧。"}
+            {t(owner ? "results.empty" : "results.emptyParticipant")}
           </p>
         )}
       </section>
-      {!commentsVisible && <p className="empty-inline">评论将在投票结束后公开</p>}
+      {!commentsVisible && <p className="empty-inline">{t("comment.afterClose")}</p>}
       {commentsVisible && (
         <section className="comments-section">
           <div className="section-title-row">
             <div>
-              <span className="eyebrow">{open && owner ? "仅发起者可见 · 结束后公开" : "听听大家的理由"}</span>
+              <span className="eyebrow">{open && owner ? t("comment.ownerOnly") : t("comment.reasons")}</span>
               <h2>
-                评论{" "}
-                <span className="heading-count">{poll.comments.length} 条</span>
+                {t("comment.heading")}{" "}
+                <span className="heading-count">{t("comment.count", { count: poll.comments.length })}</span>
               </h2>
             </div>
           </div>
           <CommentList comments={poll.comments} options={poll.options} currentVoterId={voter.id} isPollOwner={owner}
-            onEdit={async (comment, text) => { await editComment(id, comment.id, text); setCommentFeedback("评论已更新，投票选择保持不变"); }}
+            onEdit={async (comment, text) => { await editComment(id, comment.id, text); setCommentFeedback("comment.updated"); }}
             onDelete={setDeletingComment} />
         </section>
       )}
       {!open ? (
-        <div className="locked-bottom">🔒 投票已结束，不能再提交或修改选择</div>
+        <div className="locked-bottom">{t("results.locked")}</div>
       ) : (
         <Link
           className="purple-button button-full result-vote-button"
           to={pollPath(poll.id, "vote", returnTo)}
         >
-          {poll.votes.some((vote) => vote.voter.id === voter.id) ? "修改我的投票" : "参与投票"} <span>↗</span>
+          {poll.votes.some((vote) => vote.voter.id === voter.id) ? t("results.changeVote") : t("results.join")} <span>↗</span>
         </Link>
       )}
-      {owner && <button className="result-share-icon" type="button" onClick={() => void shareResult()} aria-label="分享结果" title="分享结果"><AppIcon name="share" size={24} /></button>}
+      {owner && <button className="result-share-icon" type="button" onClick={() => void shareResult()} aria-label={t("results.shareResult")} title={t("results.shareResult")}><AppIcon name="share" size={24} /></button>}
       </div>
-      {deletingComment && <Modal title="确定删除这条评论吗？" onClose={() => { if (!commentBusy) setDeletingComment(null); }} actions={<>
-        <button className="button-soft" disabled={commentBusy} onClick={() => setDeletingComment(null)}>取消</button>
-        <button className="danger-button" disabled={commentBusy} onClick={() => void confirmCommentDelete()}>{commentBusy ? "删除中…" : "删除评论"}</button>
-      </>}><p>删除后无法恢复，投票选择和统计结果不会改变。</p></Modal>}
-      {commentFeedback && <Toast message={commentFeedback} onClose={() => setCommentFeedback("")} />}
+      {deletingComment && <Modal title={t("comment.deleteQuestion")} onClose={() => { if (!commentBusy) setDeletingComment(null); }} actions={<>
+        <button className="button-soft" disabled={commentBusy} onClick={() => setDeletingComment(null)}>{t("common.cancel")}</button>
+        <button className="danger-button" disabled={commentBusy} onClick={() => void confirmCommentDelete()}>{t(commentBusy ? "comment.deleting" : "comment.delete")}</button>
+      </>}><p>{t("comment.deleteDetails")}</p></Modal>}
+      {commentFeedback && <Toast message={t(commentFeedback)} onClose={() => setCommentFeedback("")} />}
     </PageShell>
   );
 }

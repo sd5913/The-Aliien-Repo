@@ -10,7 +10,7 @@ test('ending requires confirmation and cancel never calls the API', async ({ pag
   expect(state.calls.filter((call) => call.name === 'close_poll')).toHaveLength(0);
   await page.getByRole('button', { name: '结束投票', exact: true }).click();
   await page.getByRole('button', { name: '确认结束', exact: true }).click();
-  await expect(page.getByText('投票已结束，不能再提交或修改选择', { exact: false })).toBeVisible();
+  await expect(page.getByText('投票已结束，不能提交或修改选择', { exact: false })).toBeVisible();
   expect(state.calls.filter((call) => call.name === 'close_poll')).toHaveLength(1);
 });
 
@@ -18,7 +18,7 @@ test('copy publishes a new open poll with fresh option IDs and opens sharing', a
   const state = await mockApp(page, { closed: true });
   await page.goto(`/create?copy=${pollId}`);
   await expect(page.getByLabel('投票标题')).toHaveValue('浏览器测试投票');
-  await page.getByRole('button', { name: '创建投票', exact: false }).click();
+  await page.getByRole('button', { name: '建立投票', exact: false }).click();
   await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toBeVisible();
   const saved = state.calls.find((call) => call.name === 'save_poll').body.p_poll;
   expect(saved.id).not.toBe(pollId);

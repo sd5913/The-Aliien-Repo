@@ -23,10 +23,6 @@
 /* Language changes only families; the type scale and pairing stay shared.
    Latin faces come first, so CJK fonts never replace Latin letters/digits.
    Explicit lang scopes also support mixed-language content within a page. */
-:where([lang]):lang(en), :where([lang]):lang(zh) {
-  --font-cjk-display: "Noto Sans SC";
-  --font-cjk-body: "Noto Sans SC";
-}
 :where([lang]):lang(ko) {
   --font-cjk-display: "Pretendard";
   --font-cjk-body: "Pretendard";
@@ -100,6 +96,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .settings-nav-button { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ffffffa8; box-shadow: 0 4px 12px #7c3aed18; }
 .settings-nav-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .topbar-spacer { flex: 1; }
+.language-select {
+  flex: 0 0 auto;
+  max-width: 112px;
+  min-height: 36px;
+  border: 1px solid #ffffffda;
+  border-radius: 12px;
+  padding: 4px 3px 4px 7px;
+  color: var(--deep-purple);
+  background: #ffffffa8;
+  font-size: 12px;
+  font-weight: 700;
+}
+.settings-language-select {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 14px;
+}
+.settings-language-row { justify-content: flex-start; gap: 12px; }
+@media (max-width: 359px) {
+  .topbar { gap: 6px; padding-inline: 12px; }
+  .page-header-title { font-size: 17px; }
+}
 .page-content { min-height: 0; min-width: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 22px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 20px); scrollbar-width: none; }
 .page-content::-webkit-scrollbar { display: none; }
 .management-share-page-link { margin-top: 12px; }
@@ -160,7 +182,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .step-card:nth-child(3) { background: radial-gradient(ellipse at 20% 0%, #ffffff38, transparent 65%), linear-gradient(145deg, #f6edff50, #dce2fc75); }
 .step-number { display: block; margin-bottom: 25px; color: #8851b8; font-size: 11px; font-weight: 500; }
 .step-icon { position: absolute; top: 14px; right: 11px; width: 26px; height: 26px; display: grid; place-items: center; color: #7c3aed; background: transparent; }
-.step-card h3 { margin: 0 0 7px; color: #351544; font-size: 12px; line-height: 1.5; white-space: nowrap; }
+.step-card h3 { margin: 0 0 7px; color: #351544; font-size: 12px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
 .step-card p { margin: 0; color: #73617f; font-size: 10px; line-height: 1.8; overflow-wrap: anywhere; }
 .purple-button {
   min-height: 46px;
@@ -292,7 +314,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .my-poll-ticket-main { display: block; color: inherit; text-decoration: none; }
 .my-poll-ticket-main h3 { display: -webkit-box; overflow: hidden; margin: 0 0 7px; font-size: 13px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .my-poll-ticket-status, .my-poll-deadline { margin: 0 0 5px; color: #7952a5; font-size: 10px; line-height: 1.35; }
-.my-poll-deadline { overflow: hidden; color: #9673b7; text-overflow: ellipsis; white-space: nowrap; }
+.my-poll-deadline { color: #9673b7; overflow-wrap: anywhere; }
 .my-poll-share { position: absolute; z-index: 2; right: -4px; top: 50%; transform: translateY(-50%); display: grid; width: 32px; height: 44px; place-items: center; padding: 5px; border: 0; border-radius: 12px; color: #7c3aed; background: transparent; cursor: pointer; }
 .my-poll-share:hover { background: #ffffff60; }
 .square-vote-link { display: inline-flex; align-items: center; gap: 4px; color: var(--deep-purple); font-size: 12px; font-weight: 600; }
@@ -552,7 +574,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .profile-summary .profile-avatar { flex: 0 0 58px; }
 .profile-summary-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
 .profile-summary-copy strong { overflow: hidden; color: #4c1d95; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.profile-summary-copy span { overflow: hidden; color: #9678ad; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.profile-summary-copy span { color: #9678ad; font-size: 10px; overflow-wrap: anywhere; }
 .profile-summary .profile-avatar-empty { background: #ffffff60; border-color: #ffffffb3; box-shadow: none; }
 .profile-avatar-empty .app-icon { opacity: .5; }
 .profile-summary-empty .profile-summary-copy strong { color: #9277a8; }

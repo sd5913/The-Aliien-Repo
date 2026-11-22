@@ -6,6 +6,14 @@ BothPls is an interactive project designed to help people who struggle to make d
 
 Instead of making a decision alone, users can share their options with friends and collect votes and opinions. BothPls aims to make everyday decisions easier, more interactive, and more enjoyable.
 
+### App language
+
+Three languages are live: **中文（简体）** (default), **English**, and **한국어**. Japanese is planned but **not supported yet**.
+
+Open **个人 (Me) → the gear icon at the top right → 语言**. The choice is saved in the current browser and applies to localized interface text and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
+
+The screenshots below are historical examples. Search crawlers that read only the static HTML see the Simplified Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
+
 | Main Page | Create poll | My Page |
 | --- | --- | --- |
 | ![Main Page](images/image.png) | ![Create poll](images/image-2.png) | ![My Page](images/image-1.png) |

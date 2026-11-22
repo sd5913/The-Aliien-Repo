@@ -12,6 +12,7 @@ import { AuthPage } from "../features/auth/pages/AuthPage";
 
 import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
 import { RequireAccount } from "../features/auth/components/AccountProvider";
+import { RouteFallback } from "./RouteFallback";
 
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
@@ -28,4 +29,5 @@ export const router = createBrowserRouter([
   { path: "/poll/:id/manage", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results`) },
   { path: "/poll/:id/results", element: <ResultsPage /> },
   { path: "/poll/:id/share", loader: ({ params }) => redirect(`/poll/${encodeURIComponent(params.id ?? "")}/results?share=1`) },
+  { path: "*", element: <RouteFallback missing /> },
 ]);

@@ -1,3 +1,5 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
+import type { MessageKey } from "../../../i18n/catalog";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import type { PollComment, PollOption } from "../../../types/poll";
@@ -14,13 +16,14 @@ interface CommentListProps {
 }
 
 export function CommentList({ comments, options, currentVoterId, isPollOwner = false, onEdit, onDelete }: CommentListProps) {
+  const { t, locale } = useLocale();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<MessageKey | "">("");
   const { settings } = useUserSettings();
 
-  if (!comments.length) return <p className="empty-inline">还没有评论，朋友们的想法会显示在这里。</p>;
+  if (!comments.length) return <p className="empty-inline">{t("comment.empty")}</p>;
 
   const startEdit = (comment: PollComment) => {
     setEditingId(comment.id);
@@ -37,7 +40,7 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
       await onEdit(comment, text);
       setEditingId(null);
     } catch {
-      setFeedback("评论保存失败，请检查网络或权限后重试。");
+      setFeedback("comment.saveFailed");
     } finally {
       setSaving(false);
     }
@@ -56,19 +59,19 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
           <article className="comment-row" key={comment.id}>
             <div className="comment-avatar">{comment.voter.avatar || comment.voter.nickname.slice(0, 1)}</div>
             <div className="comment-copy">
-              <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : "匿名朋友"}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time></div>
+              <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : t("comment.anonymous")}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString(locale, { month: "numeric", day: "numeric" })}</time></div>
               {editing ? (
                 <div className="comment-editor">
-                  <textarea disabled={saving} className="text-input textarea" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={200} aria-label="修改评论" autoFocus />
-                  {feedback && <p role="alert">{feedback}</p>}
-                  <div className="comment-editor-actions"><button disabled={saving} className="button-soft" onClick={() => setEditingId(null)}>取消</button><button className="purple-button" disabled={saving || !draft.trim() || draft.trim().length > 200} onClick={() => void saveEdit(comment)}>{saving ? "保存中…" : "保存"}</button></div>
+                  <textarea disabled={saving} className="text-input textarea" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} maxLength={200} aria-label={t("comment.edit")} autoFocus />
+                  {feedback && <p role="alert">{t(feedback)}</p>}
+                  <div className="comment-editor-actions"><button disabled={saving} className="button-soft" onClick={() => setEditingId(null)}>{t("common.cancel")}</button><button className="purple-button" disabled={saving || !draft.trim() || draft.trim().length > 200} onClick={() => void saveEdit(comment)}>{saving ? t("common.saving") : t("common.save")}</button></div>
                 </div>
               ) : <p>{comment.text}</p>}
             </div>
             {!editing && optionIndex >= 0 && <span className="comment-color-dot" style={{ background: optionColors[optionIndex % optionColors.length] }} title={options[optionIndex].name} />}
             {!editing && (canEdit || canDelete) && <div className="comment-management-actions">
-              {canEdit && <button disabled={saving} aria-label={`修改${comment.voter.nickname}的评论`} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />修改</button>}
-              {canDelete && <button disabled={saving} className="comment-delete-button" aria-label={`删除${comment.voter.nickname}的评论`} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />删除</button>}
+              {canEdit && <button disabled={saving} aria-label={t("comment.editBy", { name: comment.voter.nickname })} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />{t("common.editShort")}</button>}
+              {canDelete && <button disabled={saving} className="comment-delete-button" aria-label={t("comment.deleteBy", { name: comment.voter.nickname })} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />{t("common.delete")}</button>}
             </div>}
           </article>
         );

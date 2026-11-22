@@ -10,7 +10,7 @@ test('Apple web button follows the HIG layout and starts Supabase OAuth', async 
   await page.goto('/auth?returnTo=' + encodeURIComponent('/create?id=example'));
 
   const apple = page.getByRole('button', { name: '通过 Apple 登录' });
-  const github = page.getByRole('button', { name: '使用 GitHub 登录' });
+  const github = page.getByRole('button', { name: '以 GitHub 登录' });
   await expect(apple).toBeVisible();
   await expect(apple).toBeInViewport();
   const appleBox = await apple.boundingBox();

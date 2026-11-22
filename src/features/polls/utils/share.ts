@@ -1,3 +1,5 @@
+import { formatNumber, translate } from "../../../i18n/catalog";
+import type { Locale } from "../../../i18n/locale";
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
 
@@ -37,7 +39,7 @@ function loadImage(url?: string): Promise<HTMLImageElement | null> {
 }
 
 // Render once for both the preview and the downloaded PNG, including transparent perforations.
-export async function renderShareTicket(poll: Poll) {
+export async function renderShareTicket(poll: Poll, locale: Locale) {
   const images = await Promise.all(poll.options.map((option) => loadImage(option.imageUrl)));
   const styles = getComputedStyle(document.documentElement);
   const displayFont = styles.getPropertyValue("--font-display").trim();
@@ -50,7 +52,10 @@ export async function renderShareTicket(poll: Poll) {
   fontProbe.style.fontFamily = bodyFont;
   const bodyFamily = getComputedStyle(fontProbe).fontFamily;
   fontProbe.remove();
-  const sample = `BothPls ${poll.title} ${poll.options.map((option) => option.name).join(" ")} 扫码，帮我选一选`;
+  const brand = translate(locale, "share.ticketBrand");
+  const scan = translate(locale, "share.ticketScan");
+  const details = translate(locale, "share.ticketDetails", { count: poll.options.length });
+  const sample = [brand, scan, details, poll.title, ...poll.options.map((option) => option.name)].join(" ");
   await Promise.allSettled([
     document.fonts.load(`700 38px ${displayFamily}`, sample),
     document.fonts.load(`400 21px ${bodyFamily}`, sample),
@@ -124,7 +129,7 @@ export async function renderShareTicket(poll: Poll) {
     ctx.fillText(fitted, x, y);
   };
   ctx.fillStyle = "#8969a6";
-  text("BothPls  /  把选择交给大家", margin, 76, contentWidth, 19, true);
+  text(brand, margin, 76, contentWidth, 19, true);
   ctx.fillStyle = "#4c1d95";
   // Two lines keep longer questions readable without compressing the type.
   ctx.font = `700 38px ${displayFamily}`;
@@ -146,7 +151,7 @@ export async function renderShareTicket(poll: Poll) {
       ctx.drawImage(image, x + (cellWidth - image.width * scale) / 2, y + (imageHeight - image.height * scale) / 2, image.width * scale, image.height * scale);
     } else {
       ctx.fillStyle = "#b99cdd";
-      text(String(index + 1).padStart(2, "0"), x + cellWidth / 2 - 26, y + imageHeight / 2 + 16, 100, 48, true);
+      text(formatNumber(locale, index + 1, { minimumIntegerDigits: 2 }), x + cellWidth / 2 - 26, y + imageHeight / 2 + 16, 100, 48, true);
     }
     if (label) {
       ctx.fillStyle = "#5b21b6";
@@ -183,7 +188,7 @@ export async function renderShareTicket(poll: Poll) {
   }
   const linkWidth = contentWidth - slotSize - 24;
   ctx.fillStyle = "#5b21b6";
-  text("扫码，帮我选一选", margin, height - 158, linkWidth, 25, true);
+  text(scan, margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;
   do {
     ctx.font = `${urlSize}px ${bodyFamily}`;
@@ -192,6 +197,6 @@ export async function renderShareTicket(poll: Poll) {
   } while (urlSize > 8);
   text(url, margin, height - 114, linkWidth, urlSize);
   ctx.fillStyle = "#8969a6";
-  text(`${poll.options.length} 个选项 · 首次参与只需昵称和头像`, margin, height - 68, linkWidth, 16);
+  text(details, margin, height - 68, linkWidth, 16);
   return canvas.toDataURL("image/png");
 }
