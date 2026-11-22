@@ -23,17 +23,17 @@ do $$ begin
   exception when insufficient_privilege then null; end;
   insert into pg_temp.permission_test_results values('anonymous_management_and_credential_read_denied');
 end $$;
-update pg_temp.permission_test_state set participant_a=public.register_participant(repeat('a',64)),
-  participant_b=public.register_participant(repeat('b',64));
 do $$ begin
-  assert (select participant_a from pg_temp.permission_test_state) = public.register_participant(repeat('a',64)), 'registration must be idempotent';
-  insert into pg_temp.permission_test_results values('soft_login_credentials_created_without_email_account');
+  begin perform public.register_participant(repeat('a',64)); raise exception 'guest identity creation allowed';
+  exception when insufficient_privilege then null; end;
+  insert into pg_temp.permission_test_results values('guest_identity_registration_denied');
 end $$;
 
 reset role;
+update pg_temp.permission_test_state set participant_a=owner_a,participant_b=owner_b;
 select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated','is_anonymous',false)::text,true) from permission_test_state;
 set local role authenticated;
-select public.save_poll(jsonb_build_object('id',poll_a,'title','Permission test A','status','open',
+select public.save_poll(jsonb_build_object('id',poll_a,'title','Permission test A','status','open','isPublic',true,
   'creatorId',owner_b,'options',jsonb_build_array(jsonb_build_object('id',option_a,'name','A'),jsonb_build_object('id',option_b,'name','B'))))
   from pg_temp.permission_test_state;
 select public.save_poll(jsonb_build_object('id',poll_b,'title','Permission test B','status','open',
@@ -63,15 +63,15 @@ do $$ declare s record; begin
 end $$;
 
 reset role;
-select set_config('request.jwt.claims','{"role":"anon"}',true);
-set local role anon;
+select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated')::text,true) from permission_test_state;
+set local role authenticated;
 select public.submit_vote(poll_a,participant_a,repeat('a',64),jsonb_build_array(option_a)) from pg_temp.permission_test_state;
 select public.submit_vote(poll_a,participant_a,repeat('a',64),jsonb_build_array(option_b)) from pg_temp.permission_test_state;
 do $$ declare s record; begin
   select * into s from pg_temp.permission_test_state;
   assert (select count(*) from public.votes where poll_id=s.poll_a and voter_id=s.participant_a::text)=1;
   assert (select ranking->>0 from public.votes where poll_id=s.poll_a and voter_id=s.participant_a::text)=s.option_b::text;
-  begin perform public.submit_vote(s.poll_a,s.participant_a,repeat('b',64),jsonb_build_array(s.option_a));
+  begin perform public.submit_vote(s.poll_a,s.participant_b,repeat('b',64),jsonb_build_array(s.option_a));
     raise exception 'impersonation unexpectedly allowed'; exception when insufficient_privilege then null; end;
   begin insert into public.votes(poll_id,voter_id,ranking) values(s.poll_a,s.participant_a::text,jsonb_build_array(s.option_a));
     raise exception 'raw vote unexpectedly allowed'; exception when insufficient_privilege then null; end;
@@ -81,12 +81,12 @@ do $$ declare s record; begin
     raise exception 'multiple selection unexpectedly allowed'; exception when invalid_parameter_value then null; end;
   begin perform public.submit_vote(s.poll_a,s.participant_a,repeat('a',64),'[]');
     raise exception 'empty selection unexpectedly allowed'; exception when invalid_parameter_value then null; end;
-  insert into pg_temp.permission_test_results values('own_vote_upsert_only_single_valid_option_and_capability_required');
+  insert into pg_temp.permission_test_results values('own_vote_upsert_only_single_valid_option_and_account_required');
 end $$;
 
 reset role;
 update public.polls set closed_at=clock_timestamp()-interval '1 second' where id=(select poll_b from permission_test_state);
-set local role anon;
+set local role authenticated;
 do $$ declare s record; begin
   select * into s from pg_temp.permission_test_state;
   begin perform public.submit_vote(s.poll_b,s.participant_a,repeat('a',64),jsonb_build_array(s.option_c));
@@ -112,12 +112,13 @@ do $$ declare s record; begin
 end $$;
 
 reset role;
-select set_config('request.jwt.claims','{"role":"anon"}',true);
-set local role anon;
+select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated')::text,true) from permission_test_state;
+set local role authenticated;
 do $$ declare s record; begin
   select * into s from pg_temp.permission_test_state;
   begin perform public.submit_vote(s.poll_a,s.participant_a,repeat('a',64),jsonb_build_array(s.option_a));
     raise exception 'closed vote unexpectedly allowed'; exception when invalid_parameter_value then null; end;
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',s.participant_b,'role','authenticated')::text,true);
   begin perform public.submit_vote(s.poll_a,s.participant_b,repeat('b',64),jsonb_build_array(s.option_a));
     raise exception 'new vote after close unexpectedly allowed'; exception when invalid_parameter_value then null; end;
   assert (select count(*) from public.polls where id=s.poll_a)=1, 'public results must remain visible';

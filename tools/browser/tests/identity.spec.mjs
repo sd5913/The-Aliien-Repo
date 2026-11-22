@@ -9,23 +9,13 @@ test('guest settings never display sample personal data or a logout button', asy
   await expect(page.getByRole('button', { name: /退出|离开/ })).toHaveCount(0);
 });
 
-test('soft profile editing retains identity and clearing local data resets readiness', async ({ page }) => {
+test('legacy soft profile requires account login before editing', async ({ page }) => {
   await mockApp(page, { accountId: null });
   await page.addInitScript(() => localStorage.setItem('bothpls:voter:v1', JSON.stringify({
-    id: '70000000-0000-4000-8000-000000000001', nickname: '原投票者', avatar: '🐱', participantReady: true, participantToken: 'c'.repeat(64),
+    id: '70000000-0000-4000-8000-000000000001', nickname: '原投票者', participantToken: 'c'.repeat(64),
   })));
   await page.goto('/edit-profile');
-  await expect(page.getByLabel('昵称')).toHaveValue('原投票者');
-  await page.getByLabel('昵称').fill('新的投票者');
-  await page.getByRole('button', { name: '保存个人资料' }).click();
-  await expect(page).toHaveURL(/\/settings$/);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bothpls:voter:v1')).nickname)).toBe('新的投票者');
-  await page.goto('/settings/preferences');
-  await page.getByRole('button', { name: '清除本地数据' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: '确认' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:5180/');
-  await expect(page.getByRole('link', { name: /登录/ })).toBeVisible();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bothpls:voter:v1'))?.participantReady ?? false)).toBe(false);
+  await expect(page).toHaveURL(url => url.pathname === '/auth' && url.searchParams.get('returnTo') === '/edit-profile');
 });
 
 test('account profile saves nickname into the account', async ({ page }) => {

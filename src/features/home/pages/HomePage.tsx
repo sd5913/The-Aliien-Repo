@@ -13,7 +13,6 @@ import { isPollOwner } from "../../polls/utils/voting";
 import { isPollOpen } from "../../../components/ui/StatusPill";
 import { pollPath } from "../../polls/utils/navigation";
 import type { Poll } from "../../../types/poll";
-import { useParticipant } from "../../auth/utils/useParticipant";
 
 function RetryIconButton({ onClick }: { onClick: () => void }) {
   const { t } = useLocale();
@@ -31,10 +30,9 @@ export function HomePage() {
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState<MessageKey | "">("");
   const { user: accountUser, loading: accountLoading } = useAccount();
-  const participant = useParticipant();
   const [bannerVisible, setBannerVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const recent = accountUser || participant ? polls : [];
+  const recent = accountUser ? polls : [];
   const [tab, setTab] = useState<"recent" | "square">("recent");
 
   useEffect(() => {
@@ -80,7 +78,7 @@ export function HomePage() {
     <PageShell>
       {!accountLoading && !accountUser && bannerVisible && !bannerDismissed && <aside className="home-auth-banner" aria-label={t("home.authPrompt")}>
         <button className="home-auth-banner-close" type="button" aria-label={t("home.closeAuthPrompt")} onClick={() => { setBannerVisible(false); setBannerDismissed(true); }}>×</button>
-        <p>{t(participant ? "home.authForVoter" : "home.authForGuest")}</p>
+        <p>{t("home.authForGuest")}</p>
         <Link to="/auth" className="home-auth-banner-link">{t("auth.loginRegister")} <span aria-hidden="true">↗</span></Link>
       </aside>}
       <section className="home-welcome">
@@ -88,7 +86,7 @@ export function HomePage() {
         <h1>{t("home.headlineOne")}<br />{t("home.headlineTwo")}</h1>
         <p>{t("home.intro")}</p>
         <Link to="/create" className="purple-button">{t("home.startPoll")} <span>↗</span></Link>
-        {accountUser ? <Link to="/settings" className="auth-quick-link">{t("home.profile")} <AppIcon name="chevronRight" size={15} /></Link> : participant ? <Link to="/settings" className="auth-quick-link"><span aria-hidden="true">{participant.avatar}</span> {participant.nickname} · {t("home.voter")}</Link> : <Link to="/auth" className="auth-quick-link">{t("auth.loginRegister")} <AppIcon name="chevronRight" size={15} /></Link>}
+        {accountUser ? <Link to="/settings" className="auth-quick-link">{t("home.profile")} <AppIcon name="chevronRight" size={15} /></Link> : <Link to="/auth" className="auth-quick-link">{t("auth.loginRegister")} <AppIcon name="chevronRight" size={15} /></Link>}
       </section>
       <section className="home-steps">
         <div className="section-title-row"><div><span className="eyebrow">{t("home.steps")}</span><h2>{t("home.chooseTogether")}</h2></div></div>

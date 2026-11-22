@@ -51,6 +51,7 @@ const client = createClient("https://square.test", "test-publishable-key", {
 });
 globalThis.squareTestClient = client;
 const source = readFileSync(new URL("./polls.ts", import.meta.url), "utf8")
+  .replace(/import \{ requireAccountId \} from [^;]+;/, "const requireAccountId = async () => null;")
   .replace(/import \{ readParticipant \} from [^;]+;/, "const readParticipant = () => null;")
   .replace(/import \{ supabase \} from [^;]+;/, "const supabase = globalThis.squareTestClient;");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;

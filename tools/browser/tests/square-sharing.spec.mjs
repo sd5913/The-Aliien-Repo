@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mockApp, owner, pollId } from './fixtures.mjs';
 
-const participantId = '70000000-0000-4000-8000-000000000001';
-async function softLogin(page) {
-  await page.addInitScript((id) => localStorage.setItem('bothpls:voter:v1', JSON.stringify({
-    id, nickname: '测试投票者', avatar: '🐱', participantReady: true, participantToken: 'c'.repeat(64),
-  })), participantId);
-}
-
 for (const accountId of [null, owner, '10000000-0000-4000-8000-000000000099']) {
   test(`square cards only offer voting: ${accountId ?? 'guest'}`, async ({ page }) => {
     await mockApp(page, { accountId });
@@ -25,8 +18,7 @@ for (const accountId of [null, owner, '10000000-0000-4000-8000-000000000099']) {
 }
 
 test('non-owner cannot share public polls via voting, results or recent lists', async ({ page }) => {
-  const state = await mockApp(page, { accountId: null });
-  await softLogin(page);
+  const state = await mockApp(page, { accountId: '10000000-0000-4000-8000-000000000099' });
   await page.goto(`/poll/${pollId}`);
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: '分享投票' })).toHaveCount(0);
@@ -67,7 +59,6 @@ test('owner retains sharing from their own recent card and voting page', async (
 
 test('taking a poll off the square does not give its participant a share entry', async ({ page }) => {
   const state = await mockApp(page, { accountId: null });
-  await softLogin(page);
   await page.goto(`/poll/${pollId}`);
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: '分享投票' })).toHaveCount(0);
@@ -83,7 +74,6 @@ test('taking a poll off the square does not give its participant a share entry',
 
 test('non-owner legacy share route and ended results have no sharing entry or clipboard writes', async ({ page }) => {
   await mockApp(page, { accountId: null, closed: true });
-  await softLogin(page);
   await page.goto(`/poll/${pollId}/share`);
   await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   await expect(page.getByRole('button', { name: /分享|复制链接/ })).toHaveCount(0);

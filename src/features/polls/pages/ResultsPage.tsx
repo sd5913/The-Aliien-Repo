@@ -34,7 +34,7 @@ export function ResultsPage() {
       openShare(poll);
     }
   }, [poll, accountUser?.id, location.search, openedShare, openShare]);
-  const [voter] = useState(getVoter);
+  const voter = getVoter();
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentFeedback, setCommentFeedback] = useState<MessageKey | "">(location.state?.published ? "results.published" : location.state?.saved ? "results.saved" : "");

@@ -6,13 +6,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { MyPollsSection } from "../../polls/pages/MyPollsPage";
-import { useParticipant } from "../../auth/utils/useParticipant";
 import { Modal } from "../../../components/ui/Modal";
 
 export function SettingsPage() {
   const { t } = useLocale();
   const { settings, error } = useUserSettings();
-  const participant = useParticipant();
   const auth = useAccount();
   const location = useLocation();
   const navigate = useNavigate();
@@ -42,12 +40,6 @@ export function SettingsPage() {
           <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label={t("profile.edit")} onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
             <button className="profile-avatar profile-avatar-button" type="button" aria-label={t("profile.previewAvatar")} onClick={(event) => { event.stopPropagation(); if (typeof avatar === "string" && avatar.startsWith("http")) setAvatarPreview(avatar); }}>{avatar}</button>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
-            <Link className="profile-edit-entry" to="/edit-profile" aria-label={t("profile.edit")} onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
-          </div>
-        ) : participant ? (
-          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label={t("profile.edit")} onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
-            <button className="profile-avatar profile-avatar-button" type="button" aria-label={t("profile.previewAvatar")} onClick={(event) => { event.stopPropagation(); if (participant.avatar.startsWith("http")) setAvatarPreview(participant.avatar); }}>{participant.avatar}</button>
-            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>{t("profile.voterSaved")}</span></div>
             <Link className="profile-edit-entry" to="/edit-profile" aria-label={t("profile.edit")} onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : (

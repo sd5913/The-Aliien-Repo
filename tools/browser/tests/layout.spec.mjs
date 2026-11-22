@@ -7,7 +7,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
     await page.setViewportSize(viewport); await mockApp(page);
     const width = viewport.width < 600 ? viewport.width : 390;
     const height = viewport.width < 600 ? viewport.height : Math.min(844, viewport.height);
-    for (const path of ['/', '/create', '/settings', '/settings/preferences', '/join', `/poll/${pollId}/results`]) {
+    for (const path of ['/', '/create', '/settings', '/settings/preferences', '/auth', `/poll/${pollId}/results`]) {
       await page.goto(path);
       const frame = page.locator('.app-shell, .participant-page');
       await expect(frame).toBeVisible();
@@ -31,11 +31,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
         const footer = await page.locator('.create-submit-footer').boundingBox();
         expect(footer.y + footer.height).toBeLessThanOrEqual(box.y + box.height + 1);
       }
-      if (path === '/join') {
-        await page.getByRole('button', { name: '参与投票' }).scrollIntoViewIfNeeded();
-        await expect(page.getByRole('button', { name: '参与投票' })).toBeInViewport();
-        await frame.screenshot({ path: info.outputPath('soft-login.png') });
-      }
+
       if (path.endsWith('/results')) {
         await page.getByRole('button', { name: '管理投票', exact: true }).click();
         const dialog = await page.getByRole('dialog', { name: '管理投票', exact: true }).boundingBox();

@@ -22,7 +22,7 @@ test('soft participant sees the registration banner', async ({ page }) => {
     id: '70000000-0000-4000-8000-000000000001', nickname: '测试投票者', avatar: '🐱', participantReady: true, participantToken: 'c'.repeat(64),
   })));
   await page.goto('/');
-  await expect(page.getByRole('complementary', { name: '注册或登录提示' })).toContainText('注册账号');
+  await expect(page.getByRole('complementary', { name: '注册或登录提示' })).toContainText('现在就加入 BothPls');
 });
 
 test('signed-in account does not see the registration banner', async ({ page }) => {
@@ -47,6 +47,6 @@ test('auth opens registration and one email submission sends one login or signup
   await page.getByRole('button', { name: '去注册' }).click();
   await page.getByLabel('邮箱').fill('friend@example.com');
   await page.getByRole('button', { name: '继续使用邮箱' }).click();
-  await expect(page.getByRole('status')).toContainText('完成登录或注册');
+  await expect(page.getByRole('status')).toContainText('登录链接已发送');
   expect(otpRequests).toBe(1);
 });

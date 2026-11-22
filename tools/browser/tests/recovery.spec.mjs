@@ -16,10 +16,7 @@ test('create draft survives a reload and clears after successful publishing', as
 });
 
 test('voter selection and optional comment survive a reload', async ({ page }) => {
-  await mockApp(page, { accountId: null });
-  await page.addInitScript(() => localStorage.setItem('bothpls:voter:v1', JSON.stringify({
-    id: '70000000-0000-4000-8000-000000000001', nickname: '测试投票者', avatar: '🐱', participantReady: true, participantToken: 'c'.repeat(64),
-  })));
+  await mockApp(page, { accountId: '10000000-0000-4000-8000-000000000099' });
   await page.goto(`/poll/${pollId}`);
   await page.getByRole('button', { name: '选择当前选项 A', exact: false }).click();
   await page.getByPlaceholder('说说你为甚么喜欢这个选项').fill('还没有提交的理由');

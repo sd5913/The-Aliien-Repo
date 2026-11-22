@@ -6,7 +6,7 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 // Browser/API contract tests use synthetic sessions and intercept every external
 // request; they never authenticate or mutate production data.
 export async function mockApp(page, { accountId = owner, closed = false } = {}) {
-  const user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
+  let user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
     user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
   const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
     author_name: owner, status: closed ? 'closed' : 'open', is_public: true, visibility_reviewed_at: '2026-11-20T00:00:00Z', closed_at: null, created_at: '2026-01-01T00:00:00Z',
@@ -98,5 +98,15 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);
     return reply([]);
   });
+  state.signIn = async (id = owner) => {
+    accountId = id;
+    user = { id, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid', user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false };
+    const access_token = encode({ alg: 'HS256', typ: 'JWT' }) + '.' + encode({ sub: id, role: 'authenticated', exp: Math.floor(Date.now()/1000)+3600 }) + '.' + encode({ signature: 'synthetic' });
+    await page.evaluate(async (session) => {
+      const { supabase } = await import('/src/lib/supabase/client.ts');
+      const result = await supabase.auth.setSession(session);
+      if (result.error) throw result.error;
+    }, { access_token, refresh_token: 'synthetic-refresh-token' });
+  };
   return state;
 }

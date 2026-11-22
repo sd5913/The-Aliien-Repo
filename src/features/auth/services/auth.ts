@@ -32,7 +32,7 @@ export async function sendMagicLink(email: string, nickname?: string, returnTo =
 
 export async function requireAccountId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user || data.user.is_anonymous) throw new Error("请先登录创建者账号。");
+  if (error || !data.user || data.user.is_anonymous) throw new Error("请先登录。");
   return data.user.id;
 }
 

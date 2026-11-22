@@ -1,7 +1,6 @@
 // Reusable voting mode, status, scoring, and identity helpers. / 可复用的投票模式、状态、计分和身份工具。
-import type { MessageKey } from "../../../i18n/catalog";
 import type { Poll, PollOption, VoterIdentity, VotingMode } from "../../../types/poll";
-import { VOTER_STORAGE_KEY, readLocalJson, writeLocalJson } from "../../../lib/storage/localStorage";
+import { readParticipant } from "../../auth/utils/participant";
 
 export interface RankedOptionResult {
   option: PollOption;
@@ -19,13 +18,8 @@ export function isPollOpen(poll: Poll, now = Date.now()): boolean {
 }
 
 export function getVoter(): VoterIdentity {
-  const isIdentity = (value: unknown): value is VoterIdentity => Boolean(value && typeof value === "object" && "id" in value && "nickname" in value && typeof value.id === "string" && typeof value.nickname === "string");
-  const stored = readLocalJson(VOTER_STORAGE_KEY, null, isIdentity);
-  // Never copy the private participant capability into votes, comments, or UI data.
-  if (stored) return { id: stored.id, nickname: stored.nickname };
-  const voter = { id: crypto.randomUUID(), nickname: "朋友" };
-  writeLocalJson(VOTER_STORAGE_KEY, voter);
-  return voter;
+  const account = readParticipant();
+  return account ? { id: account.id, nickname: account.nickname } : { id: "", nickname: "朋友" };
 }
 
 // Ownership requires an explicit match; legacy or missing creators are read-only.
@@ -63,16 +57,4 @@ export function getBordaResults(poll: Poll): RankedOptionResult[] {
       (index < sorted.length - 1 && sorted[index + 1].score === result.score);
     return { ...result, rank, tied };
   });
-}
-
-const nicknameKeys = [
-  "guest.nicknameSun", "guest.nicknameCandy", "guest.nicknameTea",
-  "guest.nicknameOrange", "guest.nicknameCloud", "guest.nicknameRice",
-] as const satisfies readonly MessageKey[];
-
-export function getRandomNickname(translate: (key: MessageKey) => string, current: string): string {
-  const name = translate(nicknameKeys[Math.floor(Math.random() * nicknameKeys.length)]);
-  const suffix = Math.floor(10 + Math.random() * 90);
-  const suggested = `${name}${suffix}`;
-  return suggested === current ? `${name}${suffix === 99 ? 10 : suffix + 1}` : suggested;
 }
