@@ -34,7 +34,7 @@ export function ResultsPage() {
       openShare(poll);
     }
   }, [poll, accountUser?.id, location.search, openedShare, openShare]);
-  const [voter] = useState(getVoter);
+  const voter = getVoter();
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
   const [commentFeedback, setCommentFeedback] = useState<MessageKey | "">(location.state?.published ? "results.published" : location.state?.saved ? "results.saved" : "");
@@ -64,7 +64,7 @@ export function ResultsPage() {
   const returnTo = pollReturnTo(location);
   const closeButton = (
     <>
-    {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll}
+    {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll} onShare={() => openShare(poll)}
       onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
       onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
     <Link className="results-close-button" to="/" aria-label={t("results.close")}>
@@ -158,7 +158,7 @@ export function ResultsPage() {
       )}
       {!open ? (
         <div className="locked-bottom">{t("results.locked")}</div>
-      ) : (
+      ) : !owner && (
         <Link
           className="purple-button button-full result-vote-button"
           to={pollPath(poll.id, "vote", returnTo)}

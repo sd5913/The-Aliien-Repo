@@ -1,26 +1,27 @@
 begin;
 create temporary table comment_test_state as select gen_random_uuid() as owner_id,
   gen_random_uuid() as poll_id,gen_random_uuid() as option_a,gen_random_uuid() as option_b,
-  null::uuid as participant_a,null::uuid as participant_b;
+  gen_random_uuid() as participant_a,gen_random_uuid() as participant_b;
 grant select,update on comment_test_state to anon,authenticated;
 insert into auth.users(id,aud,role,email,is_anonymous)
-select owner_id,'authenticated','authenticated',owner_id::text||'@example.invalid',false from comment_test_state;
+select id,'authenticated','authenticated',id::text||'@example.invalid',false from comment_test_state s cross join lateral unnest(array[s.owner_id,s.participant_a,s.participant_b]) id;
 select set_config('request.jwt.claims',jsonb_build_object('sub',owner_id,'role','authenticated')::text,true) from comment_test_state;
 set local role authenticated;
-select public.save_poll(jsonb_build_object('id',poll_id,'title','Comment privacy test','status','open','options',
+select public.save_poll(jsonb_build_object('id',poll_id,'title','Comment privacy test','status','open','isPublic',true,'options',
   jsonb_build_array(jsonb_build_object('id',option_a,'name','A'),jsonb_build_object('id',option_b,'name','B')))) from pg_temp.comment_test_state;
 reset role;
-select set_config('request.jwt.claims','{"role":"anon"}',true);
-set local role anon;
-update pg_temp.comment_test_state set participant_a=public.register_participant(repeat('c',64)),participant_b=public.register_participant(repeat('d',64));
+select set_config('request.jwt.claims',jsonb_build_object('sub',participant_a,'role','authenticated')::text,true) from comment_test_state;
+set local role authenticated;
 select public.submit_ballot(poll_id,participant_a,repeat('c',64),jsonb_build_array(option_a),'理由 A','测试甲','🐱') from pg_temp.comment_test_state;
+select set_config('request.jwt.claims',jsonb_build_object('sub',participant_b,'role','authenticated')::text,true) from comment_test_state;
 select public.submit_ballot(poll_id,participant_b,repeat('d',64),jsonb_build_array(option_b),'理由 B','测试乙','🐰') from pg_temp.comment_test_state;
+select set_config('request.jwt.claims',jsonb_build_object('sub',participant_a,'role','authenticated')::text,true) from comment_test_state;
 do $$ declare s record; begin
   select * into s from pg_temp.comment_test_state;
   assert (select count(*) from public.poll_comments where poll_id=s.poll_id)=0,'Ongoing comments must not be publicly readable';
   assert (select count(*) from public.own_comments(s.participant_a,repeat('c',64)))=1;
   assert (select body from public.own_comments(s.participant_a,repeat('c',64)))='理由 A';
-  begin perform * from public.own_comments(s.participant_a,repeat('d',64));
+  begin perform * from public.own_comments(s.participant_b,repeat('d',64));
     raise exception 'Foreign own-comment read allowed'; exception when insufficient_privilege then null; end;
   begin insert into public.poll_comments(poll_id,voter_id,nickname,avatar,body) values(s.poll_id,s.participant_a,'冒名','🐱','forbidden');
     raise exception 'Raw comment insert allowed'; exception when insufficient_privilege then null; end;
@@ -32,6 +33,7 @@ do $$ declare s record; begin
   assert (select body from public.own_comments(s.participant_a,repeat('c',64)))='更新理由';
   perform public.submit_ballot(s.poll_id,s.participant_a,repeat('c',64),jsonb_build_array(s.option_b),'','测试甲','🐱');
   assert (select count(*) from public.own_comments(s.participant_a,repeat('c',64)))=0,'Clearing comment removes own comment only';
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',s.participant_b,'role','authenticated')::text,true);
   assert (select count(*) from public.own_comments(s.participant_b,repeat('d',64)))=1;
   assert (select count(*) from public.votes where poll_id=s.poll_id)=2,'Comment deletion must not delete votes';
 end $$;
@@ -47,8 +49,8 @@ do $$ declare s record; begin
   perform public.close_poll(s.poll_id);
 end $$;
 reset role;
-select set_config('request.jwt.claims','{"role":"anon"}',true);
-set local role anon;
+select set_config('request.jwt.claims',jsonb_build_object('sub',participant_b,'role','authenticated')::text,true) from comment_test_state;
+set local role authenticated;
 do $$ declare s record; begin
   select * into s from pg_temp.comment_test_state;
   assert (select count(*) from public.poll_comments where poll_id=s.poll_id)=1,'Ended comments public across browsers';
@@ -60,8 +62,8 @@ reset role;
 alter table pg_temp.comment_test_state add column other_owner uuid default gen_random_uuid();
 insert into auth.users(id,aud,role,email,is_anonymous)
 select other_owner,'authenticated','authenticated',other_owner::text||'@example.invalid',false from pg_temp.comment_test_state;
-select set_config('request.jwt.claims','{"role":"anon"}',true);
-set local role anon;
+select set_config('request.jwt.claims',jsonb_build_object('sub',participant_b,'role','authenticated')::text,true) from comment_test_state;
+set local role authenticated;
 do $$ declare s record; comment_id uuid; begin
   select * into s from pg_temp.comment_test_state;
   select id into comment_id from public.poll_comments where poll_id=s.poll_id;

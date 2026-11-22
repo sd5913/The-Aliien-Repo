@@ -23,7 +23,7 @@ test('recent merges created and voted polls with activity order, badges and no d
   const votedId = '20000000-0000-4000-8000-000000000002';
   state.polls.push({ ...base, id: votedId, owner_id: 'other', title: '旧题最近参与', created_at: '2025-01-01T00:00:00Z' });
   state.votes = [pollId, votedId].map((id, index) => ({ id: `vote-${index}`, poll_id: id,
-    voter_id: '70000000-0000-4000-8000-000000000001', ranking: [],
+    voter_id: owner, ranking: [],
     created_at: index ? '2026-11-22T00:00:00Z' : '2026-01-02T00:00:00Z' }));
   await page.addInitScript(() => localStorage.setItem('bothpls:voter:v1', JSON.stringify({
     id: '70000000-0000-4000-8000-000000000001', nickname: '测试投票者', avatar: '🐱', participantReady: true, participantToken: 'c'.repeat(64),
@@ -66,5 +66,5 @@ test('square excludes private, manually ended and expired polls before publicati
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toContainText('最新公开');
   await expect(cards.last()).toContainText('较早公开');
-  await expect(page.locator('.home-square').getByRole('link', { name: '去投票', exact: false })).toHaveCount(2);
+  await expect(page.locator('.home-square').getByRole('link', { name: '查看结果', exact: false })).toHaveCount(2);
 });

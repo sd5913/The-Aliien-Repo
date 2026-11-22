@@ -2,7 +2,6 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import { LanguageSelect } from "../../../i18n/LanguageSelect";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { useParticipant } from "../../auth/utils/useParticipant";
 import { clearParticipant } from "../../auth/utils/participant";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -47,7 +46,6 @@ export function SettingsPreferencesPage() {
   const { settings, error } = useUserSettings();
   const navigate = useNavigate();
   const { user } = useAccount();
-  const participant = useParticipant();
   const [feedback, setFeedback] = useState<MessageKey | "">("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [nickname, setNickname] = useState("");
@@ -65,10 +63,10 @@ export function SettingsPreferencesPage() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   const bindingStatus = (provider: "github" | "apple") => {
-    if (!user) return participant ? t("settings.binding.notBound") : t("settings.binding.signedOut");
+    if (!user) return t("settings.binding.signedOut");
     return identities.includes(provider) ? t("settings.binding.current") : t("settings.binding.notBound");
   };
-  const bindingAction = user ? undefined : participant ? t("settings.binding.upgrade") : t("settings.binding.login");
+  const bindingAction = user ? undefined : t("settings.binding.login");
 
   const clearLocalData = () => {
     Object.keys(window.localStorage).filter((key) => key.startsWith("bothpls:")).forEach((key) => window.localStorage.removeItem(key));
@@ -131,12 +129,11 @@ export function SettingsPreferencesPage() {
     <PageShell title={t("settings.title")} showHeaderTitle backTo="/settings" showNavigation={false}>
       <section className="settings-card">
         <div className="settings-section-heading"><h2>{t("settings.account")}</h2></div>
-        {(user || participant) && <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <AppIcon name="chevronRight" size={18} /></button>}
+        {user && <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <AppIcon name="chevronRight" size={18} /></button>}
         <div className="settings-subheading">
           <strong>{t("settings.binding")}</strong>
-          {!user && <span>{participant ? t("settings.softLogin") : t("settings.binding.signedOut")}</span>}
+          {!user && <span>{t("settings.binding.signedOut")}</span>}
         </div>
-        {participant && !user && <p className="settings-helper">{t("settings.binding.softHint")}</p>}
         <div className="settings-binding-list">
           {BINDING_PROVIDERS.map((provider) => (
             <BindingRow

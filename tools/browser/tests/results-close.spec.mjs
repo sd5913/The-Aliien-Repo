@@ -41,8 +41,7 @@ for (const closed of [false, true]) {
 }
 
 test('submit, change vote and close retains the submitted ballot and browser identity', async ({ page }) => {
-  const state = await mockApp(page, { accountId: null });
-  await softIdentity(page);
+  const state = await mockApp(page, { accountId: '10000000-0000-4000-8000-000000000099' });
   await page.goto(`/poll/${pollId}?returnTo=%2Fsettings`);
   await page.getByRole('button', { name: '选择当前选项 A', exact: false }).click();
   expect(state.calls.filter(call => call.name === 'submit_ballot')).toHaveLength(0);
@@ -51,7 +50,8 @@ test('submit, change vote and close retains the submitted ballot and browser ide
   await page.getByRole('button', { name: '下一个选项' }).click();
   await page.getByRole('button', { name: '选择当前选项 B', exact: false }).click();
   await page.getByRole('button', { name: '提交修改' }).click();
-  await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp('/poll/' + pollId + '/results'));
+  await expect.poll(() => state.calls.filter(c => c.name === 'submit_ballot').length).toBe(2);
   const calls = state.calls.length;
   await closeToHome(page);
   expect(state.calls.slice(calls).filter(call => ['submit_ballot', 'delete_poll', 'close_poll'].includes(call.name))).toHaveLength(0);

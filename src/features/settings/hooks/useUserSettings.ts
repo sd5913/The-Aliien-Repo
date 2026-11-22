@@ -1,9 +1,6 @@
 import { useAccount } from "../../auth/components/AccountProvider";
-import { useParticipant } from "../../auth/utils/useParticipant";
-import { saveParticipant } from "../../auth/utils/participant";
 import { supabase } from "../../../lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
-import { getVoter } from "../../polls/utils/voting";
 import {
   defaultUserSettings,
   fetchUserSettings,
@@ -16,10 +13,9 @@ export function useUserSettings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user, loading: accountLoading } = useAccount();
-  const participant = useParticipant();
-  const userId = user ? `account:${user.id}` : participant ? `participant:${participant.id}` : `guest:${getVoter().id}`;
-  const nickname = user ? (typeof user.user_metadata.nickname === "string" ? user.user_metadata.nickname : user.email?.split("@")[0] ?? "") : participant?.nickname ?? "";
-  const avatar = user ? (typeof user.user_metadata.avatar === "string" ? user.user_metadata.avatar : "🌷") : participant?.avatar ?? "";
+  const userId = user ? `account:${user.id}` : "guest";
+  const nickname = user ? (typeof user.user_metadata.nickname === "string" ? user.user_metadata.nickname : user.email?.split("@")[0] ?? "") : "";
+  const avatar = user ? (typeof user.user_metadata.avatar === "string" ? user.user_metadata.avatar : "🌷") : "";
   const email = user?.email ?? "";
 
   useEffect(() => {
@@ -51,14 +47,12 @@ export function useUserSettings() {
     if (user && (next.nickname !== nickname || next.avatar !== avatar)) {
       const { error: updateError } = await supabase.auth.updateUser({ data: { nickname: next.nickname, avatar: next.avatar } });
       if (updateError) throw updateError;
-    } else if (!user && participant && (next.nickname !== participant.nickname || next.avatar !== participant.avatar)) {
-      await saveParticipant(next.nickname, next.avatar);
     }
     const normalized = { ...next, email };
     await saveUserSettings(userId, normalized);
     setSettings(normalized);
     setError(null);
-  }, [userId, user, participant, nickname, avatar, email]);
+  }, [userId, user, nickname, avatar, email]);
 
   return { settings, loading, error, save };
 }

@@ -9,7 +9,7 @@ import type { Poll } from "../../../types/poll";
 import { isPollOpen } from "../../../components/ui/StatusPill";
 import { PollOptionPreviews } from "./PollOptionPreviews";
 
-const ACTION_WIDTH = 192;
+const ACTION_ITEM_WIDTH = 64;
 
 interface PollCardProps {
   poll: Poll;
@@ -36,8 +36,9 @@ export function PollCard({
 }: PollCardProps) {
   const { t, locale, votes } = useLocale();
   const { user: accountUser } = useAccount();
-  const owner = surface !== "square" && isPollOwner(poll, accountUser?.id ?? "");
-  const shareAllowed = surface !== "square" && canSharePoll(poll, accountUser?.id ?? "");
+  const owner = isPollOwner(poll, accountUser?.id ?? "");
+  const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
+  const actionWidth = (isPollOpen(poll) ? 3 : 1) * ACTION_ITEM_WIDTH;
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;
@@ -49,7 +50,7 @@ export function PollCard({
   } | null>(null);
   const suppressClick = useRef(false);
   const navigate = useNavigate();
-  const offset = owner ? dragOffset ?? (expanded ? -ACTION_WIDTH : 0) : 0;
+  const offset = owner ? dragOffset ?? (expanded ? -actionWidth : 0) : 0;
   const deadlineDate = poll.endsAt ? new Date(poll.endsAt) : null;
   const deadline =
     deadlineDate && !Number.isNaN(deadlineDate.getTime())
@@ -70,7 +71,7 @@ export function PollCard({
     if (event.pointerType === "mouse" && event.button !== 0) return;
     gesture.current = {
       startX: event.clientX,
-      origin: expanded ? -ACTION_WIDTH : 0,
+      origin: expanded ? -actionWidth : 0,
       lastX: event.clientX,
       lastTime: event.timeStamp,
       velocity: 0,
@@ -93,7 +94,7 @@ export function PollCard({
       activeGesture.velocity = (event.clientX - activeGesture.lastX) / elapsed;
       activeGesture.lastX = event.clientX;
       activeGesture.lastTime = event.timeStamp;
-      setDragOffset(Math.max(-ACTION_WIDTH, Math.min(0, activeGesture.origin + delta)));
+      setDragOffset(Math.max(-actionWidth, Math.min(0, activeGesture.origin + delta)));
     }
   };
 
@@ -102,9 +103,9 @@ export function PollCard({
     if (!activeGesture) return;
     gesture.current = null;
     if (activeGesture.moved) {
-      const threshold = Math.min(ACTION_WIDTH, event.currentTarget.getBoundingClientRect().width / 3);
+      const threshold = Math.min(actionWidth, event.currentTarget.getBoundingClientRect().width / 3);
       const finalOffset = Math.max(
-        -ACTION_WIDTH,
+        -actionWidth,
         Math.min(
           0,
           activeGesture.origin +
@@ -142,19 +143,19 @@ export function PollCard({
 
   return (
     <div className={`swipe-card${owner && expanded ? " swipe-card-expanded" : ""}`}>
-      {owner && <div className="swipe-actions" style={{ clipPath: `inset(0 0 0 calc(100% + ${offset}px))`, transition: dragOffset === null ? undefined : "none" }} aria-label={t("poll.actions")} aria-hidden={!expanded}>
-        <button className="swipe-action swipe-edit" disabled={!isPollOpen(poll)} tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
+      {owner && <div className="swipe-actions" style={{ width: actionWidth, clipPath: `inset(0 0 0 calc(100% + ${offset}px))`, transition: dragOffset === null ? undefined : "none" }} aria-label={t("poll.actions")} aria-hidden={!expanded}>
+        {isPollOpen(poll) && <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
           <AppIcon name="edit" size={20} />
           <span>{t("common.edit")}</span>
-        </button>
+        </button>}
         <button className="swipe-action swipe-delete" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onDelete(poll); }}>
           <AppIcon name="bin" size={20} />
           <span>{t("common.delete")}</span>
         </button>
-        <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }} disabled={!isPollOpen(poll)}>
+        {isPollOpen(poll) && <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }}>
           <AppIcon name="finished" size={20} />
           <span>{t("poll.endShort")}</span>
-        </button>
+        </button>}
       </div>}
       <article
         className={`my-poll-card poll-card${compact ? " poll-card-compact" : ""}`}
@@ -168,13 +169,13 @@ export function PollCard({
       >
         <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
-          {surface !== "square" && (owner || poll.participatedByCurrentIdentity) && <div className="poll-identity-badges">{owner && <span>{t("poll.createdByMe")}</span>}{poll.participatedByCurrentIdentity && <span>{t("poll.votedByMe")}</span>}</div>}
+          {(owner || (surface !== "square" && poll.participatedByCurrentIdentity)) && <div className="poll-identity-badges">{owner && <span>{t("poll.createdByMe")}</span>}{!owner && surface !== "square" && poll.participatedByCurrentIdentity && <span>{t("poll.votedByMe")}</span>}</div>}
           <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
             <h3>{poll.title}</h3>
           </Link>
           <p className="my-poll-ticket-status">{t(isPollOpen(poll) ? "poll.open" : "poll.closed")} · {surface === "square" ? t("poll.squareParticipants", { count: poll.voteCount ?? poll.votes.length }) : votes(poll.voteCount ?? poll.votes.length)}</p>
           <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
-          {surface === "square" && <Link className="square-vote-link" to={to} state={{ returnTo }}>{t("poll.squareVote")} <span aria-hidden="true">↗</span></Link>}
+          {surface === "square" && <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link>}
           {shareAllowed && <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
             <AppIcon name="share" size={20} />
           </button>}

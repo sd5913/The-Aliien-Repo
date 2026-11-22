@@ -1,3 +1,4 @@
+import { requireAccountId } from "../../auth/services/auth";
 import { readParticipant } from "../../auth/utils/participant";
 import type { ParticipantProfile } from "../../auth/utils/participant";
 // Supabase persistence for polls, aligned with the normalized three-table schema.
@@ -102,6 +103,20 @@ function isMissingVisibilityColumn(error: { code?: string; message?: string } | 
     && error.message?.includes("visibility_reviewed_at"));
 }
 
+interface SupabaseReadError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}
+
+function isLegacyAccountReadError(error: SupabaseReadError | null, endpoint: string): boolean {
+  if (!error) return false;
+  const text = [error.message, error.details, error.hint].filter(Boolean).join(" ");
+  return (error.code === "42501" && text.includes("PARTICIPANT_REQUIRED"))
+    || (error.code === "PGRST202" && text.includes(endpoint));
+}
+
 function toCard(row: PollRow): Poll {
   return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
 }
@@ -151,9 +166,12 @@ export async function fetchVotedPollsPage(participant: ParticipantProfile, filte
   const now = Date.now();
   const { data, error } = await supabase.rpc("my_voted_polls", {
     p_voter_id: participant.id,
-    p_token: participant.participantToken,
+    p_token: "",
   });
-  if (error) throw error;
+  if (error) {
+    if (isLegacyAccountReadError(error, "my_voted_polls")) return { polls: [], hasMore: false };
+    throw error;
+  }
   let polls = ((data ?? []) as unknown as PollRow[])
     .map(toCard)
     .filter((poll) => isNotDeletedAndMatchesFilter(poll, filter, now));
@@ -170,10 +188,10 @@ function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | u
 
 export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string): Promise<Poll[]> {
   const [votedResult, ownedPage] = await Promise.all([
-    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
+    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }) : Promise.resolve({ data: [], error: null }),
     ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
   ]);
-  if (votedResult.error) throw votedResult.error;
+  if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
   const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
   const recent = [...new Map([...voted.map(toCard), ...ownedPage.polls].map((poll) => [poll.id, poll])).values()]
@@ -197,9 +215,12 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
   if (!data) {
     const participant = readParticipant();
     const { data: linked, error: linkError } = await supabase.rpc("get_poll_by_link", {
-      p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null,
+      p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: null,
     });
-    if (linkError) throw linkError;
+    if (linkError) {
+      if (isLegacyAccountReadError(linkError, "get_poll_by_link")) return null;
+      throw linkError;
+    }
     if (!linked) return null;
     const detail = linked as { poll: PollRow; votes: VoteRow[]; comments: CommentRow[] };
     return toPollView(detail.poll, metadataOnly ? [] : detail.votes, metadataOnly ? [] : detail.comments);
@@ -213,12 +234,12 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
     supabase.from("votes").select("id,poll_id,voter_id,ranking,created_at").eq("poll_id", row.id),
     supabase.from("poll_comments").select("id,poll_id,voter_id,nickname,avatar,body,option_id,created_at").eq("poll_id", row.id),
     participant
-      ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: participant.participantToken }).eq("poll_id", row.id)
+      ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: "" }).eq("poll_id", row.id)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (votesResult.error) throw votesResult.error;
   if (commentsResult.error) throw commentsResult.error;
-  if (ownResult.error) throw ownResult.error;
+  if (ownResult.error && !isLegacyAccountReadError(ownResult.error, "own_comments")) throw ownResult.error;
 
   const merged = new Map<string, CommentRow>();
   for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) {
@@ -244,11 +265,12 @@ export async function updatePollMeta(poll: Poll): Promise<void> {
 }
 
 export async function submitVote(pollId: string, voterId: string, ranking: string[], comment = ""): Promise<void> {
+  const accountId = await requireAccountId();
   const participant = readParticipant();
-  if (!participant || participant.id !== voterId) throw new Error("请先完成软登录。");
+  if (!participant || participant.id !== accountId || accountId !== voterId) throw new Error("请先登录。");
   const { error } = await supabase.rpc("submit_ballot", {
     p_poll_id: pollId, p_voter_id: participant.id,
-    p_token: participant.participantToken, p_ranking: ranking,
+    p_token: "", p_ranking: ranking,
     p_comment: comment, p_nickname: participant.nickname, p_avatar: participant.avatar,
   });
   if (error) throw error;
@@ -267,15 +289,17 @@ export async function deletePollRemote(pollId: string): Promise<void> {
 
 export async function updateCommentRemote(commentId: string, text: string): Promise<void> {
   const participant = readParticipant();
-  if (!participant) throw new Error("请先完成软登录。");
+  const accountId = await requireAccountId();
+  if (!participant || participant.id !== accountId) throw new Error("请先登录。");
   const { error } = await supabase.rpc("update_comment", { p_comment_id: commentId,
-    p_voter_id: participant.id, p_token: participant.participantToken, p_body: text });
+    p_voter_id: participant.id, p_token: "", p_body: text });
   if (error) throw error;
 }
 
 export async function deleteCommentRemote(commentId: string): Promise<void> {
+  await requireAccountId();
   const participant = readParticipant();
   const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId,
-    p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null });
+    p_voter_id: participant?.id ?? null, p_token: null });
   if (error) throw error;
 }

@@ -3,11 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { useParticipant, } from "../../auth/utils/useParticipant";
-import { saveParticipant } from "../../auth/utils/participant";
 import { supabase } from "../../../lib/supabase/client";
 import { fetchProfile, saveProfile } from "../services/profiles";
-import { useUserSettings } from "../hooks/useUserSettings";
 
 function limitNickname(value: string) {
   return Array.from(value).slice(0, 20).join("");
@@ -17,8 +14,6 @@ export function EditProfilePage() {
   const { t } = useLocale();
   const navigate = useNavigate();
   const { user, loading: accountLoading } = useAccount();
-  const participant = useParticipant();
-  const { settings, save } = useUserSettings();
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [avatar, setAvatar] = useState("");
@@ -26,7 +21,7 @@ export function EditProfilePage() {
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    if (!accountLoading && !user && !participant) {
+    if (!accountLoading && !user) {
       navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
       return;
     }
@@ -42,13 +37,9 @@ export function EditProfilePage() {
         console.error("BothPls: could not load profile.", error);
         setFeedback(t("profile.failed"));
       });
-    } else if (participant) {
-      setNickname(participant.nickname);
-      setBio(settings.bio || "");
-      setAvatar(participant.avatar);
     }
     return () => { active = false; };
-  }, [user, participant]);
+  }, [user, accountLoading, navigate, t]);
 
   const uploadAvatar = async (file: File) => {
     setFeedback("");
@@ -98,9 +89,6 @@ export function EditProfilePage() {
           data: { nickname: cleanNickname, avatar: avatar || "🌷" },
         });
         if (error) throw error;
-      } else if (participant) {
-        await saveParticipant(cleanNickname, avatar || participant.avatar);
-        await save({ ...settings, nickname: cleanNickname, avatar: avatar || participant.avatar });
       } else {
         navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
         return;

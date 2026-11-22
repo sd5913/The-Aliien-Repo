@@ -1,3 +1,4 @@
+import { setAccountIdentity } from "../utils/participant";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -13,9 +14,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user;
+      setAccountIdentity(user ?? null);
       setAccount({ user: user && !user.is_anonymous ? user : null, loading: false });
     });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); setAccountIdentity(null); };
   }, []);
   return <AccountContext.Provider value={account}>{children}</AccountContext.Provider>;
 }

@@ -49,22 +49,11 @@ test('changing language during editing keeps the route, account and original con
   expect(state.calls.find(({ name }) => name === 'save_poll').body.p_poll.options.map(({ name }) => name)).toEqual(['选项甲', '选项乙']);
 });
 
-test('a guest shared link retains language, nickname, vote and comment across switching and reload', async ({ page }, info) => {
-  const state = await mockApp(page, { accountId: null });
+test('an account retains language, vote and comment across switching and reload', async ({ page }, info) => {
+  const state = await mockApp(page);
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto(sharedPoll);
-  await expect(page).toHaveURL(new RegExp(`${sharedPoll}/join\\?returnTo=%2F$`));
-  await expect(page.getByRole('heading', { name: '以投票者身份参与' })).toBeVisible();
-  await chooseLanguage(page, 'en-US');
-  await expect(page.getByRole('heading', { name: 'Join as a voter' })).toBeVisible();
   await chooseLanguage(page, 'ko-KR');
-  await expect(page.getByRole('heading', { name: '투표에 참여하기' })).toBeVisible();
-  await page.getByLabel('닉네임', { exact: true }).fill('茶💜둘');
-  await expect(page.getByRole('button', { name: '참여하기', exact: true })).toBeInViewport();
-  expect(await page.locator('html').evaluate((element) => element.scrollWidth)).toBe(320);
-  await page.screenshot({ path: info.outputPath('guest-join-ko.png') });
-  expect(state.calls).toHaveLength(0);
-  await page.getByRole('button', { name: '참여하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   await page.getByRole('button', { name: '선택지 A 선택: 选项甲' }).click();
   const comment = '좋아요 {name} · 我喜歡';
@@ -80,7 +69,7 @@ test('a guest shared link retains language, nickname, vote and comment across sw
   await page.getByRole('button', { name: 'Submit my vote' }).click();
   await expect.poll(() => state.calls.find(({ name }) => name === 'submit_ballot')?.body.p_comment).toBe(comment);
   expect(state.calls.find(({ name }) => name === 'submit_ballot').body).toMatchObject({
-    p_nickname: '茶💜둘', p_ranking: [optionA],
+    p_nickname: '测试账号', p_ranking: [optionA],
   });
 });
 

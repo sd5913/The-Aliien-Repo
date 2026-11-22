@@ -2,10 +2,8 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { readDraft, saveDraft, clearDraft, isVoteDraft } from "../utils/drafts";
 import { pollPath, pollReturnTo } from "../utils/navigation";
-import { readParticipant, saveParticipant } from "../../auth/utils/participant";
 import { useParticipant } from "../../auth/utils/useParticipant";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -14,7 +12,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
-import { canSharePoll, getVoter } from "../utils/voting";
+import { getVoter, isPollOwner } from "../utils/voting";
 import { optionColors } from "../utils/optionColors";
 
 export function VotingPage() {
@@ -28,12 +26,8 @@ export function VotingPage() {
   const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
   const voter = participant ?? getVoter();
-  const share = useSharePoll();
-  const [identityError, setIdentityError] = useState("");
-  const [identityRetry, setIdentityRetry] = useState(0);
-  const identityPending = useRef(false);
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
-  const [draftReady, setDraftReady] = useState(false);
+  const [hydratedKey, setHydratedKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [draftNotice, setDraftNotice] = useState<MessageKey | "">("");
   const existingVote = poll?.votes.find((vote) => vote.voter.id === voter.id);
@@ -52,30 +46,30 @@ export function VotingPage() {
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);
   useEffect(() => {
-    if (accountLoading || !accountUser || participant || identityPending.current) return;
-    identityPending.current = true;
-    const rawName = accountUser.user_metadata?.nickname ?? accountUser.email?.split("@")[0] ?? t("vote.defaultNickname");
-    const name = Array.from(String(rawName).trim()).slice(0, 12).join("");
-    void saveParticipant(name.length >= 2 ? name : t("vote.defaultNickname"), "🐱")
-      .catch(() => setIdentityError(t("guest.identityFailed")))
-      .finally(() => { identityPending.current = false; });
-  }, [accountLoading, accountUser, participant, identityRetry]);
-  useEffect(() => {
-    if (!poll || !participant || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
+    if (!poll || accountLoading || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
     hydratedPollId.current = `${poll.id}:${voter.id}`;
-    const draft = readDraft(draftKey, isVoteDraft);
+    const pendingKey = "bothpls:draft:vote:pending:" + id;
+    const params = new URLSearchParams(location.search);
+    const intent = params.get("pendingChoice");
+    const pending = intent ? { activeId: intent, selectedId: intent, comment: "" } : readDraft(pendingKey, isVoteDraft);
+    if (intent && accountUser) {
+      params.delete("pendingChoice");
+      navigate(location.pathname + (params.size ? "?" + params.toString() : "") + location.hash, { replace: true, state: location.state });
+    }
+    const draft = pending ?? readDraft(draftKey, isVoteDraft);
+    if (pending && accountUser && saveDraft(draftKey, pending)) clearDraft(pendingKey);
     const savedOptionId = draft ? (poll.options.some((option) => option.id === draft.selectedId) ? draft.selectedId : "") : existingVote?.selectedOptionId ?? "";
     setActiveId(draft && poll.options.some((option) => option.id === draft.activeId) ? draft.activeId : savedOptionId);
     setSelectedId(savedOptionId);
     setComment(draft?.comment ?? existingComment?.text ?? "");
-    if (draft) setDraftNotice("vote.restored");
-    setDraftReady(true);
-  }, [poll, participant, voter.id, existingVote, existingComment, draftKey]);
+    setDraftNotice(draft ? "vote.restored" : "");
+    setHydratedKey(draftKey);
+  }, [poll, accountLoading, accountUser, voter.id, existingVote, existingComment, draftKey, id, location, navigate]);
 
   useEffect(() => {
-    if (!draftReady) return;
+    if (hydratedKey !== draftKey) return;
     if (!saveDraft(draftKey, { activeId, selectedId, comment })) setDraftNotice("poll.draftUnavailable");
-  }, [draftReady, draftKey, activeId, selectedId, comment]);
+  }, [hydratedKey, draftKey, activeId, selectedId, comment]);
 
   if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
   if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
@@ -83,8 +77,7 @@ export function VotingPage() {
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
   if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("auth.checking")}</p></PageShell>;
-  if (accountUser && !participant) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline" role={identityError ? "alert" : "status"}>{identityError || t("vote.preparingIdentity")}</p>{identityError && <button className="button-soft" onClick={() => { setIdentityError(""); setIdentityRetry((value) => value + 1); }}>{t("common.retry")}</button>}</PageShell>;
-  if (!readParticipant()) return <Navigate replace to={pollPath(poll.id, "join", returnTo)} />;
+  if (isPollOwner(poll, accountUser?.id ?? "")) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
@@ -94,6 +87,7 @@ export function VotingPage() {
   const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
   const saveVote = async () => {
     if (saving) return;
+    if (!accountUser) { navigate("/auth?mode=login&returnTo=" + encodeURIComponent(location.pathname + location.search + location.hash)); return; }
     if (!isPollOpen(poll)) { navigate(pollPath(poll.id, "results", returnTo), { replace: true }); return; }
     if (!selectedId) { setToast("vote.chooseFirst"); return; }
     const now = new Date().toISOString();
@@ -131,7 +125,6 @@ export function VotingPage() {
   return (
     <PageShell showNavigation={false} backTo={returnTo} title={t("vote.help")}>
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{participants(poll.votes.length)}</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
-      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>{t("poll.share")}</button>}
       {!open && <div className="notice-banner">{t("vote.closed")}</div>}
       {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
@@ -143,6 +136,14 @@ export function VotingPage() {
       }} />
       <section className="vote-cup-card">
         <button className="vote-cup-confirm" disabled={saving || !open || !activeOption} onClick={() => {
+          if (!accountUser) {
+            const saved = saveDraft("bothpls:draft:vote:pending:" + id, { activeId: activeOption.id, selectedId: activeOption.id, comment });
+            const params = new URLSearchParams(location.search);
+            if (!saved) params.set("pendingChoice", activeOption.id);
+            const target = location.pathname + (params.size ? "?" + params.toString() : "") + location.hash;
+            navigate("/auth?mode=login&returnTo=" + encodeURIComponent(target));
+            return;
+          }
           setSelectedId(activeOption?.id ?? "");
           setPourSequence((sequence) => sequence + 1);
         }} aria-pressed={selectedId === activeOption?.id} aria-label={t("vote.selectAria", { letter: letter(activeIndex), name: activeOption?.name ?? "" })}>
@@ -170,9 +171,9 @@ export function VotingPage() {
         </div>
       </section>
       <label className="field-label comment-input-label" htmlFor="vote-comment">{t("vote.leaveComment")} <span className="optional">{t("common.optional")}</span></label>
-      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
+      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} disabled={!accountUser} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">{t("vote.alreadyVoted")}</p>}
-      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || !selectedId} onClick={() => void submitVote()}>{t(saving ? "vote.submitting" : existingVote ? "vote.update" : "vote.submit")}</button>
+      <button className="purple-button button-full vote-cup-submit" disabled={!accountUser || saving || !open || !selectedId} onClick={() => void submitVote()}>{t(saving ? "vote.submitting" : existingVote ? "vote.update" : "vote.submit")}</button>
       <p className="vote-cup-note">{t("vote.editable")}</p>
       {confirmCommentDelete && <Modal title={t("comment.deleteQuestion")} onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>{t("vote.deleteAndSubmit")}</button></>}><p>{t("vote.deleteDetails")}</p></Modal>}
       {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}
