@@ -2,6 +2,7 @@ import { formatNumber, translate } from "../../../i18n/catalog";
 import type { Locale } from "../../../i18n/locale";
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
+import { optionColors } from "./optionColors";
 
 export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
 
@@ -72,6 +73,7 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   const gridTop = 214;
   const gridBottom = height - 260;
   const cellHeight = (gridBottom - gridTop - Math.max(0, rows - 1) * gap) / Math.max(1, rows);
+  const textOnly = poll.options.every((option) => !option.imageUrl?.trim());
   // Continuous perforated silhouette, including the four quarter-circle corners.
   const ticketPath = (inset: number) => {
     const path = new Path2D();
@@ -128,6 +130,90 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
     if (fitted !== value) fitted = `${fitted.slice(0, -1)}…`;
     ctx.fillText(fitted, x, y);
   };
+  const roundRect = (x: number, y: number, rectWidth: number, rectHeight: number, radius: number) => {
+    ctx.beginPath();
+    ctx.roundRect(x, y, rectWidth, rectHeight, radius);
+  };
+  const drawTextBottle = (x: number, y: number, index: number, name: string) => {
+    const bottleWidth = Math.min(cellWidth * 0.68, cellHeight * 0.58);
+    const bottleHeight = Math.min(cellHeight * 0.86, bottleWidth * 1.7);
+    const bottleX = x + (cellWidth - bottleWidth) / 2;
+    const bottleY = y + (cellHeight - bottleHeight) / 2;
+    const capHeight = bottleHeight * 0.065;
+    const neckHeight = bottleHeight * 0.09;
+    const bodyY = bottleY + capHeight + neckHeight * 0.7;
+    const bodyHeight = bottleHeight - capHeight - neckHeight * 0.7;
+    const radius = bottleWidth * 0.17;
+    const color = optionColors[index % optionColors.length];
+
+    ctx.fillStyle = "#b59bd5";
+    roundRect(bottleX + bottleWidth * 0.3, bottleY, bottleWidth * 0.4, capHeight, capHeight * 0.25);
+    ctx.fill();
+    ctx.strokeStyle = "#ffffffd9";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff70";
+    roundRect(bottleX + bottleWidth * 0.34, bottleY + capHeight * 0.75, bottleWidth * 0.32, neckHeight, 4);
+    ctx.fill();
+    ctx.strokeStyle = "#ffffffe6";
+    ctx.stroke();
+
+    roundRect(bottleX, bodyY, bottleWidth, bodyHeight, radius);
+    ctx.fillStyle = "#ffffff66";
+    ctx.fill();
+    ctx.save();
+    roundRect(bottleX + 2, bodyY + 2, bottleWidth - 4, bodyHeight - 4, radius - 2);
+    ctx.clip();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.68;
+    ctx.fillRect(bottleX + 3, bodyY + bodyHeight * 0.4, bottleWidth - 6, bodyHeight * 0.6);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    ctx.strokeStyle = "#ffffffe6";
+    ctx.lineWidth = 3;
+    roundRect(bottleX, bodyY, bottleWidth, bodyHeight, radius);
+    ctx.stroke();
+
+    const labelWidth = bottleWidth * 0.84;
+    const labelHeight = Math.min(bodyHeight * 0.48, Math.max(58, cellHeight * 0.38));
+    const labelX = bottleX + (bottleWidth - labelWidth) / 2;
+    const labelY = bodyY + (bodyHeight - labelHeight) * 0.48;
+    roundRect(labelX, labelY, labelWidth, labelHeight, 8);
+    ctx.fillStyle = "#fffdf9fa";
+    ctx.fill();
+    ctx.strokeStyle = "#ede9fe";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#7c3aed";
+    text(String.fromCharCode(65 + index), bottleX + bottleWidth / 2, labelY + labelHeight * 0.31, labelWidth - 12, 14, true);
+
+    const nameSize = Math.min(19, Math.max(13, labelWidth * 0.13));
+    ctx.font = `700 ${nameSize}px ${displayFamily}`;
+    const words = Array.from(name);
+    const lines: string[] = [];
+    let line = "";
+    for (const character of words) {
+      const candidate = line + character;
+      if (line && ctx.measureText(candidate).width > labelWidth - 14) {
+        lines.push(line);
+        line = character;
+      } else {
+        line = candidate;
+      }
+    }
+    if (line) lines.push(line);
+    const maxLines = Math.max(1, Math.floor((labelHeight * 0.48) / (nameSize * 1.2)));
+    if (lines.length > maxLines) {
+      lines.length = maxLines;
+      lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, -1)}…`;
+    }
+    ctx.fillStyle = "#4c1d95";
+    lines.forEach((value, lineIndex) => {
+      text(value, bottleX + bottleWidth / 2, labelY + labelHeight * 0.56 + lineIndex * nameSize * 1.2, labelWidth - 12, nameSize, true);
+    });
+    ctx.textAlign = "start";
+  };
   ctx.fillStyle = "#8969a6";
   text(brand, margin, 76, contentWidth, 19, true);
   ctx.fillStyle = "#4c1d95";
@@ -149,11 +235,13 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       const padding = 10;
       const scale = Math.min((cellWidth - padding * 2) / image.width, (imageHeight - padding * 2) / image.height);
       ctx.drawImage(image, x + (cellWidth - image.width * scale) / 2, y + (imageHeight - image.height * scale) / 2, image.width * scale, image.height * scale);
+    } else if (textOnly) {
+      drawTextBottle(x, y, index, label || translate(locale, "image.option", { index: index + 1 }));
     } else {
       ctx.fillStyle = "#b99cdd";
       text(formatNumber(locale, index + 1, { minimumIntegerDigits: 2 }), x + cellWidth / 2 - 26, y + imageHeight / 2 + 16, 100, 48, true);
     }
-    if (label) {
+    if (label && !textOnly) {
       ctx.fillStyle = "#5b21b6";
       text(label, x + 16, y + cellHeight - 18, cellWidth - 32, 22, true);
     }
