@@ -5,7 +5,7 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 
 // Browser/API contract tests use synthetic sessions and intercept every external
 // request; they never authenticate or mutate production data.
-export async function mockApp(page, { accountId = owner, closed = false } = {}) {
+export async function mockApp(page, { accountId = owner, closed = false, legacyAccountReads = false } = {}) {
   let user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
     user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
   const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
@@ -30,6 +30,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
     const headers = { 'access-control-allow-origin': '*', 'content-type': 'application/json' };
     const reply = (data) => route.fulfill({ status: 200, headers, body: JSON.stringify(data) });
+    const reject = (data) => route.fulfill({ status: 400, headers, body: JSON.stringify(data) });
     if (url.pathname.startsWith('/storage/v1/object/') && request.method() === 'POST') {
       state.calls.push({ name: 'image_upload', path: url.pathname });
       return reply({ Key: url.pathname.split('/object/')[1] });
@@ -42,6 +43,12 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON();
       state.calls.push({ name, body });
+      if (legacyAccountReads && name === 'own_comments') {
+        return reject({ code: '42501', message: 'PARTICIPANT_REQUIRED' });
+      }
+      if (legacyAccountReads && ['my_voted_polls', 'get_poll_by_link'].includes(name)) {
+        return reject({ code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` });
+      }
       if (name === 'save_poll') {
         const poll = body.p_poll;
         state.polls = [{ ...poll, is_public: poll.isPublic ?? false, visibility_reviewed_at: new Date().toISOString(), owner_id: accountId, author_name: accountId, created_at: poll.createdAt, closed_at: poll.endsAt ?? null,

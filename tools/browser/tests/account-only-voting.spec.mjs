@@ -106,3 +106,15 @@ test('account switches keep separate vote and comment drafts', async ({ page }) 
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toHaveAttribute('aria-pressed', 'true');
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
 });
+
+test('signed-in accounts can open poll cards while legacy read RPCs are still deployed', async ({ page }) => {
+  const state = await mockApp(page, { legacyAccountReads: true });
+  await page.goto('/');
+  await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  await page.getByRole('tab', { name: '广场', exact: true }).click();
+  await page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' }).click();
+  await expect(page).toHaveURL(new RegExp('/poll/' + pollId));
+  await expect(page.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
+  expect(state.calls.some(c => c.name === 'my_voted_polls')).toBe(true);
+  expect(state.calls.some(c => c.name === 'own_comments')).toBe(true);
+});

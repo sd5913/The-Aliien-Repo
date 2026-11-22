@@ -103,6 +103,20 @@ function isMissingVisibilityColumn(error: { code?: string; message?: string } | 
     && error.message?.includes("visibility_reviewed_at"));
 }
 
+interface SupabaseReadError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}
+
+function isLegacyAccountReadError(error: SupabaseReadError | null, endpoint: string): boolean {
+  if (!error) return false;
+  const text = [error.message, error.details, error.hint].filter(Boolean).join(" ");
+  return (error.code === "42501" && text.includes("PARTICIPANT_REQUIRED"))
+    || (error.code === "PGRST202" && text.includes(endpoint));
+}
+
 function toCard(row: PollRow): Poll {
   return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
 }
@@ -154,7 +168,10 @@ export async function fetchVotedPollsPage(participant: ParticipantProfile, filte
     p_voter_id: participant.id,
     p_token: "",
   });
-  if (error) throw error;
+  if (error) {
+    if (isLegacyAccountReadError(error, "my_voted_polls")) return { polls: [], hasMore: false };
+    throw error;
+  }
   let polls = ((data ?? []) as unknown as PollRow[])
     .map(toCard)
     .filter((poll) => isNotDeletedAndMatchesFilter(poll, filter, now));
@@ -174,7 +191,7 @@ export async function fetchRecentPolls(participant?: ParticipantProfile | null, 
     participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }) : Promise.resolve({ data: [], error: null }),
     ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
   ]);
-  if (votedResult.error) throw votedResult.error;
+  if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
   const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
   const recent = [...new Map([...voted.map(toCard), ...ownedPage.polls].map((poll) => [poll.id, poll])).values()]
@@ -200,7 +217,10 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
     const { data: linked, error: linkError } = await supabase.rpc("get_poll_by_link", {
       p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: null,
     });
-    if (linkError) throw linkError;
+    if (linkError) {
+      if (isLegacyAccountReadError(linkError, "get_poll_by_link")) return null;
+      throw linkError;
+    }
     if (!linked) return null;
     const detail = linked as { poll: PollRow; votes: VoteRow[]; comments: CommentRow[] };
     return toPollView(detail.poll, metadataOnly ? [] : detail.votes, metadataOnly ? [] : detail.comments);
@@ -219,7 +239,7 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
   ]);
   if (votesResult.error) throw votesResult.error;
   if (commentsResult.error) throw commentsResult.error;
-  if (ownResult.error) throw ownResult.error;
+  if (ownResult.error && !isLegacyAccountReadError(ownResult.error, "own_comments")) throw ownResult.error;
 
   const merged = new Map<string, CommentRow>();
   for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) {
