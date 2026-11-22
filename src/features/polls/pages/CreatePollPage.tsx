@@ -203,7 +203,8 @@ export function CreatePollPage() {
         <div className="option-editor-list">
           {options.map((option, index) => (
             <div className="option-editor" key={option.id}>
-              <OptionImageInput url={option.imageUrl} index={index}
+              <OptionImageInput url={option.imageUrl} index={index} ownerId={user?.id}
+                name={option.name} onNameChange={name => updateOption(option.id, name)}
                 onChange={(imageUrl) => setOptions((current) => current.map((item) => item.id === option.id ? { ...item, imageUrl } : item))}
                 onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">

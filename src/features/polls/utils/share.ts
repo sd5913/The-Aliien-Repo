@@ -76,32 +76,31 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   const ticketPath = (inset: number) => {
     const path = new Path2D();
     const left = inset, right = width - inset, top = inset, bottom = height - inset;
-    const radius = 16 + inset;
-    const corner = 28 + inset;
-    const step = width / 14;
+    // Five semicircular cutouts on each horizontal edge, with matching corner cuts.
+    const intervals = 6;
+    const step = width / intervals;
+    const radius = 26 + inset;
     const angle = Math.asin(inset / radius);
-    const cornerAngle = Math.asin(inset / corner);
     const reach = Math.sqrt(radius * radius - inset * inset);
-    const cornerReach = Math.sqrt(corner * corner - inset * inset);
     // Keep the same circle centers for every outline so the inset follows each notch.
-    path.moveTo(left, cornerReach);
-    path.arc(0, 0, corner, Math.PI / 2 - cornerAngle, cornerAngle, true);
-    for (let i = 1; i < 14; i++) {
+    path.moveTo(left, reach);
+    path.arc(0, 0, radius, Math.PI / 2 - angle, angle, true);
+    for (let i = 1; i < intervals; i++) {
       const x = i * step;
       path.lineTo(x - reach, top);
       path.arc(x, 0, radius, Math.PI - angle, angle, true);
     }
-    path.lineTo(width - cornerReach, top);
-    path.arc(width, 0, corner, Math.PI - cornerAngle, Math.PI / 2 + cornerAngle, true);
-    path.lineTo(right, height - cornerReach);
-    path.arc(width, height, corner, -Math.PI / 2 - cornerAngle, -Math.PI + cornerAngle, true);
-    for (let i = 13; i > 0; i--) {
+    path.lineTo(width - reach, top);
+    path.arc(width, 0, radius, Math.PI - angle, Math.PI / 2 + angle, true);
+    path.lineTo(right, height - reach);
+    path.arc(width, height, radius, -Math.PI / 2 - angle, -Math.PI + angle, true);
+    for (let i = intervals - 1; i > 0; i--) {
       const x = i * step;
       path.lineTo(x + reach, bottom);
       path.arc(x, height, radius, -angle, -Math.PI + angle, true);
     }
-    path.lineTo(cornerReach, bottom);
-    path.arc(0, height, corner, -cornerAngle, -Math.PI / 2 + cornerAngle, true);
+    path.lineTo(reach, bottom);
+    path.arc(0, height, radius, -angle, -Math.PI / 2 + angle, true);
     path.closePath();
     return path;
   };
@@ -168,21 +167,26 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   // Draw modules directly into the exported PNG: no external QR service or image request.
   const qr = QRCode.create(url, { errorCorrectionLevel: "M" });
   const quietZone = 4;
-  const moduleSize = Math.max(1, Math.floor(180 / (qr.modules.size + quietZone * 2)));
-  const qrSize = (qr.modules.size + quietZone * 2) * moduleSize;
-  const qrX = width - margin - qrSize;
-  const qrY = height - 36 - qrSize;
+  const moduleCount = qr.modules.size + quietZone * 2;
+  const slotSize = moduleCount * Math.max(1, Math.floor(180 / moduleCount));
+  const qrSize = Math.max(moduleCount, Math.round(slotSize * 0.85));
+  const inset = Math.round((slotSize - qrSize) / 2);
+  const qrX = width - margin - slotSize + inset;
+  const qrY = height - 36 - slotSize + inset;
+  const moduleEdge = (index: number) => Math.round((index + quietZone) * qrSize / moduleCount);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(qrX, qrY, qrSize, qrSize);
   ctx.fillStyle = "#241039";
   for (let row = 0; row < qr.modules.size; row++) {
     for (let col = 0; col < qr.modules.size; col++) {
       if (qr.modules.get(row, col)) {
-        ctx.fillRect(qrX + (col + quietZone) * moduleSize, qrY + (row + quietZone) * moduleSize, moduleSize, moduleSize);
+        const x = moduleEdge(col);
+        const y = moduleEdge(row);
+        ctx.fillRect(qrX + x, qrY + y, moduleEdge(col + 1) - x, moduleEdge(row + 1) - y);
       }
     }
   }
-  const linkWidth = contentWidth - qrSize - 24;
+  const linkWidth = contentWidth - slotSize - 24;
   ctx.fillStyle = "#5b21b6";
   text(scan, margin, height - 158, linkWidth, 25, true);
   let urlSize = 21;

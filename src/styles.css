@@ -245,21 +245,61 @@ h1, h2, h3 { color: var(--deep-purple); }
 .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; padding: 5px; border-radius: 999px; background: #ffffff86; }
 .filter-tabs button { flex: 1; height: 34px; border: 0; border-radius: 999px; background: transparent; color: #8e6ab3; font-size: 11px; font-weight: 700; cursor: pointer; }
 .filter-tabs button.active { color: #fff; background: linear-gradient(100deg, #7c3aed, #a855f7); box-shadow: 0 4px 10px #7c3aed33; }
-.swipe-card { position: relative; border-radius: 10px; overflow: hidden; background: transparent; touch-action: pan-y; }
-.swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; width: 192px; }
+.swipe-card { position: relative; border-radius: 10px; overflow: hidden; background: transparent; touch-action: pan-y; filter: drop-shadow(0 0 1px #50346765); }
+.swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; width: 192px; transition: clip-path .24s ease-out; }
 .swipe-action { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 8px 3px; border: 0; color: #5b21b6; font-size: 11px; font-weight: 800; cursor: pointer; }
 .swipe-action svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .swipe-edit { background: #e9ddff; }
 .swipe-delete { color: #b4233c; background: #ffe1e5; }
 .swipe-end { color: #5b21b6; background: #d9ccff; }
 .swipe-action:disabled { color: #8f7cab; cursor: default; opacity: .7; }
-.my-poll-card { --ticket-background: linear-gradient(115deg, #eee3fc, #f4eafb 55%, #e6dafa); --ticket-line: #cbb5ed; position: relative; z-index: 1; display: flex; align-items: center; min-height: 116px; padding: 13px 12px; border: 1px solid #ffffffed; border-radius: 10px; background: var(--ticket-background); box-shadow: inset 0 0 10px #ffffff70; transition: transform .24s ease-out; touch-action: pan-y; user-select: none; -webkit-mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y; mask: radial-gradient(circle at 0 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y, radial-gradient(circle at 100% 50%, transparent 3px, #000 3.6px) 0 0 / 100% 16px repeat-y; -webkit-mask-composite: source-in; mask-composite: intersect; }
+.my-poll-card { --ticket-background: linear-gradient(115deg, #eee3fc, #f4eafb 55%, #e6dafa); --ticket-line: #cbb5ed; position: relative; z-index: 1; display: flex; align-items: center; min-height: 116px; padding: 13px 12px; border: 1px solid transparent; border-radius: 0; box-shadow: inset 0 0 10px #ffffff70; transition: transform .24s ease-out; touch-action: pan-y; user-select: none;
+  --ticket-seam: 43%;
+  --edge-cut: transparent 5.5px, #000 6.2px;
+  --edge-highlight: #ffffffed;
+  --side-highlight: var(--edge-highlight) 6.7px, transparent 7.4px;
+  --seam-highlight: var(--edge-highlight) 8.2px, transparent 8.9px;
+  --edge-repeat: 0 10% / 100% calc(100% / 6) repeat-y;
+  /* Match the mask's origins so the highlight follows each cut into the ticket. */
+  background:
+    radial-gradient(circle at left center, var(--side-highlight)) var(--edge-repeat) border-box,
+    radial-gradient(circle at right center, var(--side-highlight)) var(--edge-repeat) border-box,
+    radial-gradient(circle at var(--ticket-seam) top, var(--seam-highlight)) border-box,
+    radial-gradient(circle at var(--ticket-seam) bottom, var(--seam-highlight)) border-box,
+    linear-gradient(var(--edge-highlight) 1px, transparent 1px calc(100% - 1px), var(--edge-highlight) calc(100% - 1px)) border-box,
+    linear-gradient(90deg, var(--edge-highlight) 1px, transparent 1px calc(100% - 1px), var(--edge-highlight) calc(100% - 1px)) border-box,
+    var(--ticket-background);
+  /* Offset each tile by half its height to carve the corners too. */
+  --ticket-mask:
+    radial-gradient(circle at left center, var(--edge-cut)) var(--edge-repeat),
+    radial-gradient(circle at right center, var(--edge-cut)) var(--edge-repeat),
+    radial-gradient(circle at var(--ticket-seam) top, transparent 7px, #000 7.7px),
+    radial-gradient(circle at var(--ticket-seam) bottom, transparent 7px, #000 7.7px);
+  -webkit-mask: var(--ticket-mask);
+  mask: var(--ticket-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
 .my-poll-card[data-ticket-tone="1"] { --ticket-background: linear-gradient(115deg, #fbe0ee, #fceaf3 55%, #eee2fb); --ticket-line: #edbad8; }
 .my-poll-card[data-ticket-tone="2"] { --ticket-background: linear-gradient(115deg, #e9e0fc, #e7eafa 55%, #d6ebfc); --ticket-line: #c3c1f1; }
-.my-poll-card::before { position: absolute; top: 5px; bottom: 5px; left: 43%; width: 1px; background: repeating-linear-gradient(to bottom, var(--ticket-line) 0 7px, transparent 7px 12px); content: ""; pointer-events: none; }
-.my-poll-card::after { position: absolute; inset: 4px 6px; border: 1px solid var(--ticket-line); border-radius: 8px; box-shadow: 0 0 0 2px #ffffff38; opacity: .65; content: ""; pointer-events: none; }
+.my-poll-card::before { position: absolute; top: 9px; bottom: 9px; left: var(--ticket-seam); width: 3px; transform: translateX(-50%); background: radial-gradient(circle, var(--ticket-line) 1.25px, transparent 1.6px) center / 3px 6px repeat-y; content: ""; pointer-events: none; }
+.my-poll-card::after {
+  position: absolute;
+  inset: 5px 8px;
+  border: 1px solid var(--ticket-line);
+  border-radius: 2px;
+  opacity: .65;
+  content: "";
+  pointer-events: none;
+  --seam-gap-start: calc(var(--ticket-seam) - 12px);
+  --seam-gap-end: calc(var(--ticket-seam) + 12px);
+  mask-image: linear-gradient(90deg, #000 var(--seam-gap-start), transparent var(--seam-gap-start) var(--seam-gap-end), #000 var(--seam-gap-end));
+  /* Include the horizontal insets and card border to align with the notch centers. */
+  mask-size: calc(100% + 18px) 100%;
+  mask-position: center;
+  mask-repeat: no-repeat;
+}
 .settings-my-polls .swipe-card { background: transparent; box-shadow: none; }
-.settings-my-polls .my-poll-card, .home-recent .my-poll-card { background: var(--ticket-background); }
 .my-poll-thumbnails { display: flex; flex: 0 0 40%; align-items: center; gap: 7px; padding-right: 10px; }
 .my-poll-thumbnails img { width: 54px; height: 66px; flex: 0 1 54px; border-radius: 12px; object-fit: cover; background: linear-gradient(145deg, #fbcfe8, #c4b5fd 55%, #bfdbfe); }
 .poll-preview-bottle { position: relative; flex: 0 1 48px; width: 48px; min-width: 0; aspect-ratio: 2 / 3; }
@@ -686,9 +726,19 @@ h1, h2, h3 { color: var(--deep-purple); }
 .option-photo-trigger:disabled { opacity: .5; cursor: wait; }
 .option-photo-trigger:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3px; }
 .option-photo-empty { font-size: 28px; font-weight: 300; }
-.option-media-menu { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 16px; }
-.option-media-menu > button { width: min(100%, 230px); min-height: 43px; border: 1px solid #e9dcf5; border-radius: 13px; background: #fff; color: #6d28a8; font-size: 14px; font-weight: 700; cursor: pointer; }
-.option-emoji-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; width: min(100%, 230px); }
-.option-emoji-grid button { min-height: 44px; border: 1px solid #e9dcf5; border-radius: 11px; background: #fff; font-size: 25px; cursor: pointer; }
+.modal-backdrop:has(.option-media-menu) { align-items: flex-end; padding: 0; backdrop-filter: none; }
+.modal-card:has(.option-media-menu) { border-radius: 28px 28px 0 0; padding: 32px 20px max(20px, env(safe-area-inset-bottom)); background: linear-gradient(145deg,#faf4ff,#f2ebfc 65%,#e8edfc); text-align: left; }
+.modal-card:has(.option-media-menu)::before { content: ""; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 42px; height: 5px; border-radius: 6px; background: #d0b9e6; }
+.modal-card:has(.option-media-menu) .modal-sparkle { display: none; }
+.modal-card:has(.option-media-menu) h2 { font-size: 15px; }
+.option-media-menu { display: grid; gap: 10px; }
+.option-photo-strip { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-x: auto; padding: 3px; }
+.option-photo-strip button { display: grid; place-items: center; flex: 0 0 76px; height: 76px; border: 1px solid white; border-radius: 16px; overflow: hidden; padding: 0; background: linear-gradient(135deg,#f6dbf7,#d5ccfa); color: var(--purple); }
+.option-photo-strip img { width: 100%; height: 100%; object-fit: cover; }
+.option-media-menu > button, .option-media-menu > label { padding: 10px 13px; border: 1px solid #eadcf7; border-radius: 16px; background: #ffffff80; color: var(--deep-purple); text-align: left; }
+.option-gallery-row { display: grid; grid-template-columns: 1fr auto; }
+.option-gallery-row::after { content: "›"; grid-area: 1 / 2 / 3 / 3; align-self: center; font-size: 22px; }
+.option-media-menu small { color: #806295; }
+.option-media-menu textarea { display: block; margin-top: 6px; min-height: 70px; resize: vertical; }
 
 .result-leader-summary { margin: -6px 0 14px; text-align: center; color: #8256b0; font-size: 12px; font-weight: 700; }

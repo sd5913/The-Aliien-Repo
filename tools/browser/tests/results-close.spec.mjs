@@ -73,7 +73,7 @@ test('failed result loading still closes directly to Home', async ({ page }) => 
     status: 400, contentType: 'application/json', body: JSON.stringify({ code: '42501', message: 'denied' }),
   }));
   await page.goto(`/poll/${pollId}/results?returnTo=%2Fsettings`);
-  await expect(page.getByRole('alert')).toContainText('投票加载失败');
+  await expect(page.getByRole('alert')).toContainText('无法载入投票');
   await closeToHome(page);
 });
 
