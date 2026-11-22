@@ -168,6 +168,7 @@ export default {
   "poll.votedByMe": "I voted",
   "poll.squareParticipants": "{count} participants",
   "poll.squareVote": "Vote now",
+  "poll.squareResults": "View results",
   "poll.preview": "Option previews",
   "poll.previewOption": "Option {letter}: {name}",
   "image.previous": "Previous option",

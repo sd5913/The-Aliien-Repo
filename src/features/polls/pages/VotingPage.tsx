@@ -4,7 +4,6 @@ import { readDraft, saveDraft, clearDraft, isVoteDraft } from "../utils/drafts";
 import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useParticipant } from "../../auth/utils/useParticipant";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -13,7 +12,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
-import { canSharePoll, getVoter } from "../utils/voting";
+import { getVoter, isPollOwner } from "../utils/voting";
 import { optionColors } from "../utils/optionColors";
 
 export function VotingPage() {
@@ -27,7 +26,6 @@ export function VotingPage() {
   const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
   const voter = participant ?? getVoter();
-  const share = useSharePoll();
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
   const [hydratedKey, setHydratedKey] = useState("");
   const [saving, setSaving] = useState(false);
@@ -79,6 +77,7 @@ export function VotingPage() {
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
   if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("auth.checking")}</p></PageShell>;
+  if (isPollOwner(poll, accountUser?.id ?? "")) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
   const activeOption = poll.options[activeIndex];
@@ -126,7 +125,6 @@ export function VotingPage() {
   return (
     <PageShell showNavigation={false} backTo={returnTo} title={t("vote.help")}>
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{participants(poll.votes.length)}</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
-      {canSharePoll(poll, accountUser?.id ?? "") && <button className="button-soft voting-share-button" type="button" onClick={() => share(poll)}>{t("poll.share")}</button>}
       {!open && <div className="notice-banner">{t("vote.closed")}</div>}
       {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {

@@ -38,7 +38,7 @@ for (const width of [320, 390, 430]) {
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (path === '/?square') {
-        await expect(page.locator('.home-square').getByRole('button', { name: '分享投票' })).toHaveCount(0);
+        await expect(page.locator('.home-square').getByRole('button', { name: '分享投票' })).toHaveCount(1);
         await page.locator('.home-square .my-poll-card').screenshot({ path: info.outputPath('text-card.png') });
       }
     }

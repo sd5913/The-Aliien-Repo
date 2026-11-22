@@ -25,6 +25,8 @@ insert into public.votes(poll_id,voter_id) values('90000000-0000-4000-8000-00000
 insert into public.poll_comments(poll_id,voter_id,nickname,avatar,body) values('90000000-0000-4000-8000-000000000001','70000000-0000-4000-8000-000000000001','Historical guest','🐱','Preserved comment');`);
 const migration=fs.readdirSync('supabase/migrations').find(f=>f.endsWith('_account_only_participation.sql'));
 await db.exec(fs.readFileSync('supabase/migrations/'+migration,'utf8'));
+const ownerVotingMigration=fs.readdirSync('supabase/migrations').find(f=>f.endsWith('_prevent_poll_owner_voting.sql'));
+await db.exec(fs.readFileSync('supabase/migrations/'+ownerVotingMigration,'utf8'));
 await db.exec(`do $$ begin
   assert (select count(*) from public.votes where poll_id='90000000-0000-4000-8000-000000000001')=1;
   assert (select count(*) from public.poll_comments where poll_id='90000000-0000-4000-8000-000000000001')=1;

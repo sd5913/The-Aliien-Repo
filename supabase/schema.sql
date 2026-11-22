@@ -490,6 +490,7 @@ begin
   if not private.is_account_voter(p_voter_id) then raise exception 'ACCOUNT_REQUIRED' using errcode='42501'; end if;
   select * into target from public.polls where id = p_poll_id for update;
   if not found then raise exception 'POLL_NOT_FOUND' using errcode = '22023'; end if;
+  if target.owner_id = auth.uid() then raise exception 'POLL_OWNER_CANNOT_VOTE' using errcode = '42501'; end if;
   if target.status <> 'open' or (target.closed_at is not null and target.closed_at <= clock_timestamp()) then
     raise exception 'POLL_CLOSED' using errcode = '22023'; end if;
   if coalesce(jsonb_typeof(p_ranking),'') <> 'array' then raise exception 'SINGLE_OPTION_REQUIRED' using errcode = '22023'; end if;

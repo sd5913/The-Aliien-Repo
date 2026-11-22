@@ -168,6 +168,7 @@ export default {
   "poll.votedByMe": "내가 참여한 투표",
   "poll.squareParticipants": "{count}명 참여",
   "poll.squareVote": "투표하기",
+  "poll.squareResults": "결과 보기",
   "poll.preview": "선택지 미리보기",
   "poll.previewOption": "선택지 {letter}: {name}",
   "image.previous": "이전 선택지",

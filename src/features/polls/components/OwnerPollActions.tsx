@@ -7,7 +7,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { isPollOpen } from "../../../components/ui/StatusPill";
 import type { Poll } from "../../../types/poll";
 
-export function OwnerPollActions({ poll, onEnd, onDelete }: { poll: Poll; onEnd: () => Promise<void>; onDelete: () => Promise<void> }) {
+export function OwnerPollActions({ poll, onShare, onEnd, onDelete }: { poll: Poll; onShare: () => void; onEnd: () => Promise<void>; onDelete: () => Promise<void> }) {
   const { t } = useLocale();
   const [mode, setMode] = useState<"menu" | "end" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,9 +28,9 @@ export function OwnerPollActions({ poll, onEnd, onDelete }: { poll: Poll; onEnd:
     <button className="settings-nav-button" aria-label={t("poll.manage")} onClick={() => setMode("menu")}>···</button>
     {mode === "menu" && <Modal title={t("poll.manage")} onClose={() => setMode(null)}>
       <div className="owner-action-menu">
-        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => navigate(`/create?id=${poll.id}`)}>{t("poll.editDeadline")}</button>
-        <button className="button-soft" onClick={() => navigate(`/create?copy=${poll.id}`)}>{t("poll.copyNew")}</button>
-        <button className="button-soft" disabled={!isPollOpen(poll)} onClick={() => setMode("end")}>{t("poll.end")}</button>
+        {isPollOpen(poll) && <button className="button-soft" onClick={() => navigate(`/create?id=${poll.id}`)}>{t("poll.editDeadline")}</button>}
+        <button className="button-soft" onClick={() => { setMode(null); onShare(); }}>{t("poll.share")}</button>
+        {isPollOpen(poll) && <button className="button-soft" onClick={() => setMode("end")}>{t("poll.end")}</button>}
         <button className="danger-button" onClick={() => setMode("delete")}>{t("poll.delete")}</button>
       </div>
     </Modal>}

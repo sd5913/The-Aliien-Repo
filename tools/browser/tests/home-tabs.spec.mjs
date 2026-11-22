@@ -66,5 +66,5 @@ test('square excludes private, manually ended and expired polls before publicati
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toContainText('最新公开');
   await expect(cards.last()).toContainText('较早公开');
-  await expect(page.locator('.home-square').getByRole('link', { name: '去投票', exact: false })).toHaveCount(2);
+  await expect(page.locator('.home-square').getByRole('link', { name: '查看结果', exact: false })).toHaveCount(2);
 });

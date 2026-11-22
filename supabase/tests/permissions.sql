@@ -30,7 +30,7 @@ do $$ begin
 end $$;
 
 reset role;
-update pg_temp.permission_test_state set participant_a=owner_a,participant_b=owner_b;
+update pg_temp.permission_test_state set participant_a=owner_b,participant_b=owner_a;
 select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated','is_anonymous',false)::text,true) from permission_test_state;
 set local role authenticated;
 select public.save_poll(jsonb_build_object('id',poll_a,'title','Permission test A','status','open','isPublic',true,
@@ -43,6 +43,13 @@ do $$ begin
   assert (select p.owner_id=s.owner_a from public.polls p cross join pg_temp.permission_test_state s where p.id=s.poll_a), 'owner must come from JWT, not payload';
   assert (select count(*) from public.poll_options where poll_id=(select poll_a from pg_temp.permission_test_state))=2;
   insert into pg_temp.permission_test_results values('account_creates_atomic_poll_with_server_assigned_owner');
+end $$;
+
+do $$ declare s record; begin
+  select * into s from pg_temp.permission_test_state;
+  begin perform public.submit_vote(s.poll_a,s.owner_a,'',jsonb_build_array(s.option_a));
+    raise exception 'poll owner vote unexpectedly allowed'; exception when insufficient_privilege then null; end;
+  insert into pg_temp.permission_test_results values('poll_owner_cannot_vote');
 end $$;
 
 reset role;
@@ -63,7 +70,7 @@ do $$ declare s record; begin
 end $$;
 
 reset role;
-select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated')::text,true) from permission_test_state;
+select set_config('request.jwt.claims',jsonb_build_object('sub',owner_b,'role','authenticated')::text,true) from permission_test_state;
 set local role authenticated;
 select public.submit_vote(poll_a,participant_a,repeat('a',64),jsonb_build_array(option_a)) from pg_temp.permission_test_state;
 select public.submit_vote(poll_a,participant_a,repeat('a',64),jsonb_build_array(option_b)) from pg_temp.permission_test_state;
@@ -112,16 +119,14 @@ do $$ declare s record; begin
 end $$;
 
 reset role;
-select set_config('request.jwt.claims',jsonb_build_object('sub',owner_a,'role','authenticated')::text,true) from permission_test_state;
+select set_config('request.jwt.claims',jsonb_build_object('sub',owner_b,'role','authenticated')::text,true) from permission_test_state;
 set local role authenticated;
 do $$ declare s record; begin
   select * into s from pg_temp.permission_test_state;
   begin perform public.submit_vote(s.poll_a,s.participant_a,repeat('a',64),jsonb_build_array(s.option_a));
     raise exception 'closed vote unexpectedly allowed'; exception when invalid_parameter_value then null; end;
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',s.participant_b,'role','authenticated')::text,true);
-  begin perform public.submit_vote(s.poll_a,s.participant_b,repeat('b',64),jsonb_build_array(s.option_a));
-    raise exception 'new vote after close unexpectedly allowed'; exception when invalid_parameter_value then null; end;
   assert (select count(*) from public.polls where id=s.poll_a)=1, 'public results must remain visible';
+  assert (select count(*) from public.votes where poll_id=s.poll_a and voter_id=s.participant_a::text)=1;
   insert into pg_temp.permission_test_results values('closed_vote_updates_and_inserts_denied_results_still_visible');
 end $$;
 

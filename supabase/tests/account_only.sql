@@ -24,31 +24,44 @@ reset role;
 
 select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 set local role authenticated;
-select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','','["30000000-0000-4000-8000-000000000001"]','Account comment','Account user','https://example.invalid/avatar.png');
-select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','','["30000000-0000-4000-8000-000000000001"]','Updated comment','Account user','🐱');
 do $$ begin
-  assert (select count(*) from public.votes where poll_id='20000000-0000-4000-8000-000000000001')=1;
-  assert (select count(*) from public.own_comments('10000000-0000-4000-8000-000000000001',''))=1;
-  assert (select count(*) from public.my_voted_polls('10000000-0000-4000-8000-000000000001',''))=1;
-  begin perform public.submit_vote('20000000-0000-4000-8000-000000000001','70000000-0000-4000-8000-000000000001',repeat('c',64),'["30000000-0000-4000-8000-000000000001"]'); raise exception 'old token identity adopted';
+  begin
+    perform public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','','["30000000-0000-4000-8000-000000000001"]','Owner comment','Account user','🐱');
+    raise exception 'poll owner ballot unexpectedly allowed';
   exception when insufficient_privilege then null; end;
+  assert (select count(*) from public.votes where poll_id='20000000-0000-4000-8000-000000000001')=0;
+  assert (select count(*) from public.poll_comments where poll_id='20000000-0000-4000-8000-000000000001')=0;
+  assert (select count(*) from public.my_voted_polls('10000000-0000-4000-8000-000000000001',''))=0;
 end $$;
 reset role;
 
 select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 set local role authenticated;
+select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','','["30000000-0000-4000-8000-000000000001"]','Account comment','Account user','https://example.invalid/avatar.png');
+select public.submit_ballot('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','','["30000000-0000-4000-8000-000000000001"]','Updated comment','Account user','🐱');
+do $$ begin
+  assert (select count(*) from public.votes where poll_id='20000000-0000-4000-8000-000000000001')=1;
+  assert (select count(*) from public.own_comments('10000000-0000-4000-8000-000000000002',''))=1;
+  assert (select count(*) from public.my_voted_polls('10000000-0000-4000-8000-000000000002',''))=1;
+  begin perform public.submit_vote('20000000-0000-4000-8000-000000000001','70000000-0000-4000-8000-000000000001',repeat('c',64),'["30000000-0000-4000-8000-000000000001"]'); raise exception 'old token identity adopted';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
 do $$ declare comment_id uuid; begin
-  assert jsonb_array_length(public.get_poll_by_link('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',repeat('c',64))->'comments')=0;
-  begin perform * from public.own_comments('10000000-0000-4000-8000-000000000001',''); raise exception 'foreign comments readable';
+  assert jsonb_array_length(public.get_poll_by_link('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002',repeat('c',64))->'comments')=1;
+  begin perform * from public.own_comments('10000000-0000-4000-8000-000000000002',''); raise exception 'foreign comments readable';
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;
 -- Obtain the comment id as the test administrator; other accounts still cannot mutate it.
 do $$ declare comment_id uuid; begin
   select id into comment_id from public.poll_comments where poll_id='20000000-0000-4000-8000-000000000001';
-  begin perform private.update_comment(comment_id,'10000000-0000-4000-8000-000000000001','','hijack'); raise exception 'foreign edit allowed';
+  begin perform private.update_comment(comment_id,'10000000-0000-4000-8000-000000000002','','hijack'); raise exception 'foreign edit allowed';
   exception when insufficient_privilege then null; end;
-  begin perform private.delete_comment(comment_id,'10000000-0000-4000-8000-000000000001',''); raise exception 'foreign delete allowed';
+  begin perform private.delete_comment(comment_id,'10000000-0000-4000-8000-000000000002',''); raise exception 'foreign delete allowed';
   exception when insufficient_privilege then null; end;
 end $$;
 
@@ -67,15 +80,15 @@ do $$ begin
   assert jsonb_array_length(public.get_poll_by_link('20000000-0000-4000-8000-000000000001')->'comments')=1;
 end $$;
 reset role;
-select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 set local role authenticated;
 do $$ declare comment_id uuid; begin
-  begin perform public.submit_vote('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','','["30000000-0000-4000-8000-000000000001"]'); raise exception 'closed ballot allowed';
+  begin perform public.submit_vote('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','','["30000000-0000-4000-8000-000000000001"]'); raise exception 'closed ballot allowed';
   exception when invalid_parameter_value then null; end;
-  select id into comment_id from public.own_comments('10000000-0000-4000-8000-000000000001','');
-  perform public.update_comment(comment_id,'10000000-0000-4000-8000-000000000001','','Edited after close');
-  perform public.delete_comment(comment_id,'10000000-0000-4000-8000-000000000001','');
-  assert (select count(*) from public.own_comments('10000000-0000-4000-8000-000000000001',''))=0;
+  select id into comment_id from public.own_comments('10000000-0000-4000-8000-000000000002','');
+  perform public.update_comment(comment_id,'10000000-0000-4000-8000-000000000002','','Edited after close');
+  perform public.delete_comment(comment_id,'10000000-0000-4000-8000-000000000002','');
+  assert (select count(*) from public.own_comments('10000000-0000-4000-8000-000000000002',''))=0;
 end $$;
 reset role;
 rollback;

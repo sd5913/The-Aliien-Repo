@@ -52,6 +52,7 @@ export function HomePage() {
     if (!deleting) return;
     try {
       await (polls.some((item) => item.id === deleting.id) ? removePoll : removeSquarePoll)(deleting.id);
+      void refreshSquare();
       setExpandedPollId(null);
       setToast("poll.deleted");
     } catch (error) {
@@ -73,6 +74,11 @@ export function HomePage() {
       setToast("poll.endFailed");
     }
   };
+
+  const squareCards = squarePolls.map((poll) => {
+    const owner = isPollOwner(poll, accountUser?.id ?? "");
+    return <PollCard key={poll.id} poll={poll} surface="square" to={pollPath(poll.id, owner ? "results" : "vote", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />;
+  });
 
   return (
     <PageShell>
@@ -115,7 +121,13 @@ export function HomePage() {
       </section>
       <section className="home-recent home-square" id="home-square-panel" role="tabpanel" aria-labelledby="home-square-tab" hidden={tab !== "square"}>
         <div className="section-title-row"><div><span className="eyebrow">{t("home.squareEyebrow")}</span><h2>{t("home.tabSquare")}</h2><p className="home-square-description">{t("home.squareDescription")}</p></div></div>
-        {squareLoading ? <p className="empty-inline">{t("home.squareLoading")}</p> : squareError ? <p className="settings-feedback" role="alert">{t("home.squareLoadFailed")}<RetryIconButton onClick={() => void refreshSquare()} /></p> : squarePolls.length ? <><div className="poll-card-list">{squarePolls.map((poll) => <PollCard key={poll.id} poll={poll} surface="square" to={pollPath(poll.id, "vote", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div>{squareSyncError && <p className="settings-feedback" role="status">{t("home.squareLoadFailed")}<RetryIconButton onClick={() => void refreshSquare()} /></p>}</> : <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>{t("home.squareEmpty")}</h3><p>{t("home.squareEmptyDetails")}</p></div>}
+        {squareLoading && <p className="empty-inline">{t("home.squareLoading")}</p>}
+        {!squareLoading && squareError && <p className="settings-feedback" role="alert">{t("home.squareLoadFailed")}<RetryIconButton onClick={() => void refreshSquare()} /></p>}
+        {!squareLoading && !squareError && squarePolls.length > 0 && <>
+          <div className="poll-card-list">{squareCards}</div>
+          {squareSyncError && <p className="settings-feedback" role="status">{t("home.squareLoadFailed")}<RetryIconButton onClick={() => void refreshSquare()} /></p>}
+        </>}
+        {!squareLoading && !squareError && squarePolls.length === 0 && <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>{t("home.squareEmpty")}</h3><p>{t("home.squareEmptyDetails")}</p></div>}
       </section>
       {ending && <Modal title={t("poll.endQuestion")} onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>{t("poll.endConfirm")}</button></>}><p>{t("poll.endDetails")}</p></Modal>}
       {deleting && <Modal title={t("poll.deleteQuestion")} onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>{t("poll.keep")}</button><button className="danger-button" onClick={confirmDelete}>{t("poll.delete")}</button></>}><p>{t("poll.deleteDetails", { title: deleting.title })}</p></Modal>}

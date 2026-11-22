@@ -168,6 +168,7 @@ export default {
   "poll.votedByMe": "我投的",
   "poll.squareParticipants": "{count} 人参与",
   "poll.squareVote": "去投票",
+  "poll.squareResults": "查看结果",
   "poll.preview": "选项预览",
   "poll.previewOption": "选项 {letter}：{name}",
   "image.previous": "上一个选项",
