@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { useAccount } from "../components/AccountProvider";
 import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
-import { sendMagicLink, signInWithApple, signInWithGitHub } from "../services/auth";
+import { sendMagicLink, signInWithApple, signInWithGitHub, signInWithGoogle } from "../services/auth";
 import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
 
 type AuthMode = "login" | "register";
@@ -28,7 +28,7 @@ export function AuthPage() {
   const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
-  const [pending, setPending] = useState<"email" | "github" | "apple" | null>(null);
+  const [pending, setPending] = useState<"email" | "github" | "google" | "apple" | null>(null);
   const [providerError, setProviderError] = useState<MessageKey | "">(() => {
     const fragment = new URLSearchParams(hash.slice(1));
     return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key))
@@ -95,6 +95,20 @@ export function AuthPage() {
     }
   };
 
+  const submitGoogle = async () => {
+    if (pending) return;
+    setPending("google");
+    setFeedback("");
+    setProviderError("");
+    try {
+      const { data, error } = await signInWithGoogle(returnTo);
+      if (error || !data.url) throw new Error("Google sign-in did not start");
+    } catch {
+      setProviderError("auth.googleFailed");
+      setPending(null);
+    }
+  };
+
   const submitApple = async () => {
     if (pending) return;
     setPending("apple");
@@ -133,6 +147,10 @@ export function AuthPage() {
         <AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={submitApple} />
         <button className="auth-github button-full" type="button" onClick={submitGitHub} disabled={pending !== null}>
           {pending === "github" ? t("auth.githubPending") : t("auth.github")}
+        </button>
+        <button className="auth-google button-full" type="button" onClick={submitGoogle} disabled={pending !== null}>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path fill="#4285f4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z"/><path fill="#34a853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.2-2.5c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z"/><path fill="#fbbc05" d="M6.2 13.7a6 6 0 0 1 0-3.5V7.6H2.9a10 10 0 0 0 0 8.8l3.3-2.7Z"/><path fill="#ea4335" d="M12 5.9c1.5 0 2.9.5 3.9 1.5l2.9-2.9C17 2.8 14.7 2 12 2a10 10 0 0 0-9.1 5.6l3.3 2.6c.8-2.5 3.1-4.3 5.8-4.3Z"/></svg>
+          {pending === "google" ? t("auth.googlePending") : t("auth.google")}
         </button>
 
         {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}
