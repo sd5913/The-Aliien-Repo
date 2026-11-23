@@ -12,8 +12,18 @@ import chevronLeft from "../../../images/icon/chevron-left.svg";
 import chevronRight from "../../../images/icon/chevron-right.svg";
 import chevronUp from "../../../images/icon/chevron-up.svg";
 import camera from "../../../images/icon/camera.svg";
+import person from "../../../images/icon/person.svg";
+import key from "../../../images/icon/key.svg";
+import globe from "../../../images/icon/globe.svg";
+import version from "../../../images/icon/version.svg";
+import changelog from "../../../images/icon/changelog.svg";
+import bell from "../../../images/icon/bell.svg";
+import binAlert from "../../../images/icon/bin-alert.svg";
+import google from "../../../images/icon/google.svg";
+import github from "../../../images/icon/github.svg";
+import apple from "../../../images/icon/apple.svg";
 
-const icons = { home, my, setting, plus, edit, share, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp, camera };
+const icons = { home, my, setting, plus, edit, share, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp, camera, person, key, globe, version, changelog, bell, binAlert, google, github, apple };
 
 export function AppIcon({ name, size = 20 }: { name: keyof typeof icons; size?: number }) {
   return <img className="app-icon" src={icons[name]} width={size} height={size} alt="" aria-hidden="true" draggable={false} />;

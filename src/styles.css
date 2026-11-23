@@ -765,3 +765,47 @@ h1, h2, h3 { color: var(--deep-purple); }
 .option-media-menu textarea { display: block; margin-top: 6px; min-height: 70px; resize: vertical; }
 
 .result-leader-summary { margin: -6px 0 14px; text-align: center; color: #8256b0; font-size: 12px; font-weight: 700; }
+
+/* Settings page v2: grouped glass cards with icon rows (see settings preferences page). */
+.settings-v2 { display: flex; flex-direction: column; gap: 16px; padding-top: 2px; }
+.settings-v2 .settings-group { padding: 16px 18px 12px; border: 1px solid #ffffff; border-radius: 24px;
+  background: linear-gradient(165deg, #ffffffd6 0%, #fdf7fbf2 55%, #f7eff9ee 100%);
+  box-shadow: 0 12px 28px rgba(112, 62, 158, .10); backdrop-filter: blur(14px); }
+.settings-v2 .settings-group-title { margin: 2px 0 8px; color: var(--deep-purple); font-size: 17px; font-weight: 800; letter-spacing: -.2px; }
+.settings-v2 .settings-block { padding: 0; }
+.settings-v2 .settings-block + .settings-block { border-top: 1px solid #eee5f4; }
+.settings-v2 .settings-group > .settings-row + .settings-row { border-top: 1px solid #eee5f4; }
+.settings-v2 .settings-row { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 4px 0;
+  border: 0; border-radius: 14px; background: none; color: inherit; text-align: left; cursor: pointer; }
+.settings-v2 .settings-row:focus-visible { outline: 2px solid rgba(124, 58, 237, .35); outline-offset: 2px; }
+.settings-v2 .settings-row-static, .settings-v2 .settings-row-head, .settings-v2 .settings-row-select { cursor: default; }
+.settings-v2 .settings-row-head { min-height: 42px; }
+.settings-v2 .settings-provider-row { min-height: 46px; }
+.settings-v2 .settings-tile { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border-radius: 12px;
+  background: linear-gradient(150deg, #f4edfd, #e8dcf8); }
+.settings-v2 .settings-tile .app-icon { display: block; width: 20px; height: 20px; }
+.settings-v2 .settings-row-label { min-width: 0; color: var(--ink); font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+.settings-v2 .settings-chevron { margin-left: auto; display: grid; place-items: center; }
+.settings-v2 .settings-chevron .app-icon { opacity: .5; filter: brightness(0) saturate(100%) invert(13%) sepia(24%) saturate(2360%) hue-rotate(239deg) brightness(94%) contrast(95%); }
+.settings-v2 .settings-pill { margin-left: auto; padding: 6px 11px; border-radius: 10px; background: #ece9ef; color: #8b8792;
+  font-size: 13px; font-weight: 700; white-space: nowrap; }
+.settings-v2 .settings-pill.is-bound { background: #dcf1d2; color: #4b7a31; }
+.settings-v2 .settings-provider-row .settings-tile { background: #f4f1f8; }
+.settings-v2 .settings-row-danger .settings-row-label { color: #c31e36; }
+.settings-v2 .settings-row-danger .settings-tile { background: linear-gradient(150deg, #fbeef1, #f5e0e6); }
+.settings-v2 .settings-version { margin-left: auto; color: #9b91a8; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.settings-v2 .settings-row-select { gap: 10px; }
+.settings-v2 .settings-language-select { width: auto; max-width: 138px; min-width: 0; flex: 0 1 auto; margin-left: auto;
+  min-height: 40px; padding: 8px 30px 8px 12px; border: 1px solid #e8dcf4; border-radius: 13px; background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%237C3AED' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center; background-size: 13px;
+  appearance: none; -webkit-appearance: none; color: var(--ink); font-size: 14px; font-weight: 700; }
+.settings-v2 .logout-button { margin-top: 2px; min-height: 46px; font-size: 15px; letter-spacing: .2px; }
+.settings-v2 .settings-feedback { margin: 0; }
+@media (max-width: 359px) {
+  .settings-v2 .settings-group { padding: 15px 14px 12px; border-radius: 22px; }
+  .settings-v2 .settings-row-label { font-size: 15px; }
+  .settings-v2 .settings-row { gap: 10px; }
+  .settings-v2 .settings-tile { width: 36px; height: 36px; flex-basis: 36px; }
+  .settings-v2 .settings-language-select { max-width: 116px; font-size: 13px; }
+}

@@ -9,7 +9,7 @@ import { PageShell } from "../../../components/layout/PageShell";
 import { signOut } from "../../auth/services/auth";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { Modal } from "../../../components/ui/Modal";
-import { signInWithApple, signInWithGitHub } from "../../auth/services/auth";
+import { signInWithApple, signInWithGitHub, signInWithGoogle } from "../../auth/services/auth";
 import { supabase } from "../../../lib/supabase/client";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import packageJson from "../../../../package.json";
@@ -33,25 +33,33 @@ function isChangelogEntries(value: unknown): value is ChangelogEntry[] {
   });
 }
 
-const BINDING_PROVIDERS = [
-  { id: "github", label: "GitHub" },
-  { id: "apple", label: "Apple" },
-] as const;
+type ProviderId = "google" | "github" | "apple";
 
-function BindingRow({ service, status, bound = false, action, onAction }: {
+const BINDING_PROVIDERS: { id: ProviderId; label: string; icon: ProviderId }[] = [
+  { id: "google", label: "Google", icon: "google" },
+  { id: "github", label: "GitHub", icon: "github" },
+  { id: "apple", label: "Apple", icon: "apple" },
+];
+
+function ProviderRow({ service, icon, status, bound = false, action, onAction }: {
   service: string;
+  icon: ProviderId;
   status: string;
   bound?: boolean;
   action?: string;
   onAction?: () => void;
 }) {
-  return (
-    <div className="settings-binding-row">
-      <strong className="settings-binding-service">{service}</strong>
-      <span className={`settings-binding-status${bound ? " is-bound" : ""}`}>{status}</span>
-      {action && onAction && <button className="settings-binding-action" type="button" onClick={onAction}>{action}</button>}
-    </div>
+  const content = (
+    <>
+      <span className="settings-tile"><AppIcon name={icon} size={20} /></span>
+      <span className="settings-row-label">{service}</span>
+      <span className={`settings-pill${bound ? " is-bound" : ""}`}>{status}</span>
+    </>
   );
+  if (action && onAction) {
+    return <button className="settings-row settings-provider-row" type="button" aria-label={`${action} · ${service}`} onClick={onAction}>{content}</button>;
+  }
+  return <div className="settings-row settings-provider-row">{content}</div>;
 }
 
 export function SettingsPreferencesPage() {
@@ -97,7 +105,7 @@ export function SettingsPreferencesPage() {
   const identities = user?.identities?.map((identity) => identity.provider) ?? [];
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  const bindingStatus = (provider: "github" | "apple") => {
+  const bindingStatus = (provider: ProviderId) => {
     if (!user) return t("settings.binding.signedOut");
     return identities.includes(provider) ? t("settings.binding.current") : t("settings.binding.notBound");
   };
@@ -154,63 +162,107 @@ export function SettingsPreferencesPage() {
     }
   };
 
-  const bind = async (provider: "github" | "apple") => {
+  const bind = async (provider: ProviderId) => {
     setFeedback("");
-    const result = provider === "github" ? await signInWithGitHub("/settings/preferences") : await signInWithApple("/settings/preferences");
+    const returnTo = "/settings/preferences";
+    const result = provider === "google"
+      ? await signInWithGoogle(returnTo)
+      : provider === "github"
+        ? await signInWithGitHub(returnTo)
+        : await signInWithApple(returnTo);
     if (result.error) setFeedback("settings.bindFailed");
   };
 
   return (
     <PageShell title={t("settings.title")} showHeaderTitle backTo="/settings" showNavigation={false}>
-      <section className="settings-card">
-        <div className="settings-section-heading"><h2>{t("settings.account")}</h2></div>
-        {user && <button className="settings-row-button" type="button" onClick={() => navigate("/edit-profile")}>{t("settings.profile")} <AppIcon name="chevronRight" size={18} /></button>}
-        <div className="settings-subheading">
-          <strong>{t("settings.binding")}</strong>
-          {!user && <span>{t("settings.binding.signedOut")}</span>}
-        </div>
-        <div className="settings-binding-list">
-          {BINDING_PROVIDERS.map((provider) => (
-            <BindingRow
-              key={provider.id}
-              service={provider.label}
-              status={bindingStatus(provider.id)}
-              bound={Boolean(user && identities.includes(provider.id))}
-              action={bindingAction}
-              onAction={user ? undefined : () => void bind(provider.id)}
-            />
-          ))}
-        </div>
-        {!user && <button className="settings-row-button" type="button" onClick={() => setConfirmClear(true)}>{t("settings.clearLocal")}</button>}
-        {user && <button className="settings-row-button danger-text" type="button" onClick={() => setConfirmDelete(true)}>{t("settings.deleteAccount")}</button>}
-      </section>
+      <div className="settings-v2">
+        <section className="settings-group">
+          <h2 className="settings-group-title">{t("settings.account")}</h2>
+          {user && (
+            <div className="settings-block">
+              <button className="settings-row" type="button" onClick={() => navigate("/edit-profile")}>
+                <span className="settings-tile"><AppIcon name="person" size={20} /></span>
+                <span className="settings-row-label">{t("settings.profile")}</span>
+                <span className="settings-chevron"><AppIcon name="chevronRight" size={18} /></span>
+              </button>
+            </div>
+          )}
+          <div className="settings-block">
+            <div className="settings-row settings-row-head">
+              <span className="settings-tile"><AppIcon name="key" size={20} /></span>
+              <span className="settings-row-label">{t("settings.binding")}</span>
+            </div>
+            {BINDING_PROVIDERS.map((provider) => (
+              <ProviderRow
+                key={provider.id}
+                service={provider.label}
+                icon={provider.icon}
+                status={bindingStatus(provider.id)}
+                bound={Boolean(user && identities.includes(provider.id))}
+                action={bindingAction}
+                onAction={user ? undefined : () => void bind(provider.id)}
+              />
+            ))}
+          </div>
+          <div className="settings-block">
+            {user ? (
+              <button className="settings-row settings-row-danger" type="button" onClick={() => setConfirmDelete(true)}>
+                <span className="settings-tile"><AppIcon name="binAlert" size={20} /></span>
+                <span className="settings-row-label">{t("settings.deleteAccount")}</span>
+              </button>
+            ) : (
+              <button className="settings-row settings-row-danger" type="button" onClick={() => setConfirmClear(true)}>
+                <span className="settings-tile"><AppIcon name="binAlert" size={20} /></span>
+                <span className="settings-row-label">{t("settings.clearLocal")}</span>
+              </button>
+            )}
+          </div>
+        </section>
 
-      <section className="settings-card">
-        <div className="settings-section-heading"><h2>{t("settings.general")}</h2></div>
-        <div className="settings-row-static settings-language-row"><strong>{t("app.language")}</strong><LanguageSelect /></div>
-        {isIOS && <button className="settings-row-button" type="button" onClick={() => void requestNotificationPermission()}>{t("settings.notifications")} <AppIcon name="chevronRight" size={18} /></button>}
-      </section>
+        <section className="settings-group">
+          <h2 className="settings-group-title">{t("settings.general")}</h2>
+          <div className="settings-row settings-row-select">
+            <span className="settings-tile"><AppIcon name="globe" size={20} /></span>
+            <span className="settings-row-label">{t("app.language")}</span>
+            <LanguageSelect />
+          </div>
+          {isIOS && (
+            <button className="settings-row" type="button" onClick={() => void requestNotificationPermission()}>
+              <span className="settings-tile"><AppIcon name="bell" size={20} /></span>
+              <span className="settings-row-label">{t("settings.notifications")}</span>
+              <span className="settings-chevron"><AppIcon name="chevronRight" size={18} /></span>
+            </button>
+          )}
+        </section>
 
-      <section className="settings-card">
-        <div className="settings-section-heading"><h2>{t("settings.about")}</h2></div>
-        <div className="settings-row-static"><strong>{t("settings.version")}</strong><span>{version}</span></div>
-        {changelogEntries && <>
-          <button className="settings-row-button" type="button" aria-expanded={changelogOpen} aria-controls="settings-changelog" onClick={() => setChangelogOpen((open) => !open)}>
-            {t("settings.changelog")} <AppIcon name={changelogOpen ? "chevronUp" : "chevronDown"} size={18} />
-          </button>
-          {changelogOpen && <div className="settings-changelog" id="settings-changelog">
-            {changelogEntries.map((entry, index) => <div className="settings-changelog-version" key={entry.version}>
-              <strong>{entry.version}</strong>{index === 0 && <span>{t("settings.changelog.latest")}</span>}
-              <p>{entry.text[locale]}</p>
-            </div>)}
-          </div>}
-        </>}
-      </section>
+        <section className="settings-group">
+          <h2 className="settings-group-title">{t("settings.about")}</h2>
+          <div className="settings-row settings-row-static">
+            <span className="settings-tile"><AppIcon name="version" size={20} /></span>
+            <span className="settings-row-label">{t("settings.version")}</span>
+            <span className="settings-version">{version}</span>
+          </div>
+          {changelogEntries && <>
+            <button className="settings-row" type="button" aria-expanded={changelogOpen} aria-controls="settings-changelog" onClick={() => setChangelogOpen((open) => !open)}>
+              <span className="settings-tile"><AppIcon name="changelog" size={20} /></span>
+              <span className="settings-row-label">{t("settings.changelog")}</span>
+              <span className="settings-chevron"><AppIcon name={changelogOpen ? "chevronUp" : "chevronDown"} size={18} /></span>
+            </button>
+            {changelogOpen && <div className="settings-changelog" id="settings-changelog">
+              {changelogEntries.map((entry, index) => <div className="settings-changelog-version" key={entry.version}>
+                <strong>{entry.version}</strong>{index === 0 && <span>{t("settings.changelog.latest")}</span>}
+                <p>{entry.text[locale]}</p>
+              </div>)}
+            </div>}
+          </>}
+        </section>
+
+        {error && <p className="settings-feedback" role="alert">{t("settings.loadFailed")}</p>}
+        {feedback && <p className="settings-feedback" role="status">{t(feedback)}</p>}
+        {user && <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>{loggingOut ? t("settings.signingOut") : t("settings.logout")}</button>}
+      </div>
       {confirmClear && <Modal title={t("settings.clearLocal")} onClose={() => setConfirmClear(false)} actions={<><button className="button-soft" type="button" onClick={() => setConfirmClear(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={clearLocalData}>{t("settings.confirm")}</button></>}><p>{t("settings.clearConfirm")}</p></Modal>}
       {confirmDelete && <Modal title={t("settings.deleteAccount")} onClose={() => { setConfirmDelete(false); setDeleteName(""); }} actions={<><button className="button-soft" type="button" onClick={() => setConfirmDelete(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={() => void deleteAccount()}>{t("settings.confirm")}</button></>}><p>{t("settings.deleteConfirm")}</p><input className="text-input" value={deleteName} onChange={(event) => setDeleteName(event.target.value)} placeholder={nickname} /></Modal>}
-      {error && <p className="settings-feedback" role="alert">{t("settings.loadFailed")}</p>}
-      {feedback && <p className="settings-feedback" role="status">{t(feedback)}</p>}
-      {user && <button className="logout-button" type="button" onClick={() => void handleSignOut()} disabled={loggingOut}>{loggingOut ? t("settings.signingOut") : t("settings.logout")}</button>}
     </PageShell>
   );
 }
