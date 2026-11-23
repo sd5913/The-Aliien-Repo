@@ -27,6 +27,7 @@ export function VotingPage() {
   const participant = useParticipant();
   const voter = participant ?? getVoter();
   const draftKey = `bothpls:draft:vote:${voter.id}:${id}`;
+  const pendingDraftKey = `bothpls:draft:vote:pending:${id}`;
   const [hydratedKey, setHydratedKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [draftNotice, setDraftNotice] = useState<MessageKey | "">("");
@@ -41,6 +42,7 @@ export function VotingPage() {
   const [comment, setComment] = useState("");
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState<MessageKey | "">("");
+  const authRedirecting = useRef(false);
   const open = poll ? isPollOpen(poll) : false;
   // Seed the form once per poll, after the async fetch resolves.
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
@@ -48,23 +50,22 @@ export function VotingPage() {
   useEffect(() => {
     if (!poll || accountLoading || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
     hydratedPollId.current = `${poll.id}:${voter.id}`;
-    const pendingKey = "bothpls:draft:vote:pending:" + id;
     const params = new URLSearchParams(location.search);
     const intent = params.get("pendingChoice");
-    const pending = intent ? { activeId: intent, selectedId: intent, comment: "" } : readDraft(pendingKey, isVoteDraft);
+    const pending = intent ? { activeId: intent, selectedId: intent, comment: "" } : readDraft(pendingDraftKey, isVoteDraft);
     if (intent && accountUser) {
       params.delete("pendingChoice");
       navigate(location.pathname + (params.size ? "?" + params.toString() : "") + location.hash, { replace: true, state: location.state });
     }
     const draft = pending ?? readDraft(draftKey, isVoteDraft);
-    if (pending && accountUser && saveDraft(draftKey, pending)) clearDraft(pendingKey);
+    if (pending && accountUser && saveDraft(draftKey, pending)) clearDraft(pendingDraftKey);
     const savedOptionId = draft ? (poll.options.some((option) => option.id === draft.selectedId) ? draft.selectedId : "") : existingVote?.selectedOptionId ?? "";
     setActiveId(draft && poll.options.some((option) => option.id === draft.activeId) ? draft.activeId : savedOptionId);
     setSelectedId(savedOptionId);
     setComment(draft?.comment ?? existingComment?.text ?? "");
     setDraftNotice(draft ? "vote.restored" : "");
     setHydratedKey(draftKey);
-  }, [poll, accountLoading, accountUser, voter.id, existingVote, existingComment, draftKey, id, location, navigate]);
+  }, [poll, accountLoading, accountUser, voter.id, existingVote, existingComment, draftKey, pendingDraftKey, id, location, navigate]);
 
   useEffect(() => {
     if (hydratedKey !== draftKey) return;
@@ -85,9 +86,19 @@ export function VotingPage() {
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
   const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
+  const redirectGuestToLogin = () => {
+    if (accountUser || authRedirecting.current) return;
+    if (!saveDraft(pendingDraftKey, { activeId, selectedId, comment })) {
+      setDraftNotice("poll.draftUnavailable");
+      return;
+    }
+    authRedirecting.current = true;
+    const currentPath = location.pathname + location.search + location.hash;
+    navigate("/auth?mode=login&returnTo=" + encodeURIComponent(currentPath));
+  };
   const saveVote = async () => {
     if (saving) return;
-    if (!accountUser) { navigate("/auth?mode=login&returnTo=" + encodeURIComponent(location.pathname + location.search + location.hash)); return; }
+    if (!accountUser) { redirectGuestToLogin(); return; }
     if (!isPollOpen(poll)) { navigate(pollPath(poll.id, "results", returnTo), { replace: true }); return; }
     if (!selectedId) { setToast("vote.chooseFirst"); return; }
     const now = new Date().toISOString();
@@ -171,9 +182,12 @@ export function VotingPage() {
         </div>
       </section>
       <label className="field-label comment-input-label" htmlFor="vote-comment">{t("vote.leaveComment")} <span className="optional">{t("common.optional")}</span></label>
-      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} disabled={!accountUser} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
+      <textarea id="vote-comment" className="text-input textarea vote-comment-input" value={comment} readOnly={!accountUser} onFocus={redirectGuestToLogin} onClick={redirectGuestToLogin} onChange={(event) => setComment(event.target.value)} placeholder={t("vote.commentHint")} rows={2} maxLength={200} />
       {existingVote && open && <p className="field-hint">{t("vote.alreadyVoted")}</p>}
-      <button className="purple-button button-full vote-cup-submit" disabled={!accountUser || saving || !open || !selectedId} onClick={() => void submitVote()}>{t(saving ? "vote.submitting" : existingVote ? "vote.update" : "vote.submit")}</button>
+      <button className="purple-button button-full vote-cup-submit" disabled={saving || !open || (Boolean(accountUser) && !selectedId)} onClick={() => {
+        if (!accountUser) redirectGuestToLogin();
+        else void submitVote();
+      }}>{t(saving ? "vote.submitting" : existingVote ? "vote.update" : "vote.submit")}</button>
       <p className="vote-cup-note">{t("vote.editable")}</p>
       {confirmCommentDelete && <Modal title={t("comment.deleteQuestion")} onClose={() => setConfirmCommentDelete(false)} actions={<><button className="button-soft" onClick={() => setConfirmCommentDelete(false)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { setConfirmCommentDelete(false); void saveVote(); }}>{t("vote.deleteAndSubmit")}</button></>}><p>{t("vote.deleteDetails")}</p></Modal>}
       {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}
