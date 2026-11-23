@@ -19,6 +19,24 @@ test('GitHub OAuth works without filling in the email form and preserves the ret
   await expect(page).toHaveURL(consentUrl);
 });
 
+test('Google OAuth works without filling in the email form and preserves the return path', async ({ page }) => {
+  const destination = '/create?id=example#options';
+  await mockApp(page, { accountId: null });
+  const consentUrl = 'http://127.0.0.1:5180/mock-google-consent';
+  await page.route('https://*.supabase.co/auth/v1/authorize**', (route) =>
+    route.fulfill({ status: 302, headers: { location: consentUrl } }));
+  await page.goto('/auth?returnTo=' + encodeURIComponent(destination));
+  const authorize = page.waitForRequest('https://*.supabase.co/auth/v1/authorize**');
+  await page.getByRole('button', { name: '以 Google 登录' }).click();
+  const url = new URL((await authorize).url());
+  expect(url.searchParams.get('provider')).toBe('google');
+  const callback = new URL(url.searchParams.get('redirect_to'));
+  expect(callback.origin).toBe('http://127.0.0.1:5180');
+  expect(callback.pathname).toBe('/auth');
+  expect(callback.searchParams.get('returnTo')).toBe(destination);
+  await expect(page).toHaveURL(consentUrl);
+});
+
 test('GitHub cancellation displays retry feedback and keeps email sign-in available', async ({ page }) => {
   await mockApp(page, { accountId: null });
   await page.route('https://*.supabase.co/auth/v1/authorize**', async (route) => {
