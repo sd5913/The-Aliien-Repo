@@ -180,7 +180,7 @@ export function SettingsPreferencesPage() {
           <h2 className="settings-group-title">{t("settings.account")}</h2>
           {user && (
             <div className="settings-block">
-              <button className="settings-row" type="button" onClick={() => navigate("/edit-profile")}>
+              <button className="settings-row" type="button" onClick={() => navigate("/edit-profile?from=settings")}>
                 <span className="settings-tile"><AppIcon name="person" size={20} /></span>
                 <span className="settings-row-label">{t("settings.profile")}</span>
                 <span className="settings-chevron"><AppIcon name="chevronRight" size={18} /></span>
