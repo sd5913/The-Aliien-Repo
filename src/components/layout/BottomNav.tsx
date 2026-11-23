@@ -11,7 +11,7 @@ export function BottomNav() {
         <AppIcon name="home" size={25} /><small>{t("nav.home")}</small>
       </NavLink>
       <NavLink to="/create" aria-label={t("poll.createNav")} title={t("poll.createNav")} className={({ isActive }) => `nav-item nav-create${isActive ? " active" : ""}`}>
-        <AppIcon name="plusCircle" size={48} />
+        <AppIcon name="plus" size={48} />
       </NavLink>
       <NavLink to="/settings" className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}>
         <AppIcon name="my" size={25} /><small>{t("nav.profile")}</small>
