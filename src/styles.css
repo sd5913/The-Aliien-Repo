@@ -673,6 +673,15 @@ h1, h2, h3 { color: var(--deep-purple); }
 .auth-google svg { width: 18px; height: 18px; }
 .auth-feedback { margin: 14px 4px 0; color: #b4233c; font-size: 11px; line-height: 1.6; text-align: center; }
 .auth-legal { margin: 19px 13px 0; color: #a085bd; font-size: 9px; line-height: 1.55; text-align: center; }
+.auth-agreement { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; }
+.auth-agreement-link { color: #7c3aed; font-weight: 700; text-decoration: underline; }
+
+/* Legal page: terms of service and privacy policy. */
+.legal-page { padding-top: 4px; }
+.legal-updated { margin: 2px 2px 14px; color: #a085bd; font-size: 10px; }
+.legal-card { margin-bottom: 13px; }
+.legal-heading { margin: 0 0 8px; font-size: 14px; color: #5b21b6; }
+.legal-body { margin: 0; color: #8062a4; font-size: 12px; line-height: 1.75; }
 
 /* Results page: square sand visual and glass legend. */
 .results-redesign .results-topline { margin-bottom: 8px; }
