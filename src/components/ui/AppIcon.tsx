@@ -11,8 +11,9 @@ import chevronDown from "../../../images/icon/chevron-down.svg";
 import chevronLeft from "../../../images/icon/chevron-left.svg";
 import chevronRight from "../../../images/icon/chevron-right.svg";
 import chevronUp from "../../../images/icon/chevron-up.svg";
+import camera from "../../../images/icon/camera.svg";
 
-const icons = { home, my, setting, plus, edit, share, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp };
+const icons = { home, my, setting, plus, edit, share, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp, camera };
 
 export function AppIcon({ name, size = 20 }: { name: keyof typeof icons; size?: number }) {
   return <img className="app-icon" src={icons[name]} width={size} height={size} alt="" aria-hidden="true" draggable={false} />;

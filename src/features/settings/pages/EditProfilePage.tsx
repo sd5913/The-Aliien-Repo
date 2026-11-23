@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import { PageShell } from "../../../components/layout/PageShell";
+import { AppIcon } from "../../../components/ui/AppIcon";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { supabase } from "../../../lib/supabase/client";
 import { saveProfile } from "../services/profiles";
@@ -20,6 +21,8 @@ export function EditProfilePage() {
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!accountLoading && !user) {
@@ -47,6 +50,7 @@ export function EditProfilePage() {
       setFeedback(t("profile.avatarTooLarge"));
       return;
     }
+    setUploadingAvatar(true);
     try {
       if (!user) throw new Error(t("profile.avatarAccountRequired"));
       const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
@@ -57,6 +61,8 @@ export function EditProfilePage() {
     } catch (error) {
       console.error("BothPls: avatar upload failed.", error);
       setFeedback(t("image.uploadFailed"));
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -109,13 +115,26 @@ export function EditProfilePage() {
       <form className="settings-card profile-form" onSubmit={submit}>
         <label className="field-label">{t("guest.avatar")}</label>
         <div className="avatar-picker-row">
-          {avatar.startsWith("http") ? (
-            <img className="profile-avatar" src={avatar} alt={t("profile.currentAvatar", { avatar })} />
-          ) : (
-            <div className="profile-avatar" aria-label={t("profile.currentAvatar", { avatar: displayAvatar(avatar) })}>{displayAvatar(avatar)}</div>
-          )}
-          <label className="button-soft" htmlFor="edit-profile-avatar">{t("profile.chooseAvatar")}</label>
+          <button
+            type="button"
+            className={`avatar-edit-button${uploadingAvatar ? " is-busy" : ""}`}
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            aria-label={t("profile.changeAvatar")}
+            aria-busy={uploadingAvatar}
+          >
+            {avatar.startsWith("http") ? (
+              <img className="profile-avatar" src={avatar} alt="" />
+            ) : (
+              <span className="profile-avatar" aria-hidden="true">{displayAvatar(avatar)}</span>
+            )}
+            <span className="avatar-edit-badge" aria-hidden="true"><AppIcon name="camera" size={14} /></span>
+          </button>
+          <div className="avatar-picker-copy">
+            <span>{uploadingAvatar ? t("profile.avatarUploading") : t("profile.avatarFormats")}</span>
+          </div>
           <input
+            ref={avatarInputRef}
             id="edit-profile-avatar"
             type="file"
             accept="image/jpeg,image/png,image/webp"
