@@ -269,6 +269,21 @@ using(exists(select 1 from public.polls p where p.id=poll_id and
   (p.owner_id=(select auth.uid()) or (p.is_public and
     (p.status='closed' or (p.closed_at is not null and p.closed_at <= statement_timestamp()))))));
 
+-- Account profiles (mirror of the account metadata; see 20261121000001_create_profiles.sql)
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  nickname text not null,
+  avatar_url text,
+  bio text,
+  updated_at timestamptz not null default now()
+);
+alter table public.profiles enable row level security;
+drop policy if exists "profiles read own" on public.profiles;
+create policy "profiles read own" on public.profiles for select to authenticated using (id = (select auth.uid()));
+drop policy if exists "profiles write own" on public.profiles;
+create policy "profiles write own" on public.profiles for all to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
+grant select, insert, update on public.profiles to authenticated;
+
 -- An own-comment endpoint is separate from the result list: the participant may
 -- restore their own text into the edit form without seeing anyone else's reasons.
 create function private.own_comments(p_voter_id uuid,p_token text) returns setof public.poll_comments

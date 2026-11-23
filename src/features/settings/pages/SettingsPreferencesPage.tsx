@@ -10,11 +10,11 @@ import { signOut } from "../../auth/services/auth";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { Modal } from "../../../components/ui/Modal";
 import { signInWithApple, signInWithGitHub } from "../../auth/services/auth";
-import { fetchProfile } from "../services/profiles";
 import { supabase } from "../../../lib/supabase/client";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import packageJson from "../../../../package.json";
 import type { Locale } from "../../../i18n/locale";
+import { profileDraftFromUser } from "../utils/profile";
 
 interface ChangelogEntry {
   version: string;
@@ -70,8 +70,7 @@ export function SettingsPreferencesPage() {
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[] | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    void fetchProfile(user.id).then((profile) => setNickname(profile?.nickname || settings.nickname)).catch(() => setNickname(settings.nickname));
+    if (user) setNickname(profileDraftFromUser(user).nickname || settings.nickname);
   }, [user, settings.nickname]);
 
   useEffect(() => {

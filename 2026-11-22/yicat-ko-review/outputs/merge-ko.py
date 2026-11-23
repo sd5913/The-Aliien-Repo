@@ -142,6 +142,22 @@ def load_xlsx(path: Path, known: set[str]) -> dict[str, str]:
     return out
 
 
+def load_xlsx_row_order(path: Path, order: list[str]) -> dict[str, str]:
+    from openpyxl import load_workbook
+
+    wb = load_workbook(path, data_only=True)
+    ws = wb.worksheets[0]
+    exported: dict[str, str] = {}
+    for index, row in enumerate(ws.iter_rows(values_only=True)):
+        candidates = [str(c).strip() for c in row if isinstance(c, str) and c.strip()]
+        if not candidates:
+            continue
+        if index >= len(order):
+            break
+        exported[order[index]] = candidates[-1]
+    return exported
+
+
 def inner_text(element) -> str:
     return "".join(element.itertext()) if element is not None else ""
 
@@ -193,6 +209,11 @@ def load_xliff(
 def main() -> int:
     parser = argparse.ArgumentParser(description="把 YiCAT 导出译文回并到 ko-KR.ts")
     parser.add_argument("--input", required=True, type=Path, help="导出的 .xlsx 或 .xliff")
+    parser.add_argument(
+        "--row-order",
+        action="store_true",
+        help="按导出文件非空行顺序与本地 key 顺序一一对应；用于普通 Excel 解析、无 key 列的导出文件",
+    )
     parser.add_argument("--ts", type=Path, help="目标 ko-KR.ts（默认自动定位）")
     parser.add_argument("--write", action="store_true", help="实际写入；默认只预览")
     parser.add_argument(
@@ -210,7 +231,9 @@ def main() -> int:
     _, _, source = load_catalog(zh_path)
 
     suffix = args.input.suffix.lower()
-    if suffix in {".xlsx", ".xlsm"}:
+    if args.row_order and suffix in {".xlsx", ".xlsm"}:
+        exported = load_xlsx_row_order(args.input, order)
+    elif suffix in {".xlsx", ".xlsm"}:
         exported = load_xlsx(args.input, known)
     elif suffix in {".xliff", ".xlf"}:
         exported = load_xliff(args.input, known, order, source)
