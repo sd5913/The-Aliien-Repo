@@ -22,10 +22,19 @@ let authError = null;
 let lastEmail;
 let lastOAuth;
 let oauthError = null;
+let lastReset;
+let lastPasswordUpdate;
+let lastEmailOtp;
+let lastOtpVerification;
+let remembered;
 globalThis.accountTestAuth = {
+  setSessionPersistence: (value) => { remembered = value; },
   auth: {
     getUser: async () => ({ data: { user }, error: authError }),
-    signInWithOtp: async (input) => { lastEmail = input; return { error: null }; },
+    signInWithOtp: async (input) => { lastEmailOtp = input; return { data: {}, error: null }; },
+    verifyOtp: async (input) => { lastOtpVerification = input; return { data: {}, error: null }; },
+    resetPasswordForEmail: async (email, options) => { lastReset = { email, options }; return { data: {}, error: null }; },
+    updateUser: async (input) => { lastPasswordUpdate = input; return { data: {}, error: null }; },
     signInWithOAuth: async (input) => {
       lastOAuth = input;
       return { data: { provider: input.provider, url: oauthError ? null : "https://bothpls.test/authorize" }, error: oauthError };
@@ -34,8 +43,8 @@ globalThis.accountTestAuth = {
   },
 };
 globalThis.accountTestNavigation = navigation;
-const { requireAccountId, sendMagicLink, signInWithGitHub } = await load("../services/auth.ts", [
-  [/import \{ supabase \} from [^;]+;/, "const supabase = globalThis.accountTestAuth;"],
+const { requireAccountId, sendEmailCode, verifyEmailCode, sendPasswordRecoveryEmail, updatePassword, signInWithGitHub } = await load("../services/auth.ts", [
+  [/import \{ setSessionPersistence, supabase \} from [^;]+;/, "const supabase = globalThis.accountTestAuth; const { setSessionPersistence } = globalThis.accountTestAuth;"],
   [/import \{ accountReturnTo \} from [^;]+;/, "const { accountReturnTo } = globalThis.accountTestNavigation;"],
 ]);
 await assert.rejects(requireAccountId(), /请先登录/);
@@ -51,14 +60,21 @@ authError = null;
 
 const originalWindow = globalThis.window;
 globalThis.window = { location: { origin: "https://bothpls.test" } };
-await sendMagicLink("test@example.test", "测试用户", "/create?id=example-poll");
-const callback = new URL(lastEmail.options.emailRedirectTo);
-assert.equal(callback.origin, "https://bothpls.test");
-assert.equal(callback.pathname, "/auth");
-assert.equal(callback.searchParams.get("returnTo"), "/create?id=example-poll");
-assert.deepEqual(lastEmail.options.data, { nickname: "测试用户" });
-await sendMagicLink("test@example.test", undefined, "//evil.test");
-assert.equal(new URL(lastEmail.options.emailRedirectTo).searchParams.get("returnTo"), "/");
+await sendEmailCode("test@example.test", true, "测试用户", false);
+assert.deepEqual(lastEmailOtp, { email: "test@example.test", options: { shouldCreateUser: true, data: { nickname: "测试用户" } } });
+assert.equal(remembered, false);
+await sendEmailCode("test@example.test", false, undefined, true);
+assert.deepEqual(lastEmailOtp, { email: "test@example.test", options: { shouldCreateUser: false } });
+assert.equal(remembered, true);
+await verifyEmailCode("test@example.test", "123456", "signup");
+assert.deepEqual(lastOtpVerification, { email: "test@example.test", token: "123456", type: "signup" });
+await verifyEmailCode("test@example.test", "654321", "email");
+assert.deepEqual(lastOtpVerification, { email: "test@example.test", token: "654321", type: "email" });
+await sendPasswordRecoveryEmail("test@example.test", "/settings");
+assert.equal(lastReset.email, "test@example.test");
+assert.equal(new URL(lastReset.options.redirectTo).searchParams.get("returnTo"), "/settings");
+await updatePassword("abc12345");
+assert.deepEqual(lastPasswordUpdate, { password: "abc12345" });
 const oauth = await signInWithGitHub("/create?id=example-poll#options");
 assert.equal(oauth.data.url, "https://bothpls.test/authorize");
 assert.equal(lastOAuth.provider, "github");
@@ -72,4 +88,4 @@ assert.equal(new URL(lastOAuth.options.redirectTo).searchParams.get("returnTo"),
 globalThis.window = originalWindow;
 delete globalThis.accountTestAuth;
 delete globalThis.accountTestNavigation;
-console.log("Passed: account-required writes, anonymous rejection, switched accounts, expired sessions, login/edit callback and safe return URLs, and GitHub OAuth options/errors. No live credentials used.");
+console.log("Passed: account access, email OTP signup/sign-in, password recovery, safe callback URLs, and GitHub OAuth options/errors. No live credentials used.");

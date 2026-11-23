@@ -14,6 +14,7 @@ const ACTION_ITEM_WIDTH = 64;
 interface PollCardProps {
   poll: Poll;
   to: string;
+  interactive?: boolean;
   compact?: boolean;
   surface?: "personal" | "square";
   returnTo?: string;
@@ -26,6 +27,7 @@ interface PollCardProps {
 export function PollCard({
   poll,
   to,
+  interactive = true,
   compact = false,
   surface = "personal",
   returnTo = "/",
@@ -124,6 +126,7 @@ export function PollCard({
   };
 
   const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!interactive) return;
     if (suppressClick.current) {
       event.preventDefault();
       event.stopPropagation();
@@ -165,18 +168,24 @@ export function PollCard({
         onPointerMove={moveDrag}
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
-        onClick={handleCardClick}
+        onClick={interactive ? handleCardClick : undefined}
       >
         <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
           {(owner || (surface !== "square" && poll.participatedByCurrentIdentity)) && <div className="poll-identity-badges">{owner && <span>{t("poll.createdByMe")}</span>}{!owner && surface !== "square" && poll.participatedByCurrentIdentity && <span>{t("poll.votedByMe")}</span>}</div>}
-          <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
-            <h3>{poll.title}</h3>
-          </Link>
+          {interactive ? (
+            <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
+              <h3>{poll.title}</h3>
+            </Link>
+          ) : (
+            <div className="my-poll-ticket-main">
+              <h3>{poll.title}</h3>
+            </div>
+          )}
           <p className="my-poll-ticket-status">{t(isPollOpen(poll) ? "poll.open" : "poll.closed")} · {surface === "square" ? t("poll.squareParticipants", { count: poll.voteCount ?? poll.votes.length }) : votes(poll.voteCount ?? poll.votes.length)}</p>
           <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
-          {surface === "square" && <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link>}
-          {shareAllowed && <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
+          {surface === "square" && (interactive ? <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link> : <span className="square-vote-link">{t(owner ? "poll.squareResults" : "poll.squareVote")}</span>)}
+          {interactive && shareAllowed && <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
             <AppIcon name="share" size={20} />
           </button>}
         </div>

@@ -14,6 +14,9 @@ import { isPollOpen } from "../../../components/ui/StatusPill";
 import { pollPath } from "../../polls/utils/navigation";
 import type { Poll } from "../../../types/poll";
 
+const AUTH_BANNER_DISMISSED_KEY = "bothpls:home-auth-banner:dismissed-at";
+const AUTH_BANNER_DISMISSAL_MS = 7 * 24 * 60 * 60 * 1000;
+
 function RetryIconButton({ onClick }: { onClick: () => void }) {
   const { t } = useLocale();
   return (
@@ -50,21 +53,27 @@ export function HomePage() {
   const [toast, setToast] = useState<MessageKey | "">("");
   const { user: accountUser, loading: accountLoading } = useAccount();
   const [bannerVisible, setBannerVisible] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try {
+      const dismissedAt = Number(window.localStorage.getItem(AUTH_BANNER_DISMISSED_KEY));
+      const now = Date.now();
+      if (Number.isFinite(dismissedAt) && dismissedAt > 0 && dismissedAt <= now && now - dismissedAt < AUTH_BANNER_DISMISSAL_MS) return true;
+      window.localStorage.removeItem(AUTH_BANNER_DISMISSED_KEY);
+      return false;
+    } catch (error) {
+      console.error("Could not read the home sign-in prompt dismissal.", error);
+      return false;
+    }
+  });
   const recent = accountUser ? polls : [];
   const [tab, setTab] = useState<"recent" | "square">("square");
 
   useEffect(() => {
     if (accountLoading || accountUser || bannerDismissed) return;
-    let closeTimer: number | undefined;
     const showTimer = window.setTimeout(() => {
       setBannerVisible(true);
-      closeTimer = window.setTimeout(() => setBannerVisible(false), 3000);
     }, 2000);
-    return () => {
-      window.clearTimeout(showTimer);
-      if (closeTimer !== undefined) window.clearTimeout(closeTimer);
-    };
+    return () => window.clearTimeout(showTimer);
   }, [accountLoading, accountUser, bannerDismissed]);
 
   const confirmDelete = async () => {
@@ -133,6 +142,11 @@ export function HomePage() {
             onClick={() => {
               setBannerVisible(false);
               setBannerDismissed(true);
+              try {
+                window.localStorage.setItem(AUTH_BANNER_DISMISSED_KEY, String(Date.now()));
+              } catch (error) {
+                console.error("Could not save the home sign-in prompt dismissal.", error);
+              }
             }}
           >
             ×

@@ -2,19 +2,23 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "../../../lib/supabase/client";
 import { useAccount } from "../components/AccountProvider";
 import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
-import { sendMagicLink, signInWithApple, signInWithGitHub, signInWithGoogle } from "../services/auth";
+import { sendEmailCode, sendPasswordRecoveryEmail, signInWithApple, signInWithGitHub, signInWithGoogle, updatePassword, verifyEmailCode } from "../services/auth";
 import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
 
-type AuthMode = "login" | "register";
+type AuthMode = "login" | "register" | "reset";
+const validPassword = (value: string) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,32}$/.test(value);
 
-function getAuthErrorKey(message: string): MessageKey {
+function getAuthErrorKey(message: string, mode: AuthMode): MessageKey {
   const normalized = message.toLowerCase();
   if (normalized.includes("email rate limit") || normalized.includes("rate limit")) return "auth.rateLimit";
   if (normalized.includes("email not authorized")) return "auth.emailUnauthorized";
-  return "auth.emailFailed";
+  if (normalized.includes("invalid login credentials")) return "auth.invalidCredentials";
+  if (normalized.includes("already registered") || normalized.includes("already been registered")) return "auth.emailRegistered";
+  return mode === "reset" ? "auth.resetFailed" : "auth.emailFailed";
 }
 
 export function AuthPage() {
@@ -22,141 +26,125 @@ export function AuthPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const mode: AuthMode = searchParams.get("mode") === "login" ? "login" : "register";
-  const requestedReturnTo = searchParams.get("returnTo");
-  const returnTo = accountReturnTo(requestedReturnTo);
+  const requestedMode = searchParams.get("mode");
+  const mode: AuthMode = requestedMode === "login" || requestedMode === "reset" ? requestedMode : "register";
+  const returnTo = accountReturnTo(searchParams.get("returnTo"));
   const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [recoveryActive, setRecoveryActive] = useState(false);
   const [pending, setPending] = useState<"email" | "github" | "google" | "apple" | null>(null);
   const [providerError, setProviderError] = useState<MessageKey | "">(() => {
     const fragment = new URLSearchParams(hash.slice(1));
-    return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key))
-      ? "auth.notCompleted"
-      : "";
+    return ["error", "error_code", "error_description"].some((key) => searchParams.has(key) || fragment.has(key)) ? "auth.notCompleted" : "";
   });
   const [feedback, setFeedback] = useState<MessageKey | "">("");
 
+  useEffect(() => { if (!accountLoading && user && mode !== "reset") navigate(returnTo, { replace: true }); }, [accountLoading, user, navigate, returnTo, mode]);
   useEffect(() => {
-    if (!accountLoading && user) navigate(returnTo, { replace: true });
-  }, [accountLoading, user, navigate, returnTo]);
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") { setRecoveryActive(true); setFeedback(""); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   useEffect(() => {
-    const restoreAppleButton = (event: PageTransitionEvent) => {
-      if (event.persisted) setPending((current) => current === "apple" ? null : current);
-    };
+    const restoreAppleButton = (event: PageTransitionEvent) => { if (event.persisted) setPending((current) => current === "apple" ? null : current); };
     window.addEventListener("pageshow", restoreAppleButton);
     return () => window.removeEventListener("pageshow", restoreAppleButton);
   }, []);
 
   const switchMode = (nextMode: AuthMode) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (nextMode === "login") nextParams.set("mode", "login");
-    else nextParams.delete("mode");
-    setSearchParams(nextParams);
-    setFeedback("");
-    setProviderError("");
+    if (nextMode === "register") nextParams.delete("mode"); else nextParams.set("mode", nextMode);
+    setSearchParams(nextParams); setFeedback(""); setProviderError(""); setPassword(""); setConfirmation("");
+    setEmailCode(""); setEmailCodeSent(false);
+    if (nextMode !== "reset") setRecoveryActive(false);
   };
-
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const requestEmailCode = async () => {
     if (pending) return;
-    setProviderError("");
-    const cleanEmail = email.trim();
-    const cleanNickname = nickname.trim();
-    if (!cleanEmail) {
-      setFeedback("auth.emailRequired");
-      return;
-    }
-    setPending("email");
-    setFeedback("");
+    const cleanEmail = email.trim(), cleanNickname = nickname.trim();
+    if (!cleanEmail) { setFeedback("auth.emailRequired"); return; }
+    if (mode === "register" && Array.from(cleanNickname).length < 2) { setFeedback("auth.nicknameRequired"); return; }
+    setPending("email"); setFeedback("");
     try {
-      const result = await sendMagicLink(cleanEmail, mode === "register" ? cleanNickname : undefined, returnTo);
-      if (result.error) throw result.error;
-      setFeedback("auth.sent");
+      const { error } = await sendEmailCode(cleanEmail, mode === "register", mode === "register" ? cleanNickname : undefined, rememberMe);
+      if (error) throw error;
+      setEmailCode("");
+      setEmailCodeSent(true);
+      setFeedback("auth.codeSent");
     } catch (error) {
-      setFeedback(getAuthErrorKey(error instanceof Error ? error.message : ""));
+      setFeedback(getAuthErrorKey(error instanceof Error ? error.message : "", mode));
     } finally {
       setPending(null);
     }
   };
-
-  const submitGitHub = async () => {
-    if (pending) return;
-    setPending("github");
-    setFeedback("");
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); if (pending) return;
     setProviderError("");
-    try {
-      const { data, error } = await signInWithGitHub(returnTo);
-      if (error || !data.url) throw new Error("GitHub sign-in did not start");
-    } catch {
-      setProviderError("auth.githubFailed");
-      setPending(null);
+    const cleanEmail = email.trim(), cleanNickname = nickname.trim();
+    if (!recoveryActive && !cleanEmail) return setFeedback("auth.emailRequired");
+    if (!recoveryActive && (mode === "login" || mode === "register") && !emailCodeSent) {
+      await requestEmailCode();
+      return;
     }
+    if (!recoveryActive && (mode === "login" || mode === "register") && !emailCode.trim()) return setFeedback("auth.codeRequired");
+    if (!recoveryActive && mode === "register" && Array.from(cleanNickname).length < 2) return setFeedback("auth.nicknameRequired");
+    if (recoveryActive) {
+      if (!validPassword(password)) return setFeedback("auth.passwordInvalid");
+      if (password !== confirmation) return setFeedback("auth.passwordMismatch");
+    }
+    setPending("email"); setFeedback("");
+    try {
+      if (!recoveryActive && (mode === "register" || mode === "login")) {
+        const { error } = await verifyEmailCode(cleanEmail, emailCode.trim(), mode === "register" ? "signup" : "email");
+        if (error) throw error;
+      } else if (recoveryActive) {
+        const result = await updatePassword(password);
+        if (result.error) throw result.error;
+        setFeedback("auth.passwordUpdated"); setPassword(""); setConfirmation("");
+      } else {
+        const result = await sendPasswordRecoveryEmail(cleanEmail, returnTo);
+        if (result.error) throw result.error;
+        setFeedback("auth.resetSent");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setFeedback(/token|otp|code/i.test(message) ? "auth.invalidCode" : getAuthErrorKey(message, mode));
+    } finally { setPending(null); }
   };
-
-  const submitGoogle = async () => {
+  const submitProvider = async (provider: "github" | "google" | "apple") => {
     if (pending) return;
-    setPending("google");
-    setFeedback("");
-    setProviderError("");
+    setPending(provider); setFeedback(""); setProviderError("");
     try {
-      const { data, error } = await signInWithGoogle(returnTo);
-      if (error || !data.url) throw new Error("Google sign-in did not start");
-    } catch {
-      setProviderError("auth.googleFailed");
-      setPending(null);
-    }
+      const signIn = provider === "github" ? signInWithGitHub : provider === "google" ? signInWithGoogle : signInWithApple;
+      const { data, error } = await signIn(returnTo);
+      if (error || !data.url) throw new Error(`${provider} sign-in did not start`);
+    } catch { setProviderError(`auth.${provider}Failed` as MessageKey); setPending(null); }
   };
+  const isPasswordForm = recoveryActive;
+  const heading = recoveryActive ? "auth.chooseNewPassword" : mode === "reset" ? "auth.resetPassword" : mode === "login" ? "auth.welcome" : "auth.join";
+  const intro = recoveryActive ? "auth.chooseNewPasswordIntro" : mode === "reset" ? "auth.resetPasswordIntro" : mode === "login" ? "auth.loginIntro" : "auth.registerIntro";
+  const submitLabel = pending === "email" ? "auth.submitting" : recoveryActive ? "auth.updatePassword" : mode === "reset" ? "auth.sendResetLink" : emailCodeSent ? "auth.verifyCode" : "auth.sendCode";
 
-  const submitApple = async () => {
-    if (pending) return;
-    setPending("apple");
-    setFeedback("");
-    setProviderError("");
-    try {
-      const { data, error } = await signInWithApple(returnTo);
-      if (error || !data.url) throw new Error("Apple OAuth did not start");
-    } catch {
-      setProviderError("auth.appleFailed");
-      setPending(null);
-    }
-  };
-
-  return (
-    <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">{t("auth.browse")}</Link>}>
-      <section className="auth-page">
-        <span className="eyebrow">WELCOME TO BOTHPLS</span>
-        <h1>{t(mode === "login" ? "auth.welcome" : "auth.join")}</h1>
-        <p className="auth-subtitle">{t(mode === "login" ? "auth.loginIntro" : "auth.registerIntro")}</p>
-
-        <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}>
-          <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button>
-          <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("register")}>{t("auth.register")}</button>
-        </div>
-
-        <form className="auth-form" onSubmit={submit}>
-          {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("common.optional")}</span></label><input id="auth-nickname" className="text-input" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={24} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
-          <label className="field-label" htmlFor="auth-email">{t("common.email")}</label>
-          <input id="auth-email" className="text-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" />
-          <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{t(pending === "email" ? "auth.sending" : "auth.continueEmail")}</button>
-          <p className="auth-mode-prompt">{t(mode === "register" ? "auth.haveAccount" : "auth.noAccount")} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{t(mode === "register" ? "auth.goLogin" : "auth.goRegister")}</button></p>
-        </form>
-
-        <div className="auth-divider" aria-hidden="true">{t("auth.or")}</div>
-        <AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={submitApple} />
-        <button className="auth-github button-full" type="button" onClick={submitGitHub} disabled={pending !== null}>
-          {pending === "github" ? t("auth.githubPending") : t("auth.github")}
-        </button>
-        <button className="auth-google button-full" type="button" onClick={submitGoogle} disabled={pending !== null}>
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path fill="#4285f4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z"/><path fill="#34a853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.2-2.5c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z"/><path fill="#fbbc05" d="M6.2 13.7a6 6 0 0 1 0-3.5V7.6H2.9a10 10 0 0 0 0 8.8l3.3-2.7Z"/><path fill="#ea4335" d="M12 5.9c1.5 0 2.9.5 3.9 1.5l2.9-2.9C17 2.8 14.7 2 12 2a10 10 0 0 0-9.1 5.6l3.3 2.6c.8-2.5 3.1-4.3 5.8-4.3Z"/></svg>
-          {pending === "google" ? t("auth.googlePending") : t("auth.google")}
-        </button>
-
-        {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}
-        {feedback && <p className="auth-feedback" role="status">{t(feedback)}</p>}
-        <p className="auth-legal">{t("auth.legal")}</p>
-      </section>
-    </PageShell>
-  );
+  return <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">{t("auth.browse")}</Link>}><section className="auth-page">
+    <span className="eyebrow">WELCOME TO BOTHPLS</span><h1>{t(heading)}</h1><p className="auth-subtitle">{t(intro)}</p>
+    {mode !== "reset" && <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}><button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button><button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("register")}>{t("auth.register")}</button></div>}
+    <form className="auth-form" onSubmit={submit}>
+      {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label><input id="auth-nickname" className="text-input" required value={nickname} disabled={emailCodeSent} onChange={(event) => setNickname(Array.from(event.target.value).slice(0, 20).join(""))} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
+      {!recoveryActive && <><label className="field-label" htmlFor="auth-email">{t("common.email")}</label><input id="auth-email" className="text-input" required type="email" value={email} disabled={emailCodeSent} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" /></>}
+      {(mode === "login" || mode === "register") && emailCodeSent && <><label className="field-label" htmlFor="auth-email-code">{t("auth.emailCode")}</label><input id="auth-email-code" className="text-input" required inputMode="numeric" autoComplete="one-time-code" value={emailCode} onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="123456" /><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => { setEmailCode(""); setEmailCodeSent(false); setFeedback(""); }}>{t("auth.changeEmail")}</button><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => void requestEmailCode()}>{t("auth.resendCode")}</button></>}
+      {(mode === "login" || mode === "register") && <label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /> <span>{t("auth.rememberMe")}</span></label>}
+      {isPasswordForm && <><label className="field-label" htmlFor="auth-password">{t("auth.password")}</label><input id="auth-password" className="text-input" required type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={32} placeholder={t("auth.passwordHint")} autoComplete="new-password" /><label className="field-label" htmlFor="auth-confirmation">{t("auth.confirmPassword")}</label><input id="auth-confirmation" className="text-input" required type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={8} maxLength={32} autoComplete="new-password" /></>}
+      <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{t(submitLabel)}</button>
+      {mode === "reset" && !recoveryActive && <p className="auth-mode-prompt"><button type="button" disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.backToLogin")}</button></p>}
+      {mode !== "reset" && <p className="auth-mode-prompt">{t(mode === "register" ? "auth.haveAccount" : "auth.noAccount")} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{t(mode === "register" ? "auth.goLogin" : "auth.goRegister")}</button></p>}
+    </form>
+    {mode !== "reset" && <><div className="auth-divider" aria-hidden="true">{t("auth.or")}</div><AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={() => void submitProvider("apple")} /><button className="auth-github button-full" type="button" onClick={() => void submitProvider("github")} disabled={pending !== null}>{pending === "github" ? t("auth.githubPending") : t("auth.github")}</button><button className="auth-google button-full" type="button" onClick={() => void submitProvider("google")} disabled={pending !== null}>{pending === "google" ? t("auth.googlePending") : t("auth.google")}</button></>}
+    {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.codeSent" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}<p className="auth-legal">{t("auth.legal")}</p>
+  </section></PageShell>;
 }

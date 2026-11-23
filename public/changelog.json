@@ -1,8 +1,20 @@
 {
   "entries": [
     {
+      "version": "1.5.0",
+      "text": {
+        "zh-CN": "完善账号登录、投票权限与草稿体验。",
+        "en-US": "Improved account sign-in, voting access, and draft handling.",
+        "ko-KR": "계정 로그인, 투표 권한 및 임시 저장 환경을 개선했어요."
+      }
+    },
+    {
       "version": "1.4.0",
-      "text": "新增个人主页、资料编辑与账号设置。"
+      "text": {
+        "zh-CN": "新增个人主页、资料编辑与账号设置。",
+        "en-US": "Added personal profiles, profile editing, and account settings.",
+        "ko-KR": "개인 프로필, 프로필 편집 및 계정 설정을 추가했어요."
+      }
     }
   ]
 }

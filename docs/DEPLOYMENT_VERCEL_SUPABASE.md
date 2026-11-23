@@ -124,6 +124,8 @@ Project → Settings → Environment Variables，新增两条，Production / Pre
 
 ### 5.3 邮箱登录回调
 
+启用 **Authentication → Providers → Email**。在 **Authentication → URL Configuration** 中，为每个已部署域名加入 `/auth` 回调 URL；将密码规范设置为至少 8 位且包含字母和数字，并将邮件链接有效期设置为 30 分钟。托管 Supabase 的 Auth 设置不能通过 SQL migration 下发，仓库中的 `supabase/config.toml` 仅作为本地开发默认值。
+
 在 Supabase 项目的 **Authentication → URL Configuration** 中配置：
 
 - **Site URL**：`https://the-aliien-repo-oqpi.vercel.app`（正式域名变更后同步更新）。

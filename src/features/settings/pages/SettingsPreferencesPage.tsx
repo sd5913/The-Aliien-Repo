@@ -13,12 +13,25 @@ import { signInWithApple, signInWithGitHub } from "../../auth/services/auth";
 import { fetchProfile } from "../services/profiles";
 import { supabase } from "../../../lib/supabase/client";
 import { AppIcon } from "../../../components/ui/AppIcon";
+import packageJson from "../../../../package.json";
+import type { Locale } from "../../../i18n/locale";
 
-const CHANGELOG_140: MessageKey[] = [
-  "settings.changelog.v140.item1",
-  "settings.changelog.v140.item2",
-  "settings.changelog.v140.item3",
-];
+interface ChangelogEntry {
+  version: string;
+  text: Record<Locale, string>;
+}
+
+function isChangelogEntries(value: unknown): value is ChangelogEntry[] {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  return value.every((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const record = entry as Record<string, unknown>;
+    const text = record.text;
+    if (typeof record.version !== "string" || !text || typeof text !== "object") return false;
+    const localized = text as Record<string, unknown>;
+    return ["en-US", "zh-CN", "ko-KR"].every((locale) => typeof localized[locale] === "string");
+  });
+}
 
 const BINDING_PROVIDERS = [
   { id: "github", label: "GitHub" },
@@ -42,7 +55,7 @@ function BindingRow({ service, status, bound = false, action, onAction }: {
 }
 
 export function SettingsPreferencesPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { settings, error } = useUserSettings();
   const navigate = useNavigate();
   const { user } = useAccount();
@@ -53,11 +66,34 @@ export function SettingsPreferencesPage() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [version, setVersion] = useState(packageJson.version);
+  const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[] | null>(null);
 
   useEffect(() => {
     if (!user) return;
     void fetchProfile(user.id).then((profile) => setNickname(profile?.nickname || settings.nickname)).catch(() => setNickname(settings.nickname));
   }, [user, settings.nickname]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch(`${import.meta.env.BASE_URL}changelog.json`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Changelog request failed with status ${response.status}.`);
+        const payload: unknown = await response.json();
+        if (!payload || typeof payload !== "object" || !("entries" in payload) || !isChangelogEntries(payload.entries)) {
+          throw new Error("Changelog data is invalid.");
+        }
+        if (active) {
+          setChangelogEntries(payload.entries);
+          setVersion(payload.entries[0].version);
+        }
+      })
+      .catch((cause: unknown) => {
+        console.error("Could not load changelog.", cause);
+        if (active) setChangelogEntries(null);
+      });
+    return () => { active = false; };
+  }, []);
 
   const identities = user?.identities?.map((identity) => identity.provider) ?? [];
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -158,14 +194,18 @@ export function SettingsPreferencesPage() {
 
       <section className="settings-card">
         <div className="settings-section-heading"><h2>{t("settings.about")}</h2></div>
-        <div className="settings-row-static"><strong>{t("settings.version")}</strong><span>1.4.0</span></div>
-        <button className="settings-row-button" type="button" aria-expanded={changelogOpen} aria-controls="settings-changelog" onClick={() => setChangelogOpen((open) => !open)}>
-          {t("settings.changelog")} <AppIcon name={changelogOpen ? "chevronUp" : "chevronDown"} size={18} />
-        </button>
-        {changelogOpen && <div className="settings-changelog" id="settings-changelog">
-          <div className="settings-changelog-version"><strong>1.4.0</strong><span>{t("settings.changelog.latest")}</span></div>
-          <ul>{CHANGELOG_140.map((item) => <li key={item}>{t(item)}</li>)}</ul>
-        </div>}
+        <div className="settings-row-static"><strong>{t("settings.version")}</strong><span>{version}</span></div>
+        {changelogEntries && <>
+          <button className="settings-row-button" type="button" aria-expanded={changelogOpen} aria-controls="settings-changelog" onClick={() => setChangelogOpen((open) => !open)}>
+            {t("settings.changelog")} <AppIcon name={changelogOpen ? "chevronUp" : "chevronDown"} size={18} />
+          </button>
+          {changelogOpen && <div className="settings-changelog" id="settings-changelog">
+            {changelogEntries.map((entry, index) => <div className="settings-changelog-version" key={entry.version}>
+              <strong>{entry.version}</strong>{index === 0 && <span>{t("settings.changelog.latest")}</span>}
+              <p>{entry.text[locale]}</p>
+            </div>)}
+          </div>}
+        </>}
       </section>
       {confirmClear && <Modal title={t("settings.clearLocal")} onClose={() => setConfirmClear(false)} actions={<><button className="button-soft" type="button" onClick={() => setConfirmClear(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={clearLocalData}>{t("settings.confirm")}</button></>}><p>{t("settings.clearConfirm")}</p></Modal>}
       {confirmDelete && <Modal title={t("settings.deleteAccount")} onClose={() => { setConfirmDelete(false); setDeleteName(""); }} actions={<><button className="button-soft" type="button" onClick={() => setConfirmDelete(false)}>{t("settings.cancel")}</button><button className="danger-button" type="button" onClick={() => void deleteAccount()}>{t("settings.confirm")}</button></>}><p>{t("settings.deleteConfirm")}</p><input className="text-input" value={deleteName} onChange={(event) => setDeleteName(event.target.value)} placeholder={nickname} /></Modal>}

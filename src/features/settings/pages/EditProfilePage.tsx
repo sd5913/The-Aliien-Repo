@@ -67,7 +67,7 @@ export function EditProfilePage() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const cleanNickname = nickname.trim();
-    if (!cleanNickname) {
+    if (Array.from(cleanNickname).length < 2) {
       setFeedback(t("profile.nicknameRequired"));
       return;
     }
@@ -130,7 +130,6 @@ export function EditProfilePage() {
           id="edit-profile-nickname"
           className="text-input"
           value={nickname}
-          maxLength={20}
           required
           placeholder={t("profile.nicknameHint")}
           onChange={(event) => setNickname(limitNickname(event.target.value))}
