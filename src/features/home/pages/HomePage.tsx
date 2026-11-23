@@ -33,7 +33,7 @@ export function HomePage() {
   const [bannerVisible, setBannerVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const recent = accountUser ? polls : [];
-  const [tab, setTab] = useState<"recent" | "square">("recent");
+  const [tab, setTab] = useState<"recent" | "square">("square");
 
   useEffect(() => {
     if (accountLoading || accountUser || bannerDismissed) return;
@@ -106,19 +106,13 @@ export function HomePage() {
         const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
         if (!keys.includes(event.key)) return;
         event.preventDefault();
-        const next = event.key === "Home" ? "recent" : event.key === "End" ? "square" : tab === "recent" ? "square" : "recent";
+        const next = event.key === "Home" ? "square" : event.key === "End" ? "recent" : tab === "recent" ? "square" : "recent";
         setTab(next); setExpandedPollId(null);
         event.currentTarget.querySelector<HTMLButtonElement>(next === "recent" ? "#home-recent-tab" : "#home-square-tab")?.focus();
       }}>
-        <button id="home-recent-tab" type="button" role="tab" aria-selected={tab === "recent"} aria-controls="home-recent-panel" tabIndex={tab === "recent" ? 0 : -1} className={tab === "recent" ? "active" : ""} onClick={() => { setTab("recent"); setExpandedPollId(null); }}>{t("home.tabRecent")}</button>
         <button id="home-square-tab" type="button" role="tab" aria-selected={tab === "square"} aria-controls="home-square-panel" tabIndex={tab === "square" ? 0 : -1} className={tab === "square" ? "active" : ""} onClick={() => { setTab("square"); setExpandedPollId(null); }}>{t("home.tabSquare")}</button>
+        <button id="home-recent-tab" type="button" role="tab" aria-selected={tab === "recent"} aria-controls="home-recent-panel" tabIndex={tab === "recent" ? 0 : -1} className={tab === "recent" ? "active" : ""} onClick={() => { setTab("recent"); setExpandedPollId(null); }}>{t("home.tabRecent")}</button>
       </div>
-      <section className="home-recent" id="home-recent-panel" role="tabpanel" aria-labelledby="home-recent-tab" hidden={tab !== "recent"}>
-        <div className="section-title-row"><div><span className="eyebrow">{t("home.decideTogether")}</span><h2>{t("home.recent")}</h2></div></div>
-        {loading ? <p className="empty-inline">{t("poll.loading")}</p> : error ? <p className="settings-feedback" role="alert">{t("home.recentLoadFailed")}<RetryIconButton onClick={() => void refresh()} /></p> : recent.length ? <><div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div>{syncError && <p className="settings-feedback" role="status">{t("home.recentLoadFailed")}<RetryIconButton onClick={() => void refresh()} /></p>}</> : (
-          <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>{t("home.recentEmpty")}</h3><p>{t("home.recentEmptyDetails")}</p><Link to="/create" className="purple-button">{t("home.startPoll")}</Link></div>
-        )}
-      </section>
       <section className="home-recent home-square" id="home-square-panel" role="tabpanel" aria-labelledby="home-square-tab" hidden={tab !== "square"}>
         <div className="section-title-row"><div><span className="eyebrow">{t("home.squareEyebrow")}</span><h2>{t("home.tabSquare")}</h2><p className="home-square-description">{t("home.squareDescription")}</p></div></div>
         {squareLoading && <p className="empty-inline">{t("home.squareLoading")}</p>}
@@ -128,6 +122,12 @@ export function HomePage() {
           {squareSyncError && <p className="settings-feedback" role="status">{t("home.squareLoadFailed")}<RetryIconButton onClick={() => void refreshSquare()} /></p>}
         </>}
         {!squareLoading && !squareError && squarePolls.length === 0 && <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>{t("home.squareEmpty")}</h3><p>{t("home.squareEmptyDetails")}</p></div>}
+      </section>
+      <section className="home-recent" id="home-recent-panel" role="tabpanel" aria-labelledby="home-recent-tab" hidden={tab !== "recent"}>
+        <div className="section-title-row"><div><span className="eyebrow">{t("home.decideTogether")}</span><h2>{t("home.recent")}</h2></div></div>
+        {loading ? <p className="empty-inline">{t("poll.loading")}</p> : error ? <p className="settings-feedback" role="alert">{t("home.recentLoadFailed")}<RetryIconButton onClick={() => void refresh()} /></p> : recent.length ? <><div className="poll-card-list">{recent.map((poll) => <PollCard key={poll.id} poll={poll} to={pollPath(poll.id, isPollOpen(poll) && !isPollOwner(poll, accountUser?.id ?? "") ? "vote" : "results", "/")} returnTo="/" expanded={expandedPollId === poll.id} onExpand={(next) => setExpandedPollId(next ? poll.id : null)} onDelete={(item) => { setExpandedPollId(null); setDeleting(item); }} onEnd={setEnding} />)}</div>{syncError && <p className="settings-feedback" role="status">{t("home.recentLoadFailed")}<RetryIconButton onClick={() => void refresh()} /></p>}</> : (
+          <div className="empty-state home-recent-empty"><div className="empty-art" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M17 44h29a11 11 0 0 0 1-22 16 16 0 0 0-30-3A13 13 0 0 0 17 44Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M24 50c3 3 7 4 11 4s8-1 11-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg></div><h3>{t("home.recentEmpty")}</h3><p>{t("home.recentEmptyDetails")}</p><Link to="/create" className="purple-button">{t("home.startPoll")}</Link></div>
+        )}
       </section>
       {ending && <Modal title={t("poll.endQuestion")} onClose={() => setEnding(null)} actions={<><button className="button-soft" onClick={() => setEnding(null)}>{t("common.cancel")}</button><button className="danger-button" onClick={() => { const selected = ending; setEnding(null); void endPoll(selected); }}>{t("poll.endConfirm")}</button></>}><p>{t("poll.endDetails")}</p></Modal>}
       {deleting && <Modal title={t("poll.deleteQuestion")} onClose={() => setDeleting(null)} actions={<><button className="button-soft" onClick={() => setDeleting(null)}>{t("poll.keep")}</button><button className="danger-button" onClick={confirmDelete}>{t("poll.delete")}</button></>}><p>{t("poll.deleteDetails", { title: deleting.title })}</p></Modal>}
