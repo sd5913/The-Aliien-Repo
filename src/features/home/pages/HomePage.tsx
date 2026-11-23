@@ -118,6 +118,7 @@ export function HomePage() {
         key={poll.id}
         poll={poll}
         surface="square"
+        interactive={Boolean(accountUser)}
         to={pollPath(poll.id, owner ? "results" : "vote", "/")}
         returnTo="/"
         expanded={expandedPollId === poll.id}

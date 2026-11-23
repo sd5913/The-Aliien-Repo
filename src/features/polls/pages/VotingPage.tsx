@@ -72,12 +72,12 @@ export function VotingPage() {
     if (!saveDraft(draftKey, { activeId, selectedId, comment })) setDraftNotice("poll.draftUnavailable");
   }, [hydratedKey, draftKey, activeId, selectedId, comment]);
 
-  if (loading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+  if (accountLoading || loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+  if (!accountUser) return <Navigate replace to="/" />;
   if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
   if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>{t("poll.missing")}</h2><p>{t("poll.missingDetails")}</p><Link className="purple-button" to="/">{t("common.home")}</Link></div></PageShell>;
 
   if (!open) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
-  if (accountLoading) return <PageShell backTo={returnTo} showNavigation={false}><p className="empty-inline">{t("auth.checking")}</p></PageShell>;
   if (isPollOwner(poll, accountUser?.id ?? "")) return <Navigate replace to={pollPath(poll.id, "results", returnTo)} />;
 
   const activeIndex = Math.max(0, poll.options.findIndex((option) => option.id === activeId));
