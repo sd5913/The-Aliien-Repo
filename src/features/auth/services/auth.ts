@@ -26,20 +26,6 @@ export function signInWithApple(returnTo = "/") {
   });
 }
 
-export function signUpWithEmailPassword(email: string, password: string, nickname: string, returnTo = "/", rememberMe = true) {
-  setSessionPersistence(rememberMe);
-  return supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: authCallbackUrl(returnTo), data: { nickname } },
-  });
-}
-
-export function signInWithEmailPassword(email: string, password: string, rememberMe: boolean) {
-  setSessionPersistence(rememberMe);
-  return supabase.auth.signInWithPassword({ email, password });
-}
-
 export function sendEmailCode(email: string, shouldCreateUser: boolean, nickname: string | undefined, rememberMe: boolean) {
   setSessionPersistence(rememberMe);
   return supabase.auth.signInWithOtp({

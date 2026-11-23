@@ -22,8 +22,6 @@ let authError = null;
 let lastEmail;
 let lastOAuth;
 let oauthError = null;
-let lastPasswordSignIn;
-let lastSignUp;
 let lastReset;
 let lastPasswordUpdate;
 let lastEmailOtp;
@@ -33,8 +31,6 @@ globalThis.accountTestAuth = {
   setSessionPersistence: (value) => { remembered = value; },
   auth: {
     getUser: async () => ({ data: { user }, error: authError }),
-    signUp: async (input) => { lastSignUp = input; return { data: { session: null }, error: null }; },
-    signInWithPassword: async (input) => { lastPasswordSignIn = input; return { data: {}, error: null }; },
     signInWithOtp: async (input) => { lastEmailOtp = input; return { data: {}, error: null }; },
     verifyOtp: async (input) => { lastOtpVerification = input; return { data: {}, error: null }; },
     resetPasswordForEmail: async (email, options) => { lastReset = { email, options }; return { data: {}, error: null }; },
@@ -47,7 +43,7 @@ globalThis.accountTestAuth = {
   },
 };
 globalThis.accountTestNavigation = navigation;
-const { requireAccountId, signUpWithEmailPassword, signInWithEmailPassword, sendEmailCode, verifyEmailCode, sendPasswordRecoveryEmail, updatePassword, signInWithGitHub } = await load("../services/auth.ts", [
+const { requireAccountId, sendEmailCode, verifyEmailCode, sendPasswordRecoveryEmail, updatePassword, signInWithGitHub } = await load("../services/auth.ts", [
   [/import \{ setSessionPersistence, supabase \} from [^;]+;/, "const supabase = globalThis.accountTestAuth; const { setSessionPersistence } = globalThis.accountTestAuth;"],
   [/import \{ accountReturnTo \} from [^;]+;/, "const { accountReturnTo } = globalThis.accountTestNavigation;"],
 ]);
@@ -64,19 +60,6 @@ authError = null;
 
 const originalWindow = globalThis.window;
 globalThis.window = { location: { origin: "https://bothpls.test" } };
-await signUpWithEmailPassword("test@example.test", "abc12345", "测试用户", "/create?id=example-poll", false);
-const callback = new URL(lastSignUp.options.emailRedirectTo);
-assert.equal(callback.origin, "https://bothpls.test");
-assert.equal(callback.pathname, "/auth");
-assert.equal(callback.searchParams.get("returnTo"), "/create?id=example-poll");
-assert.equal(lastSignUp.password, "abc12345");
-assert.deepEqual(lastSignUp.options.data, { nickname: "测试用户" });
-assert.equal(remembered, false);
-await signUpWithEmailPassword("test@example.test", "abc12345", "测试用户", "//evil.test");
-assert.equal(new URL(lastSignUp.options.emailRedirectTo).searchParams.get("returnTo"), "/");
-await signInWithEmailPassword("test@example.test", "abc12345", false);
-assert.deepEqual(lastPasswordSignIn, { email: "test@example.test", password: "abc12345" });
-assert.equal(remembered, false);
 await sendEmailCode("test@example.test", true, "测试用户", false);
 assert.deepEqual(lastEmailOtp, { email: "test@example.test", options: { shouldCreateUser: true, data: { nickname: "测试用户" } } });
 assert.equal(remembered, false);
