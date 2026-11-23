@@ -73,7 +73,6 @@ export function VotingPage() {
   }, [hydratedKey, draftKey, activeId, selectedId, comment]);
 
   if (accountLoading || loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
-  if (!accountUser) return <Navigate replace to="/" />;
   if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
   if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>{t("poll.missing")}</h2><p>{t("poll.missingDetails")}</p><Link className="purple-button" to="/">{t("common.home")}</Link></div></PageShell>;
 

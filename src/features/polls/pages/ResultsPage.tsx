@@ -4,7 +4,7 @@ import { useAccount } from "../../auth/components/AccountProvider";
 import { pollPath, pollReturnTo } from "../utils/navigation";
 import { useSharePoll } from "../components/ShareProvider";
 import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useParams, useNavigate } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { OwnerPollActions } from "../components/OwnerPollActions";
 import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
@@ -75,8 +75,6 @@ export function ResultsPage() {
 
   if (accountLoading || loading)
     return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
-
-  if (!accountUser) return <Navigate replace to="/" />;
 
   if (error)
     return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;

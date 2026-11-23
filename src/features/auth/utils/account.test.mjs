@@ -26,6 +26,8 @@ let lastPasswordSignIn;
 let lastSignUp;
 let lastReset;
 let lastPasswordUpdate;
+let lastEmailOtp;
+let lastOtpVerification;
 let remembered;
 globalThis.accountTestAuth = {
   setSessionPersistence: (value) => { remembered = value; },
@@ -33,6 +35,8 @@ globalThis.accountTestAuth = {
     getUser: async () => ({ data: { user }, error: authError }),
     signUp: async (input) => { lastSignUp = input; return { data: { session: null }, error: null }; },
     signInWithPassword: async (input) => { lastPasswordSignIn = input; return { data: {}, error: null }; },
+    signInWithOtp: async (input) => { lastEmailOtp = input; return { data: {}, error: null }; },
+    verifyOtp: async (input) => { lastOtpVerification = input; return { data: {}, error: null }; },
     resetPasswordForEmail: async (email, options) => { lastReset = { email, options }; return { data: {}, error: null }; },
     updateUser: async (input) => { lastPasswordUpdate = input; return { data: {}, error: null }; },
     signInWithOAuth: async (input) => {
@@ -43,7 +47,7 @@ globalThis.accountTestAuth = {
   },
 };
 globalThis.accountTestNavigation = navigation;
-const { requireAccountId, signUpWithEmailPassword, signInWithEmailPassword, sendPasswordRecoveryEmail, updatePassword, signInWithGitHub } = await load("../services/auth.ts", [
+const { requireAccountId, signUpWithEmailPassword, signInWithEmailPassword, sendEmailCode, verifyEmailCode, sendPasswordRecoveryEmail, updatePassword, signInWithGitHub } = await load("../services/auth.ts", [
   [/import \{ setSessionPersistence, supabase \} from [^;]+;/, "const supabase = globalThis.accountTestAuth; const { setSessionPersistence } = globalThis.accountTestAuth;"],
   [/import \{ accountReturnTo \} from [^;]+;/, "const { accountReturnTo } = globalThis.accountTestNavigation;"],
 ]);
@@ -73,6 +77,16 @@ assert.equal(new URL(lastSignUp.options.emailRedirectTo).searchParams.get("retur
 await signInWithEmailPassword("test@example.test", "abc12345", false);
 assert.deepEqual(lastPasswordSignIn, { email: "test@example.test", password: "abc12345" });
 assert.equal(remembered, false);
+await sendEmailCode("test@example.test", true, "测试用户", false);
+assert.deepEqual(lastEmailOtp, { email: "test@example.test", options: { shouldCreateUser: true, data: { nickname: "测试用户" } } });
+assert.equal(remembered, false);
+await sendEmailCode("test@example.test", false, undefined, true);
+assert.deepEqual(lastEmailOtp, { email: "test@example.test", options: { shouldCreateUser: false } });
+assert.equal(remembered, true);
+await verifyEmailCode("test@example.test", "123456", "signup");
+assert.deepEqual(lastOtpVerification, { email: "test@example.test", token: "123456", type: "signup" });
+await verifyEmailCode("test@example.test", "654321", "email");
+assert.deepEqual(lastOtpVerification, { email: "test@example.test", token: "654321", type: "email" });
 await sendPasswordRecoveryEmail("test@example.test", "/settings");
 assert.equal(lastReset.email, "test@example.test");
 assert.equal(new URL(lastReset.options.redirectTo).searchParams.get("returnTo"), "/settings");
@@ -91,4 +105,4 @@ assert.equal(new URL(lastOAuth.options.redirectTo).searchParams.get("returnTo"),
 globalThis.window = originalWindow;
 delete globalThis.accountTestAuth;
 delete globalThis.accountTestNavigation;
-console.log("Passed: account-required writes, password sign-up/sign-in/recovery, safe callback URLs, and GitHub OAuth options/errors. No live credentials used.");
+console.log("Passed: account access, email OTP signup/sign-in, password recovery, safe callback URLs, and GitHub OAuth options/errors. No live credentials used.");

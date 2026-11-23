@@ -40,6 +40,21 @@ export function signInWithEmailPassword(email: string, password: string, remembe
   return supabase.auth.signInWithPassword({ email, password });
 }
 
+export function sendEmailCode(email: string, shouldCreateUser: boolean, nickname: string | undefined, rememberMe: boolean) {
+  setSessionPersistence(rememberMe);
+  return supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser,
+      ...(nickname ? { data: { nickname } } : {}),
+    },
+  });
+}
+
+export function verifyEmailCode(email: string, token: string, type: "email" | "signup") {
+  return supabase.auth.verifyOtp({ email, token, type });
+}
+
 export function sendPasswordRecoveryEmail(email: string, returnTo = "/") {
   return supabase.auth.resetPasswordForEmail(email, { redirectTo: authCallbackUrl(returnTo) });
 }

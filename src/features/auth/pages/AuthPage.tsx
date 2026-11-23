@@ -6,7 +6,7 @@ import { supabase } from "../../../lib/supabase/client";
 import { useAccount } from "../components/AccountProvider";
 import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
-import { sendPasswordRecoveryEmail, signInWithApple, signInWithEmailPassword, signInWithGitHub, signInWithGoogle, signUpWithEmailPassword, updatePassword } from "../services/auth";
+import { sendEmailCode, sendPasswordRecoveryEmail, signInWithApple, signInWithGitHub, signInWithGoogle, updatePassword, verifyEmailCode } from "../services/auth";
 import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
 
 type AuthMode = "login" | "register" | "reset";
@@ -34,6 +34,8 @@ export function AuthPage() {
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [recoveryActive, setRecoveryActive] = useState(false);
   const [pending, setPending] = useState<"email" | "github" | "google" | "apple" | null>(null);
@@ -60,27 +62,47 @@ export function AuthPage() {
     const nextParams = new URLSearchParams(searchParams);
     if (nextMode === "register") nextParams.delete("mode"); else nextParams.set("mode", nextMode);
     setSearchParams(nextParams); setFeedback(""); setProviderError(""); setPassword(""); setConfirmation("");
+    setEmailCode(""); setEmailCodeSent(false);
     if (nextMode !== "reset") setRecoveryActive(false);
+  };
+  const requestEmailCode = async () => {
+    if (pending) return;
+    const cleanEmail = email.trim(), cleanNickname = nickname.trim();
+    if (!cleanEmail) { setFeedback("auth.emailRequired"); return; }
+    if (mode === "register" && Array.from(cleanNickname).length < 2) { setFeedback("auth.nicknameRequired"); return; }
+    setPending("email"); setFeedback("");
+    try {
+      const { error } = await sendEmailCode(cleanEmail, mode === "register", mode === "register" ? cleanNickname : undefined, rememberMe);
+      if (error) throw error;
+      setEmailCode("");
+      setEmailCodeSent(true);
+      setFeedback("auth.codeSent");
+    } catch (error) {
+      setFeedback(getAuthErrorKey(error instanceof Error ? error.message : "", mode));
+    } finally {
+      setPending(null);
+    }
   };
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); if (pending) return;
     setProviderError("");
     const cleanEmail = email.trim(), cleanNickname = nickname.trim();
-    if (!cleanEmail) return setFeedback("auth.emailRequired");
-    if (mode === "register" && Array.from(cleanNickname).length < 2) return setFeedback("auth.nicknameRequired");
-    if (mode !== "reset" || recoveryActive) {
+    if (!recoveryActive && !cleanEmail) return setFeedback("auth.emailRequired");
+    if (!recoveryActive && (mode === "login" || mode === "register") && !emailCodeSent) {
+      await requestEmailCode();
+      return;
+    }
+    if (!recoveryActive && (mode === "login" || mode === "register") && !emailCode.trim()) return setFeedback("auth.codeRequired");
+    if (!recoveryActive && mode === "register" && Array.from(cleanNickname).length < 2) return setFeedback("auth.nicknameRequired");
+    if (recoveryActive) {
       if (!validPassword(password)) return setFeedback("auth.passwordInvalid");
-      if ((mode === "register" || recoveryActive) && password !== confirmation) return setFeedback("auth.passwordMismatch");
+      if (password !== confirmation) return setFeedback("auth.passwordMismatch");
     }
     setPending("email"); setFeedback("");
     try {
-      if (mode === "register") {
-        const result = await signUpWithEmailPassword(cleanEmail, password, cleanNickname, returnTo, rememberMe);
-        if (result.error) throw result.error;
-        setFeedback(result.data.session ? "auth.registered" : "auth.confirmEmail");
-      } else if (mode === "login") {
-        const result = await signInWithEmailPassword(cleanEmail, password, rememberMe);
-        if (result.error) throw result.error;
+      if (!recoveryActive && (mode === "register" || mode === "login")) {
+        const { error } = await verifyEmailCode(cleanEmail, emailCode.trim(), mode === "register" ? "signup" : "email");
+        if (error) throw error;
       } else if (recoveryActive) {
         const result = await updatePassword(password);
         if (result.error) throw result.error;
@@ -90,7 +112,10 @@ export function AuthPage() {
         if (result.error) throw result.error;
         setFeedback("auth.resetSent");
       }
-    } catch (error) { setFeedback(getAuthErrorKey(error instanceof Error ? error.message : "", mode)); } finally { setPending(null); }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setFeedback(/token|otp|code/i.test(message) ? "auth.invalidCode" : getAuthErrorKey(message, mode));
+    } finally { setPending(null); }
   };
   const submitProvider = async (provider: "github" | "google" | "apple") => {
     if (pending) return;
@@ -101,24 +126,25 @@ export function AuthPage() {
       if (error || !data.url) throw new Error(`${provider} sign-in did not start`);
     } catch { setProviderError(`auth.${provider}Failed` as MessageKey); setPending(null); }
   };
-  const isPasswordForm = mode !== "reset" || recoveryActive;
-  const heading = mode === "reset" ? (recoveryActive ? "auth.chooseNewPassword" : "auth.resetPassword") : mode === "login" ? "auth.welcome" : "auth.join";
-  const intro = mode === "reset" ? (recoveryActive ? "auth.chooseNewPasswordIntro" : "auth.resetPasswordIntro") : mode === "login" ? "auth.loginIntro" : "auth.registerIntro";
-  const submitLabel = pending === "email" ? "auth.submitting" : mode === "reset" ? recoveryActive ? "auth.updatePassword" : "auth.sendResetLink" : mode === "login" ? "auth.login" : "auth.register";
+  const isPasswordForm = recoveryActive;
+  const heading = recoveryActive ? "auth.chooseNewPassword" : mode === "reset" ? "auth.resetPassword" : mode === "login" ? "auth.welcome" : "auth.join";
+  const intro = recoveryActive ? "auth.chooseNewPasswordIntro" : mode === "reset" ? "auth.resetPasswordIntro" : mode === "login" ? "auth.loginIntro" : "auth.registerIntro";
+  const submitLabel = pending === "email" ? "auth.submitting" : recoveryActive ? "auth.updatePassword" : mode === "reset" ? "auth.sendResetLink" : emailCodeSent ? "auth.verifyCode" : "auth.sendCode";
 
   return <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">{t("auth.browse")}</Link>}><section className="auth-page">
     <span className="eyebrow">WELCOME TO BOTHPLS</span><h1>{t(heading)}</h1><p className="auth-subtitle">{t(intro)}</p>
     {mode !== "reset" && <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}><button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button><button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("register")}>{t("auth.register")}</button></div>}
     <form className="auth-form" onSubmit={submit}>
-      {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label><input id="auth-nickname" className="text-input" required value={nickname} onChange={(event) => setNickname(Array.from(event.target.value).slice(0, 20).join(""))} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
-      {!recoveryActive && <><label className="field-label" htmlFor="auth-email">{t("common.email")}</label><input id="auth-email" className="text-input" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" /></>}
-      {isPasswordForm && <><label className="field-label" htmlFor="auth-password">{t("auth.password")}</label><input id="auth-password" className="text-input" required type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={32} placeholder={t("auth.passwordHint")} autoComplete={mode === "login" ? "current-password" : "new-password"} />{(mode === "register" || recoveryActive) && <><label className="field-label" htmlFor="auth-confirmation">{t("auth.confirmPassword")}</label><input id="auth-confirmation" className="text-input" required type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={8} maxLength={32} autoComplete="new-password" /></>}{(mode === "login" || mode === "register") && <label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /> <span>{t("auth.rememberMe")}</span></label>}</>}
+      {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label><input id="auth-nickname" className="text-input" required value={nickname} disabled={emailCodeSent} onChange={(event) => setNickname(Array.from(event.target.value).slice(0, 20).join(""))} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
+      {!recoveryActive && <><label className="field-label" htmlFor="auth-email">{t("common.email")}</label><input id="auth-email" className="text-input" required type="email" value={email} disabled={emailCodeSent} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" /></>}
+      {(mode === "login" || mode === "register") && emailCodeSent && <><label className="field-label" htmlFor="auth-email-code">{t("auth.emailCode")}</label><input id="auth-email-code" className="text-input" required inputMode="numeric" autoComplete="one-time-code" value={emailCode} onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="123456" /><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => { setEmailCode(""); setEmailCodeSent(false); setFeedback(""); }}>{t("auth.changeEmail")}</button><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => void requestEmailCode()}>{t("auth.resendCode")}</button></>}
+      {(mode === "login" || mode === "register") && <label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /> <span>{t("auth.rememberMe")}</span></label>}
+      {isPasswordForm && <><label className="field-label" htmlFor="auth-password">{t("auth.password")}</label><input id="auth-password" className="text-input" required type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={32} placeholder={t("auth.passwordHint")} autoComplete="new-password" /><label className="field-label" htmlFor="auth-confirmation">{t("auth.confirmPassword")}</label><input id="auth-confirmation" className="text-input" required type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={8} maxLength={32} autoComplete="new-password" /></>}
       <button className="purple-button button-full auth-submit" type="submit" disabled={pending !== null}>{t(submitLabel)}</button>
-      {mode === "login" && <button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => switchMode("reset")}>{t("auth.forgotPassword")}</button>}
       {mode === "reset" && !recoveryActive && <p className="auth-mode-prompt"><button type="button" disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.backToLogin")}</button></p>}
       {mode !== "reset" && <p className="auth-mode-prompt">{t(mode === "register" ? "auth.haveAccount" : "auth.noAccount")} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{t(mode === "register" ? "auth.goLogin" : "auth.goRegister")}</button></p>}
     </form>
     {mode !== "reset" && <><div className="auth-divider" aria-hidden="true">{t("auth.or")}</div><AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={() => void submitProvider("apple")} /><button className="auth-github button-full" type="button" onClick={() => void submitProvider("github")} disabled={pending !== null}>{pending === "github" ? t("auth.githubPending") : t("auth.github")}</button><button className="auth-google button-full" type="button" onClick={() => void submitProvider("google")} disabled={pending !== null}>{pending === "google" ? t("auth.googlePending") : t("auth.google")}</button></>}
-    {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}<p className="auth-legal">{t("auth.legal")}</p>
+    {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.codeSent" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}<p className="auth-legal">{t("auth.legal")}</p>
   </section></PageShell>;
 }
