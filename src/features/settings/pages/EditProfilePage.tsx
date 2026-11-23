@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import { PageShell } from "../../../components/layout/PageShell";
 import { AppIcon } from "../../../components/ui/AppIcon";
@@ -15,7 +15,11 @@ function limitNickname(value: string) {
 export function EditProfilePage() {
   const { t } = useLocale();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: accountLoading } = useAccount();
+  // Opening the editor from the settings page must return there, not to the profile page.
+  const fromSettings = new URLSearchParams(location.search).get("from") === "settings";
+  const exitTo = fromSettings ? "/settings/preferences" : "/settings";
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [avatar, setAvatar] = useState("");
@@ -26,7 +30,7 @@ export function EditProfilePage() {
 
   useEffect(() => {
     if (!accountLoading && !user) {
-      navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
+      navigate(`/auth?returnTo=${encodeURIComponent(`/edit-profile${location.search}`)}`, { replace: true });
       return;
     }
     if (!user) return;
@@ -38,7 +42,7 @@ export function EditProfilePage() {
       setAvatar(draft.avatar);
     });
     return () => { active = false; };
-  }, [user, accountLoading, navigate]);
+  }, [user, accountLoading, navigate, location.search]);
 
   const uploadAvatar = async (file: File) => {
     setFeedback("");
@@ -101,7 +105,7 @@ export function EditProfilePage() {
         console.warn("BothPls: could not mirror the profile into the profiles table.", mirrorError);
         return false;
       });
-      navigate("/settings", { replace: true });
+      navigate(exitTo, { replace: true });
     } catch (error) {
       console.error("BothPls: could not save profile.", error);
       setFeedback(t("settings.saveFailed"));
@@ -111,7 +115,7 @@ export function EditProfilePage() {
   };
 
   return (
-    <PageShell title={t("profile.edit")} showHeaderTitle backTo="/settings" showNavigation={false}>
+    <PageShell title={t("profile.edit")} showHeaderTitle backTo={exitTo} showNavigation={false}>
       <form className="settings-card profile-form" onSubmit={submit}>
         <label className="field-label">{t("guest.avatar")}</label>
         <div className="avatar-picker-row">
