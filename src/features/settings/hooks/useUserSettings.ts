@@ -7,6 +7,7 @@ import {
   saveUserSettings,
   type UserSettings,
 } from "../services/settings";
+import { displayAvatar, profileDraftFromUser } from "../utils/profile";
 
 export function useUserSettings() {
   const [settings, setSettings] = useState(defaultUserSettings);
@@ -14,8 +15,9 @@ export function useUserSettings() {
   const [error, setError] = useState<Error | null>(null);
   const { user, loading: accountLoading } = useAccount();
   const userId = user ? `account:${user.id}` : "guest";
-  const nickname = user ? (typeof user.user_metadata.nickname === "string" ? user.user_metadata.nickname : user.email?.split("@")[0] ?? "") : "";
-  const avatar = user ? (typeof user.user_metadata.avatar === "string" ? user.user_metadata.avatar : "🌷") : "";
+  const draft = profileDraftFromUser(user);
+  const nickname = draft.nickname;
+  const avatar = user ? displayAvatar(draft.avatar) : "";
   const email = user?.email ?? "";
 
   useEffect(() => {

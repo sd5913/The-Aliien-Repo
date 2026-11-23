@@ -5,9 +5,9 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 
 // Browser/API contract tests use synthetic sessions and intercept every external
 // request; they never authenticate or mutate production data.
-export async function mockApp(page, { accountId = owner, closed = false, legacyAccountReads = false } = {}) {
+export async function mockApp(page, { accountId = owner, closed = false, legacyAccountReads = false, nickname = '测试账号', avatar = '' } = {}) {
   let user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
-    user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
+    user_metadata: avatar ? { nickname, avatar } : { nickname }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
   const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
     author_name: owner, status: closed ? 'closed' : 'open', is_public: true, visibility_reviewed_at: '2026-11-20T00:00:00Z', closed_at: null, created_at: '2026-01-01T00:00:00Z',
     poll_options: [{ id: optionA, poll_id: pollId, label: '选项甲', position: 0 }, { id: optionB, poll_id: pollId, label: '选项乙', position: 1 }] }] };
@@ -103,11 +103,17 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
     }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
     if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);
+    // Production still has no deployed profiles table: mirroring must never block a profile save.
+    if (url.pathname === '/rest/v1/profiles') {
+      (state.profileWrites ??= []).push({ method: request.method(), body: request.method() === 'GET' ? null : request.postDataJSON() });
+      return route.fulfill({ status: 404, headers, body: JSON.stringify({
+        code: 'PGRST205', message: "Could not find the table 'public.profiles' in the schema cache" }) });
+    }
     return reply([]);
   });
   state.signIn = async (id = owner) => {
     accountId = id;
-    user = { id, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid', user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false };
+    user = { id, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid', user_metadata: avatar ? { nickname, avatar } : { nickname }, app_metadata: {}, is_anonymous: false };
     const access_token = encode({ alg: 'HS256', typ: 'JWT' }) + '.' + encode({ sub: id, role: 'authenticated', exp: Math.floor(Date.now()/1000)+3600 }) + '.' + encode({ signature: 'synthetic' });
     await page.evaluate(async (session) => {
       const { supabase } = await import('/src/lib/supabase/client.ts');

@@ -4,7 +4,8 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import { PageShell } from "../../../components/layout/PageShell";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { supabase } from "../../../lib/supabase/client";
-import { fetchProfile, saveProfile } from "../services/profiles";
+import { saveProfile } from "../services/profiles";
+import { displayAvatar, loadProfileDraft } from "../utils/profile";
 
 function limitNickname(value: string) {
   return Array.from(value).slice(0, 20).join("");
@@ -25,21 +26,16 @@ export function EditProfilePage() {
       navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
       return;
     }
+    if (!user) return;
     let active = true;
-    if (user) {
-      void fetchProfile(user.id).then((profile) => {
-        if (!active) return;
-        const metadataNickname = typeof user.user_metadata.nickname === "string" ? user.user_metadata.nickname : "";
-        setNickname(profile?.nickname || metadataNickname || user.email?.split("@")[0] || "");
-        setBio(profile?.bio || "");
-        setAvatar(profile?.avatar_url || (typeof user.user_metadata.avatar === "string" ? user.user_metadata.avatar : ""));
-      }).catch((error) => {
-        console.error("BothPls: could not load profile.", error);
-        setFeedback(t("profile.failed"));
-      });
-    }
+    void loadProfileDraft(user).then((draft) => {
+      if (!active) return;
+      setNickname(limitNickname(draft.nickname));
+      setBio(draft.bio);
+      setAvatar(draft.avatar);
+    });
     return () => { active = false; };
-  }, [user, accountLoading, navigate, t]);
+  }, [user, accountLoading, navigate]);
 
   const uploadAvatar = async (file: File) => {
     setFeedback("");
@@ -78,21 +74,27 @@ export function EditProfilePage() {
     setSaving(true);
     setFeedback("");
     try {
-      if (user) {
-        await saveProfile({
-          id: user.id,
-          nickname: cleanNickname,
-          avatar_url: avatar || null,
-          bio: bio.trim() || null,
-        });
-        const { error } = await supabase.auth.updateUser({
-          data: { nickname: cleanNickname, avatar: avatar || "🌷" },
-        });
-        if (error) throw error;
-      } else {
+      if (!user) {
         navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
         return;
       }
+      const avatarValue = avatar.trim();
+      const bioValue = bio.trim();
+      // Account metadata is the display source, so it is written first and is authoritative.
+      const { error } = await supabase.auth.updateUser({
+        data: { nickname: cleanNickname, avatar: displayAvatar(avatarValue), bio: bioValue },
+      });
+      if (error) throw error;
+      // The profiles table is a mirror only; a missing table must not block the save.
+      await saveProfile({
+        id: user.id,
+        nickname: cleanNickname,
+        avatar_url: avatarValue || null,
+        bio: bioValue || null,
+      }).catch((mirrorError) => {
+        console.warn("BothPls: could not mirror the profile into the profiles table.", mirrorError);
+        return false;
+      });
       navigate("/settings", { replace: true });
     } catch (error) {
       console.error("BothPls: could not save profile.", error);
@@ -107,10 +109,10 @@ export function EditProfilePage() {
       <form className="settings-card profile-form" onSubmit={submit}>
         <label className="field-label">{t("guest.avatar")}</label>
         <div className="avatar-picker-row">
-          {avatar && avatar.startsWith("http") ? (
-            <img className="profile-avatar" src={avatar} alt={t("profile.currentAvatar", { avatar: avatar || "🌷" })} />
+          {avatar.startsWith("http") ? (
+            <img className="profile-avatar" src={avatar} alt={t("profile.currentAvatar", { avatar })} />
           ) : (
-            <div className="profile-avatar" aria-label={t("profile.currentAvatar", { avatar: avatar || "🌷" })}>{avatar || "🌷"}</div>
+            <div className="profile-avatar" aria-label={t("profile.currentAvatar", { avatar: displayAvatar(avatar) })}>{displayAvatar(avatar)}</div>
           )}
           <label className="button-soft" htmlFor="edit-profile-avatar">{t("profile.chooseAvatar")}</label>
           <input

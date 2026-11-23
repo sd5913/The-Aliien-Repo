@@ -593,7 +593,8 @@ h1, h2, h3 { color: var(--deep-purple); }
 .profile-edit-actions button { min-height: 38px; padding: 0 15px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; }
 .profile-edit-actions .profile-cancel-button { color: #7c3aed; background: #ede9fe; }
 .avatar-picker-row { display: flex; align-items: center; gap: 12px; margin: 14px 0 10px; }
-.profile-avatar { width: 58px; height: 58px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 21px; background: linear-gradient(140deg, #fbcfe8, #c4b5fd); box-shadow: 0 5px 14px #7c3aed20; font-size: 28px; }
+.profile-avatar { width: 58px; height: 58px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 21px; background: linear-gradient(140deg, #fbcfe8, #c4b5fd); box-shadow: 0 5px 14px #7c3aed20; font-size: 28px; object-fit: cover; overflow: hidden; }
+.profile-avatar-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 18px; }
 .avatar-picker-copy { display: flex; flex-direction: column; gap: 4px; }
 .avatar-picker-copy strong { color: #5b21b6; font-size: 12px; }
 .avatar-picker-copy span { color: #a085bd; font-size: 10px; }

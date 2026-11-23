@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import type { VoterIdentity } from "../../../types/poll";
 import { VOTER_STORAGE_KEY } from "../../../lib/storage/localStorage";
+import { displayAvatar } from "../../settings/utils/profile";
 
 // Current account profile only. Browser-issued voter credentials are never read.
 export type ParticipantProfile = VoterIdentity & { avatar: string };
@@ -10,7 +11,7 @@ export function setAccountIdentity(user: User | null) {
   current = user && !user.is_anonymous ? {
     id: user.id,
     nickname: Array.from(nickname).length >= 2 ? nickname : "朋友",
-    avatar: String(user.user_metadata?.avatar || "🐱"),
+    avatar: displayAvatar(String(user.user_metadata?.avatar ?? "")),
   } : null;
 }
 export function readParticipant(): ParticipantProfile | null { return current; }
