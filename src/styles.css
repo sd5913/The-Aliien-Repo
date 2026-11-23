@@ -650,6 +650,10 @@ h1, h2, h3 { color: var(--deep-purple); }
 .auth-form { padding: 18px 16px 16px; border: 1px solid #fff9; border-radius: 24px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
 .auth-form .text-input { margin-bottom: 13px; }
 .auth-submit { margin-top: 4px; }
+.auth-remember { display: flex; align-items: center; gap: 7px; margin: -2px 0 13px; color: #8062a4; font-size: 11px; cursor: pointer; }
+.auth-remember input { accent-color: #7c3aed; }
+.auth-forgot-password { display: block; margin: 11px auto -2px; padding: 0; border: 0; background: transparent; color: #7c3aed; font-size: 11px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.auth-forgot-password:disabled { cursor: wait; opacity: .65; }
 .auth-mode-prompt { margin: 13px 0 0; color: #8062a4; font-size: 11px; text-align: center; }
 .auth-mode-prompt button { padding: 0; border: 0; background: transparent; color: #7c3aed; font-size: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .auth-divider { display: flex; align-items: center; gap: 10px; margin: 19px 0 13px; color: #a085bd; font-size: 10px; }

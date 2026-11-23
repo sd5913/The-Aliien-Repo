@@ -1,4 +1,4 @@
-import { supabase } from "../../../lib/supabase/client";
+import { setSessionPersistence, supabase } from "../../../lib/supabase/client";
 import { accountReturnTo } from "../utils/navigation";
 
 function authCallbackUrl(returnTo: string) {
@@ -26,15 +26,26 @@ export function signInWithApple(returnTo = "/") {
   });
 }
 
-export async function sendMagicLink(email: string, nickname?: string, returnTo = "/") {
-  return supabase.auth.signInWithOtp({
+export function signUpWithEmailPassword(email: string, password: string, nickname: string, returnTo = "/", rememberMe = true) {
+  setSessionPersistence(rememberMe);
+  return supabase.auth.signUp({
     email,
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: authCallbackUrl(returnTo),
-      ...(nickname ? { data: { nickname } } : {}),
-    },
+    password,
+    options: { emailRedirectTo: authCallbackUrl(returnTo), data: { nickname } },
   });
+}
+
+export function signInWithEmailPassword(email: string, password: string, rememberMe: boolean) {
+  setSessionPersistence(rememberMe);
+  return supabase.auth.signInWithPassword({ email, password });
+}
+
+export function sendPasswordRecoveryEmail(email: string, returnTo = "/") {
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo: authCallbackUrl(returnTo) });
+}
+
+export function updatePassword(password: string) {
+  return supabase.auth.updateUser({ password });
 }
 
 export async function requireAccountId(): Promise<string> {

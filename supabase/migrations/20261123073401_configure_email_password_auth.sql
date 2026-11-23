@@ -1,0 +1,3 @@
+-- Password policy is configured in Supabase Auth (Dashboard for hosted projects).
+-- Keep this migration as an explicit deployment marker; local development is configured in
+-- supabase/config.toml with an 8-character letters-and-digits requirement.
