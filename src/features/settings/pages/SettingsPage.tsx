@@ -34,8 +34,8 @@ export function SettingsPage() {
   }, [user?.id]);
 
   const metadataNickname = typeof user?.user_metadata.nickname === "string" ? user.user_metadata.nickname.trim() : "";
-  const nickname = profile?.nickname || metadataNickname || settings.nickname || user?.email?.split("@")[0] || t("profile.signedIn");
-  const avatar = profile?.avatar_url || (typeof user?.user_metadata.avatar === "string" ? user.user_metadata.avatar : settings.avatar || nickname.slice(0, 1).toUpperCase());
+  const nickname = profile?.nickname || settings.nickname || metadataNickname || user?.email?.split("@")[0] || t("profile.signedIn");
+  const avatar = profile?.avatar_url || settings.avatar || (typeof user?.user_metadata.avatar === "string" ? user.user_metadata.avatar : nickname.slice(0, 1).toUpperCase());
 
   useEffect(() => {
     if (location.hash === "#my-polls") {

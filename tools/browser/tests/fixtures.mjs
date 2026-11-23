@@ -105,7 +105,7 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
       if (request.method() === 'GET') return reply(state.profiles ? [state.profiles] : []);
       if (request.method() === 'POST' || request.method() === 'PATCH') {
         state.profiles = request.postDataJSON();
-        return reply([state.profiles]);
+        return reply(null);
       }
     }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
