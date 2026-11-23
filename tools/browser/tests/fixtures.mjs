@@ -8,7 +8,7 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 export async function mockApp(page, { accountId = owner, closed = false, legacyAccountReads = false } = {}) {
   let user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
     user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
-  const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
+  const state = { calls: [], requests: [], profiles: accountId ? { id: accountId, nickname: '测试账号', avatar_url: null, bio: null } : null, polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
     author_name: owner, status: closed ? 'closed' : 'open', is_public: true, visibility_reviewed_at: '2026-11-20T00:00:00Z', closed_at: null, created_at: '2026-01-01T00:00:00Z',
     poll_options: [{ id: optionA, poll_id: pollId, label: '选项甲', position: 0 }, { id: optionB, poll_id: pollId, label: '选项乙', position: 1 }] }] };
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -100,6 +100,13 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
       const offset = Number(url.searchParams.get('offset') ?? 0);
       const limit = Number(url.searchParams.get('limit') ?? rows.length);
       return reply(rows.slice(offset, offset + limit).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
+    }
+    if (url.pathname === '/rest/v1/profiles') {
+      if (request.method() === 'GET') return reply(state.profiles ? [state.profiles] : []);
+      if (request.method() === 'POST' || request.method() === 'PATCH') {
+        state.profiles = request.postDataJSON();
+        return reply([state.profiles]);
+      }
     }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
     if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);

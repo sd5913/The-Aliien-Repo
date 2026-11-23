@@ -27,6 +27,8 @@ test('account profile saves nickname into the account', async ({ page }) => {
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByText('更新的账号', { exact: true })).toBeVisible();
   await expect(page.getByText('test@example.invalid')).toBeVisible();
+  await page.goto('/edit-profile');
+  await expect(page.getByLabel('昵称')).toHaveValue('更新的账号');
 });
 
 test('missing result close returns home without an invisible exit dialog or login redirect', async ({ page }) => {
