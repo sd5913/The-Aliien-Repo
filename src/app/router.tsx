@@ -8,6 +8,7 @@ import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPreferencesPage";
 import { EditProfilePage } from "../features/settings/pages/EditProfilePage";
 import { AuthPage } from "../features/auth/pages/AuthPage";
+import { LegalPage } from "../features/legal/pages/LegalPage";
 
 
 import { ParticipantLoginPage } from "../features/auth/pages/ParticipantLoginPage";
@@ -17,6 +18,8 @@ import { RouteFallback } from "./RouteFallback";
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
   { path: "/login", element: <AuthPage /> },
+  { path: "/terms", element: <LegalPage doc="terms" /> },
+  { path: "/privacy", element: <LegalPage doc="privacy" /> },
   { path: "/", element: <HomePage /> },
   { path: "/settings", element: <SettingsPage /> },
   { path: "/profile", loader: () => redirect("/settings") },
