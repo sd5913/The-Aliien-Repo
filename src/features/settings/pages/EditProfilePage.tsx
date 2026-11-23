@@ -85,10 +85,6 @@ export function EditProfilePage() {
           avatar_url: avatar || null,
           bio: bio.trim() || null,
         });
-        const { error } = await supabase.auth.updateUser({
-          data: { nickname: cleanNickname, avatar: avatar || "🌷" },
-        });
-        if (error) throw error;
       } else {
         navigate("/auth?returnTo=%2Fedit-profile", { replace: true });
         return;
