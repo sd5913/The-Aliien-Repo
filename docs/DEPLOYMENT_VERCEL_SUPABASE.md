@@ -139,6 +139,15 @@ GitHub OAuth App 的 **Authorization callback URL** 使用 Supabase GitHub provi
 
 在目标站点从受保护的页面（例如 /create）进入登录页，点击「使用 GitHub 登录」，确认授权后返回原页面。取消授权时，确认页面显示可重试的提示，且邮箱登录仍可使用。参考 [Supabase GitHub 登录文档](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)。
 
+### 5.5 Google 登录回调
+
+1. 在 Google Cloud Console 的 **Google Auth Platform** 创建一个 Web application OAuth client；将生产站点和本地开发地址加入 **Authorized JavaScript origins**。
+2. 在 **Authorized redirect URIs** 中添加 Supabase Dashboard 的 Google provider 页面显示的回调地址（通常是 `https://<project-ref>.supabase.co/auth/v1/callback`）。不要填前端的 `/auth` 地址。
+3. 在 Supabase Dashboard → **Authentication → Providers → Google** 中启用 Google，并填写该 client 的 Client ID 和 Client Secret。密钥只保存在 Google 与 Supabase 中，不添加 `VITE_` 变量，也不提交到仓库。
+4. 将生产站点和本地 `http://localhost:5173/auth` 保留在 **Authentication → URL Configuration → Redirect URLs** 中。前端 OAuth 完成后会返回 `/auth`，并恢复用户原本要访问的页面。
+
+从受保护页面进入登录页，选择「以 Google 登录」，完成授权后确认回到原页面且已登录；取消授权时应显示可重试提示。参考 [Supabase Google 登录文档](https://supabase.com/docs/guides/auth/social-sign-in/auth-google)。
+
 ---
 
 ## 6. 验收清单

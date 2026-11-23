@@ -12,6 +12,13 @@ export function signInWithGitHub(returnTo = "/") {
   });
 }
 
+export function signInWithGoogle(returnTo = "/") {
+  return supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: authCallbackUrl(returnTo) },
+  });
+}
+
 export function signInWithApple(returnTo = "/") {
   return supabase.auth.signInWithOAuth({
     provider: "apple",
