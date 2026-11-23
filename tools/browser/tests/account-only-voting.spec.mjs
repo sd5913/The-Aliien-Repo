@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { mockApp, owner, pollId, optionB } from './fixtures.mjs';
+import { mockApp, pollId, optionB } from './fixtures.mjs';
+
+const voter = '10000000-0000-4000-8000-000000000098';
 
 test('guest browses, selects B, logs in, reloads and explicitly confirms once', async ({ page }) => {
   const state = await mockApp(page, { accountId: null });
@@ -12,7 +14,7 @@ test('guest browses, selects B, logs in, reloads and explicitly confirms once', 
   await expect(page).toHaveURL(url => url.pathname === '/auth' && url.searchParams.get('returnTo') === target);
   await page.reload(); // A cancelled/failed login never consumes the pending choice.
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
-  await state.signIn();
+  await state.signIn(voter);
   await expect(page).toHaveURL('http://127.0.0.1:5180' + target);
   await expect(page.getByRole('button', { name: '选择当前选项 B', exact: false })).toHaveAttribute('aria-pressed', 'true');
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
@@ -21,7 +23,7 @@ test('guest browses, selects B, logs in, reloads and explicitly confirms once', 
   await page.getByRole('button', { name: '提交我的选择' }).click();
   await expect(page).toHaveURL(new RegExp('/poll/' + pollId + '/results'));
   expect(state.calls.filter(c => c.name === 'submit_ballot')).toHaveLength(1);
-  expect(state.votes[0]).toMatchObject({ voter_id: owner, ranking: [optionB] });
+  expect(state.votes[0]).toMatchObject({ voter_id: voter, ranking: [optionB] });
   expect(state.calls.some(c => c.name === 'register_participant')).toBe(false);
 });
 
@@ -49,7 +51,7 @@ test('a poll ending during login shows results without submitting', async ({ pag
   await page.getByRole('button', { name: '选择当前选项 A', exact: false }).click();
   await expect(page).toHaveURL(url => url.pathname === '/auth');
   state.polls[0].status = 'closed';
-  await state.signIn();
+  await state.signIn(voter);
   await expect(page).toHaveURL(new RegExp('/results'));
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
 });
@@ -61,7 +63,7 @@ test('a removed option is not restored or submitted after login', async ({ page 
   await page.getByRole('button', { name: '选择当前选项 B', exact: false }).click();
   await expect(page).toHaveURL(url => url.pathname === '/auth');
   state.polls[0].poll_options.pop();
-  await state.signIn();
+  await state.signIn(voter);
   await expect(page.getByRole('button', { name: '提交我的选择' })).toBeDisabled();
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
 });
@@ -87,21 +89,21 @@ test('blocked draft storage still returns from login with the selected option', 
   await page.getByRole('button', { name: '下一个选项' }).click();
   await page.getByRole('button', { name: '选择当前选项 B', exact: false }).click();
   await expect(page).toHaveURL(url => url.pathname === '/auth');
-  await state.signIn();
+  await state.signIn(voter);
   await expect(page.getByRole('button', { name: '选择当前选项 B', exact: false })).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(url => url.pathname === '/poll/' + pollId && !url.searchParams.has('pendingChoice'));
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
 });
 
 test('account switches keep separate vote and comment drafts', async ({ page }) => {
-  const state = await mockApp(page);
+  const state = await mockApp(page, { accountId: voter });
   await page.goto('/poll/' + pollId);
   await page.getByRole('button', { name: '选择当前选项 A', exact: false }).click();
   await page.locator('#vote-comment').fill('Only account A');
   await state.signIn('10000000-0000-4000-8000-000000000099');
   await expect(page.locator('#vote-comment')).toHaveValue('');
   await expect(page.getByRole('button', { name: '提交我的选择' })).toBeDisabled();
-  await state.signIn(owner);
+  await state.signIn(voter);
   await expect(page.locator('#vote-comment')).toHaveValue('Only account A');
   await expect(page.getByRole('button', { name: '选择当前选项 A', exact: false })).toHaveAttribute('aria-pressed', 'true');
   expect(state.calls.some(c => c.name === 'submit_ballot')).toBe(false);
