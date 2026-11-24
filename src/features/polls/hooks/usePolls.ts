@@ -17,6 +17,8 @@ import {
   fetchVotedPollsPage,
   submitVote,
   updatePollMeta,
+  RECENT_POLL_PAGE_SIZE,
+  SQUARE_POLL_PAGE_SIZE,
 } from "../services/polls";
 import { getVoter, isPollOwner, isPollOpen } from "../utils/voting";
 
@@ -72,15 +74,23 @@ export function usePolls(query: PollQuery) {
       const page = owned && user?.id ? await fetchOwnedPollsPage(user.id, 0, ownedFilter) : null;
       const votedPage = voted && participant ? await fetchVotedPollsPage(participant, votedFilter) : null;
       let data = page?.polls ?? [];
-      if (votedPage) data = votedPage.polls;
-      if (recent) data = await fetchRecentPolls(participant, user?.id);
-      if (square) data = await fetchSquarePolls(participant);
+      let nextHasMore = page?.hasMore ?? false;
+      if (votedPage) { data = votedPage.polls; nextHasMore = votedPage.hasMore; }
+      if (recent) {
+        const recentPage = await fetchRecentPolls(participant, user?.id, 0, RECENT_POLL_PAGE_SIZE);
+        data = recentPage.polls; nextHasMore = recentPage.hasMore;
+      }
+      if (square) {
+        const squarePage = await fetchSquarePolls(participant, 0, SQUARE_POLL_PAGE_SIZE);
+        data = squarePage.polls; nextHasMore = squarePage.hasMore;
+      }
       if (pollId) {
         const poll = await fetchPoll(pollId, metadataOnly);
         data = poll ? [poll] : [];
+        nextHasMore = false;
       }
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
-      pollsRef.current = data; loadedCount.current = page?.polls.length ?? 0; setPolls(data); setHasMore(page?.hasMore ?? false); setError(null); setSyncError(false); initialized.current = true;
+      pollsRef.current = data; loadedCount.current = data.length; setPolls(data); setHasMore(nextHasMore); setError(null); setSyncError(false); initialized.current = true;
     } catch (cause) {
       if (!mounted.current || sequence !== requestSequence.current) return;
       if (!initialized.current) setError(cause instanceof Error ? cause : new Error(String(cause)));
@@ -91,21 +101,32 @@ export function usePolls(query: PollQuery) {
   }, [accountId, recent, square, owned, ownedFilter, voted, votedFilter, participant, pollId, metadataOnly]);
 
   const loadMore = useCallback(async () => {
-    if (!owned || !user?.id || !hasMore || loadingMoreRef.current || loading) return;
+    if (!hasMore || loadingMoreRef.current || loading) return;
     loadingMoreRef.current = true; setLoadingMore(true);
     const sequence = requestSequence.current;
     const revision = version.current;
     try {
-      const page = await fetchOwnedPollsPage(user.id, loadedCount.current, ownedFilter);
+      let next: Poll[] = [];
+      let nextHasMore = false;
+      if (owned && user?.id) {
+        const page = await fetchOwnedPollsPage(user.id, loadedCount.current, ownedFilter);
+        next = page.polls; nextHasMore = page.hasMore;
+      } else if (square) {
+        const page = await fetchSquarePolls(participant, loadedCount.current, SQUARE_POLL_PAGE_SIZE);
+        next = page.polls; nextHasMore = page.hasMore;
+      } else if (recent) {
+        const page = await fetchRecentPolls(participant, user?.id, loadedCount.current, RECENT_POLL_PAGE_SIZE);
+        next = page.polls; nextHasMore = page.hasMore;
+      }
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;
-      const next = [...pollsRef.current, ...page.polls.filter((poll) => !pollsRef.current.some((existing) => existing.id === poll.id))];
-      loadedCount.current += page.polls.length; pollsRef.current = next; setPolls(next); setHasMore(page.hasMore); setSyncError(false);
+      const merged = [...pollsRef.current, ...next.filter((poll) => !pollsRef.current.some((existing) => existing.id === poll.id))];
+      loadedCount.current = merged.length; pollsRef.current = merged; setPolls(merged); setHasMore(nextHasMore); setSyncError(false);
     } catch {
       if (mounted.current && sequence === requestSequence.current) setSyncError(true);
     } finally {
       loadingMoreRef.current = false; if (mounted.current) setLoadingMore(false);
     }
-  }, [owned, user?.id, hasMore, loading, ownedFilter]);
+  }, [owned, square, recent, user?.id, participant, hasMore, loading, ownedFilter]);
 
   useEffect(() => {
     mounted.current = true; initialized.current = false; setLoading(true);

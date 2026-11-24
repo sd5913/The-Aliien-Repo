@@ -17,6 +17,6 @@ export function PollOptionPreviews({ options }: { options: PollOption[] }) {
           <span className="poll-preview-label">{option.name || t("image.option", { index: index + 1 })}</span>
         </div>
       </div>
-    ) : <img key={option.id} src={option.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`} alt="" draggable="false" />)}
+    ) : <img key={option.id} src={option.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`} alt="" draggable="false" loading="lazy" />)}
   </div>;
 }

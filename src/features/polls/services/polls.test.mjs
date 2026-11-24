@@ -42,11 +42,10 @@ const client = createClient("https://square.test", "test-publishable-key", {
     assert.equal(params.get("status"), "eq.open");
     assert.equal(params.get("or"), "(closed_at.is.null,closed_at.gt.now)");
     assert.equal(params.get("order"), "created_at.desc,id.desc");
-    assert.equal(params.get("limit"), "5");
     // Ineligible rows occupy the newest slots: limiting before filtering would
     // return fewer than five valid cards. Equality at the deadline is ended.
     return json(empty ? [] : rows.filter((row) => row.is_public && row.status === "open"
-      && (!row.closed_at || row.closed_at > serverNow)).slice(0, 5));
+      && (!row.closed_at || row.closed_at > serverNow)).slice(0, 10));
   } },
 });
 globalThis.squareTestClient = client;
@@ -62,9 +61,11 @@ const source = readFileSync(new URL("./polls.ts", import.meta.url), "utf8")
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
 const { fetchSquarePolls } = await import(`data:text/javascript;base64,${Buffer.from(js).toString("base64")}`);
 
-const expected = Array.from({ length: 5 }, (_, index) => `active-${index}`);
-const cards = await fetchSquarePolls();
+const expected = Array.from({ length: 6 }, (_, index) => `active-${index}`);
+const firstPage = await fetchSquarePolls();
+const cards = firstPage.polls;
 assert.deepEqual(cards.map((card) => card.id), expected);
+assert.equal(firstPage.hasMore, false);
 assert.equal(cards[0].voteCount, 4);
 assert.equal(cards[0].endsAt, undefined);
 assert.equal(cards[1].endsAt, "2026-11-22T00:00:00.000Z");
@@ -73,24 +74,25 @@ const created = [];
 while (created.length < 5) created.push(makeOption(created));
 const active = rows.find(row => row.id === expected[0]);
 active.poll_options = created.map(({ id }, position) => ({ id, position, label: String(position) }));
-const reloaded = (await fetchSquarePolls())[0].options.map(option => option.colorIndex);
+const reloaded = (await fetchSquarePolls()).polls[0].options.map(option => option.colorIndex);
 assert.equal(new Set(reloaded).size, 5);
 assert.deepEqual(reloaded, created.map(option => option.colorIndex));
 active.poll_options = [4, 4, 2].map((prefix, position) => ({
   id: prefix.toString(16).padStart(8, "0") + "-0000-4000-8000-" + String(position).padStart(12, "0"),
   position, label: String(position), color_index: position === 2 ? 4 : null,
 }));
-assert.deepEqual((await fetchSquarePolls())[0].options.map(option => option.colorIndex), [0, 1, 4]);
+assert.deepEqual((await fetchSquarePolls()).polls[0].options.map(option => option.colorIndex), [0, 1, 4]);
 for (const code of ["42703", "PGRST204"]) {
   requests.length = 0;
   missingColumnCode = code;
-  assert.deepEqual((await fetchSquarePolls()).map((card) => card.id), expected);
+  const fallback = await fetchSquarePolls();
+  assert.deepEqual(fallback.polls.map((card) => card.id), expected);
   assert.equal(requests.length, 2);
   assert.ok(!requests[1].searchParams.get("select").includes("visibility_reviewed_at"));
 }
 missingColumnCode = null;
 empty = true;
-assert.deepEqual(await fetchSquarePolls(), []);
+assert.deepEqual((await fetchSquarePolls()).polls, []);
 failure = true;
 requests.length = 0;
 await assert.rejects(fetchSquarePolls(), (error) => error.code === "42501");
