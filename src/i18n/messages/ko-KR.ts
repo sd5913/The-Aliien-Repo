@@ -223,6 +223,7 @@ export default {
   "image.recentEmpty": "최근 사용한 사진이 여기에 표시돼요",
   "image.photo": "사진",
   "image.chooseFromGallery": "사진 보관함에서 선택",
+  "image.chooseFromAlbum": "앨범에서 선택",
   "image.text": "텍스트",
   "image.enterText": "텍스트 입력",
   "image.addInfo": "선택지 {index} 정보 추가",

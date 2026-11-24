@@ -223,6 +223,7 @@ export default {
   "image.recentEmpty": "最近使用的照片会显示在这里",
   "image.photo": "照片",
   "image.chooseFromGallery": "从你的相册中选择",
+  "image.chooseFromAlbum": "从相册选",
   "image.text": "文本",
   "image.enterText": "输入文本",
   "image.addInfo": "添加选项 {index} 信息",

@@ -223,6 +223,7 @@ export default {
   "image.recentEmpty": "Recently used photos will appear here",
   "image.photo": "Photo",
   "image.chooseFromGallery": "Choose from your photo library",
+  "image.chooseFromAlbum": "Choose from album",
   "image.text": "Text",
   "image.enterText": "Enter text",
   "image.addInfo": "Add details for option {index}",
