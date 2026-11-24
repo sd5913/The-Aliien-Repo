@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { PollOption } from "../../../types/poll";
 import { optionColor } from "../utils/optionColors";
-import { chartSize, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
+import { chartSize, dragPoint, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
 import type { Contact, Point } from "../utils/resultShapes";
 
 export function LiquidResults({ pollId, options, counts }: { pollId: string; options: PollOption[]; counts: Map<string, number> }) {
@@ -23,6 +23,8 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     let paths: { path: Path2D; center: Point; points: Point[] }[] = [];
     let contact: Contact | undefined;
     let pointerId: number | undefined;
+    let holdTimer: number | undefined;
+    let drag: { box: typeof shapes[number]["box"]; start: Point; delta: Point; releasing: boolean } | undefined;
     let strength = 0, velocity = 0, holdUntil = 0, frame = 0, previous = 0;
 
     const draw = (time: number) => {
@@ -30,6 +32,11 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       if (document.hidden) return;
       const dt = Math.min(60, Math.max(0, time - previous));
       previous = time;
+      if (drag?.releasing) {
+        const decay = motion.matches ? 0 : Math.exp(-dt / 95);
+        drag.delta = { x: drag.delta.x * decay, y: drag.delta.y * decay };
+        if (Math.hypot(drag.delta.x, drag.delta.y) < .1) drag = undefined;
+      }
       const target = pointerId !== undefined || time < holdUntil ? 1 : 0;
       if (motion.matches) {
         strength = target;
@@ -53,6 +60,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
             x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
             y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
           };
+          if (drag) return dragPoint(rest, drag.box, drag.delta);
           return contact ? pressPoint(rest, contact, strength) : rest;
         };
         const points = shape.points.map(project);
@@ -79,17 +87,27 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       if (!motion.matches || time < holdUntil) frame = requestAnimationFrame(draw);
     };
 
-    const press = (event: PointerEvent) => {
-      if (pointerId !== undefined || event.button !== 0) return;
+    const position = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const focus = {
+      return {
         x: (event.clientX - rect.left) / rect.width * chartSize,
         y: (event.clientY - rect.top) / rect.height * chartSize,
       };
-      const hit = paths.find(({ path }) => ctx.isPointInPath(path, focus.x * ratio, focus.y * ratio));
+    };
+    const press = (event: PointerEvent) => {
+      if (pointerId !== undefined || event.button !== 0) return;
+      const focus = position(event);
+      const index = paths.findIndex(({ path }) => ctx.isPointInPath(path, focus.x * ratio, focus.y * ratio));
+      const hit = paths[index];
       const nearestEdge = hit ? Math.min(...hit.points.map(p => Math.hypot(p.x - focus.x, p.y - focus.y))) : 0;
       contact = { focus, origin: hit?.center ?? focus, radius: 78 + nearestEdge * 1.35 };
       pointerId = event.pointerId;
+      if (hit) holdTimer = window.setTimeout(() => {
+        holdTimer = undefined;
+        drag = { box: shapes[index].box, start: focus, delta: { x: 0, y: 0 }, releasing: false };
+        contact = undefined;
+        draw(performance.now());
+      }, 350);
       canvas.setPointerCapture(pointerId);
       const now = performance.now();
       holdUntil = now + 110;
@@ -97,15 +115,31 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       velocity = 0;
       draw(now);
     };
+    const move = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      const p = position(event);
+      if (drag && !drag.releasing) {
+        const clamp = (n: number) => Math.max(0, Math.min(chartSize, n));
+        drag.delta = { x: clamp(p.x) - drag.start.x, y: clamp(p.y) - drag.start.y };
+        draw(performance.now());
+      } else if (contact && Math.hypot(p.x - contact.focus.x, p.y - contact.focus.y) > 9) {
+        window.clearTimeout(holdTimer);
+      }
+    };
     const release = (event: PointerEvent) => {
       if (event.pointerId !== pointerId) return;
       pointerId = undefined;
+      window.clearTimeout(holdTimer);
+      if (drag) drag.releasing = true;
       if (event.type === "pointercancel") holdUntil = 0;
       draw(performance.now());
     };
     const restart = () => draw(performance.now());
+    const preventMenu = (event: Event) => event.preventDefault();
     restart();
     canvas.addEventListener("pointerdown", press);
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("contextmenu", preventMenu);
     canvas.addEventListener("pointerup", release);
     canvas.addEventListener("pointercancel", release);
     canvas.addEventListener("lostpointercapture", release);
@@ -113,6 +147,9 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     document.addEventListener("visibilitychange", restart);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(holdTimer);
+      canvas.removeEventListener("pointermove", move);
+      canvas.removeEventListener("contextmenu", preventMenu);
       canvas.removeEventListener("pointerdown", press);
       canvas.removeEventListener("pointerup", release);
       canvas.removeEventListener("pointercancel", release);

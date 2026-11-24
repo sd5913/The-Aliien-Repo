@@ -4,7 +4,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("./resultShapes.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
-const { resultShapes, pressPoint, jellyPose } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { resultShapes, pressPoint, jellyPose, dragPoint } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function area(points) {
   return points.reduce((sum, p, i) => {
@@ -36,7 +36,7 @@ for (const shape of resultShapes("bounce", [51, 29, 15, 4, 1])) {
       y: (p.y - shape.center.y) * pose.scaleY + pose.dy,
     }));
     assert.ok(Math.abs(area(points) / restArea - 1) < 1e-10);
-    assert.ok(points.every(p => Math.abs(p.x) < shape.width / 2 && Math.abs(p.y) < shape.height / 2));
+    assert.ok(points.every(p => p.x + shape.center.x > 0 && p.x + shape.center.x < 360 && p.y + shape.center.y > 0 && p.y + shape.center.y < 360));
   }
 }
 const gap = { focus: { x: 50, y: 50 }, origin: { x: 50, y: 50 }, radius: 78 };
@@ -47,4 +47,12 @@ assert.deepEqual(pressPoint(far, gap, 1), far);
 const shape = resultShapes("tap", [6, 4])[0];
 const block = { focus: shape.center, origin: shape.center, radius: 200 };
 assert.ok(area(shape.points.map(p => pressPoint(p, block, 1))) > area(shape.points));
-console.log("Verified one shape per option, area and bounds throughout a bounce, and local touch response.");
+const box = { left: 100, right: 200, top: 110, bottom: 210 };
+assert.deepEqual(dragPoint({ x: 150, y: 160 }, box, { x: 24, y: -15 }), { x: 174, y: 145 });
+const push = { x: 300, y: 0 };
+const leading = dragPoint({ x: 200, y: 160 }, box, push);
+const trailing = dragPoint({ x: 100, y: 160 }, box, push);
+assert.ok(leading.x < 352 && leading.x - trailing.x < 100);
+assert.ok(dragPoint({ x: 215, y: 160 }, box, push).x > leading.x);
+assert.deepEqual(dragPoint(far, box, push), far);
+console.log("Verified proportional outlines, bounce bounds, local touch, drag travel and compression.");

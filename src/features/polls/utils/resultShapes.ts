@@ -1,9 +1,9 @@
 export type Point = { x: number; y: number };
-type Cell = Point & { width: number; height: number };
+
 type Piece = { index: number; weight: number };
 
 export const chartSize = 360;
-const samples = 96;
+
 const inkFraction = .71;
 
 function layoutRandom(pollId: string) {
@@ -15,33 +15,56 @@ function layoutRandom(pollId: string) {
   };
 }
 
-// Fit the actual sampled outline to a common filled fraction of each cell.
-// Leave room around each outline for its rebound.
-function shape(piece: Piece, cell: Cell, random: () => number) {
-  const phase = random() * 2 * Math.PI;
-  const exponent = .69 + random() * .12;
-  const outline = Array.from({ length: samples }, (_, i) => {
-    const angle = i * 2 * Math.PI / samples;
-    const cos = Math.cos(angle), sin = Math.sin(angle);
-    const radius = .5 + .008 * Math.sin(3 * angle + phase);
-    return {
-      x: radius * Math.sign(cos) * Math.abs(cos) ** exponent,
-      y: radius * Math.sign(sin) * Math.abs(sin) ** exponent,
-    };
-  });
-  const area = outline.reduce((sum, p, i) => {
-    const next = outline[(i + 1) % samples];
-    return sum + (p.x * next.y - next.x * p.y) / 2;
-  }, 0);
-  const scale = Math.sqrt(inkFraction / area);
-  const center = { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 };
-  const points = outline.map(p => ({
-    x: center.x + p.x * scale * cell.width,
-    y: center.y + p.y * scale * cell.height,
-  }));
-  return { ...piece, center, points, phase, width: cell.width, height: cell.height };
+function area(points: Point[]) {
+  return points.reduce((sum, p, i) => {
+    const q = points[(i + 1) % points.length];
+    return sum + p.x * q.y - p.y * q.x;
+  }, 0) / 2;
 }
 
+function mix(a: Point, b: Point, t: number) {
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+
+function clip(points: Point[], normal: Point, offset: number, side: number) {
+  const result: Point[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i], b = points[(i + 1) % points.length];
+    const da = side * (a.x * normal.x + a.y * normal.y - offset);
+    const db = side * (b.x * normal.x + b.y * normal.y - offset);
+    if (da <= 0) result.push(a);
+    if ((da < 0 && db > 0) || (da > 0 && db < 0)) result.push(mix(a, b, da / (da - db)));
+  }
+  return result;
+}
+
+function bounds(points: Point[]) {
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  return { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+}
+
+function shape(piece: Piece, cell: Point[], random: () => number) {
+  const phase = random() * 2 * Math.PI;
+  const corners = cell.map((p, i) => {
+    const t = .34 + random() * .14;
+    return { p, a: mix(p, cell[(i + cell.length - 1) % cell.length], t), b: mix(p, cell[(i + 1) % cell.length], t) };
+  });
+  const outline = corners.flatMap(({ p, a, b }) => Array.from({ length: 25 }, (_, i) => {
+    const t = i / 24;
+    return mix(mix(a, p, t), mix(p, b, t), t);
+  }));
+  // Use the polygon centroid so the label stays inside asymmetric contours.
+  const signedArea = area(outline);
+  const center = outline.reduce((c, p, i) => {
+    const q = outline[(i + 1) % outline.length];
+    const k = (p.x * q.y - q.x * p.y) / (6 * signedArea);
+    return { x: c.x + (p.x + q.x) * k, y: c.y + (p.y + q.y) * k };
+  }, { x: 0, y: 0 });
+  const scale = Math.sqrt(inkFraction * area(cell) / signedArea);
+  const points = outline.map(p => mix(center, p, scale));
+  const box = bounds(points);
+  return { ...piece, center, points, phase, box, width: box.right - box.left, height: box.bottom - box.top };
+}
 export function resultShapes(pollId: string, counts: number[]) {
   const random = layoutRandom(pollId);
   const total = counts.reduce((a, b) => a + b, 0);
@@ -51,7 +74,7 @@ export function resultShapes(pollId: string, counts: number[]) {
     [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
   }
   const shapes: ReturnType<typeof shape>[] = [];
-  function divide(group: Piece[], weight: number, cell: Cell) {
+  function divide(group: Piece[], weight: number, cell: Point[]) {
     if (group.length === 1) {
       shapes.push(shape(group[0], cell, random));
       return;
@@ -61,18 +84,55 @@ export function resultShapes(pollId: string, counts: number[]) {
     while (cut < group.length - 1 && Math.abs(subtotal + group[cut].weight - weight / 2) < Math.abs(subtotal - weight / 2)) {
       subtotal += group[cut++].weight;
     }
-    const vertical = cell.width === cell.height ? random() < .5 : cell.width > cell.height;
-    const dimension = vertical ? "width" : "height";
-    const axis = vertical ? "x" : "y";
-    const span = cell[dimension] * subtotal / weight;
-    divide(group.slice(0, cut), subtotal, { ...cell, [dimension]: span });
-    divide(group.slice(cut), weight - subtotal, { ...cell, [axis]: cell[axis] + span, [dimension]: cell[dimension] - span });
+    const box = bounds(cell);
+    const width = box.right - box.left, height = box.bottom - box.top;
+    const vertical = Math.abs(width - height) < 1 ? random() < .5 : width > height;
+    const angle = (vertical ? 0 : Math.PI / 2) + (random() - .5) * 1.18;
+    const normal = { x: Math.cos(angle), y: Math.sin(angle) };
+    const projections = cell.map(p => p.x * normal.x + p.y * normal.y);
+    let low = Math.min(...projections), high = Math.max(...projections);
+    const target = area(cell) * subtotal / weight;
+    for (let i = 0; i < 48; i++) {
+      const offset = (low + high) / 2;
+      if (area(clip(cell, normal, offset, 1)) < target) low = offset;
+      else high = offset;
+    }
+    const offset = (low + high) / 2;
+    divide(group.slice(0, cut), subtotal, clip(cell, normal, offset, 1));
+    divide(group.slice(cut), weight - subtotal, clip(cell, normal, offset, -1));
   }
-  if (pieces.length) divide(pieces, total, { x: 9, y: 9, width: chartSize - 18, height: chartSize - 18 });
+  const low = 10, high = chartSize - low;
+  if (pieces.length) divide(pieces, total, [{ x: low, y: low }, { x: high, y: low }, { x: high, y: high }, { x: low, y: high }]);
   return shapes;
 }
 
 export type Contact = { focus: Point; origin: Point; radius: number };
+
+// Move both edges of the grabbed shape. The leading edge yields first near
+// a wall; neighboring contours share the same continuous compression field.
+function dragAxis(value: number, from: number, to: number, delta: number) {
+  const reach = Math.abs(delta) + 52;
+  const low = Math.min(from, Math.max(8, from - reach));
+  const high = Math.max(to, Math.min(chartSize - 8, to + reach));
+  if (value <= low || value >= high || !delta) return value;
+  const shift = (edge: number) => Math.max((low - edge) * .84, Math.min((high - edge) * .84, delta));
+  const a = shift(from), b = shift(to);
+  if (value < from) return value + a * (value - low) / (from - low);
+  if (value > to) return value + b * (high - value) / (high - to);
+  return value + a + (b - a) * (value - from) / (to - from);
+}
+
+function proximity(value: number, low: number, high: number) {
+  const t = Math.max(0, 1 - Math.max(0, low - value, value - high) / 52);
+  return t * t * (3 - 2 * t);
+}
+
+export function dragPoint(point: Point, box: ReturnType<typeof bounds>, delta: Point): Point {
+  const x = dragAxis(point.x, box.left, box.right, delta.x * proximity(point.y, box.top, box.bottom));
+  const left = dragAxis(box.left, box.left, box.right, delta.x);
+  const right = dragAxis(box.right, box.left, box.right, delta.x);
+  return { x, y: dragAxis(point.y, box.top, box.bottom, delta.y * proximity(x, left, right)) };
+}
 
 // A short hop ends in a squash and a damped rebound. Reciprocal axis
 // scales preserve the outline's area throughout the animation.
