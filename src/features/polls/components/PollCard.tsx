@@ -184,7 +184,7 @@ export function PollCard({
           )}
           <p className="my-poll-ticket-status">{t(isPollOpen(poll) ? "poll.open" : "poll.closed")} · {surface === "square" ? t("poll.squareParticipants", { count: poll.voteCount ?? poll.votes.length }) : votes(poll.voteCount ?? poll.votes.length)}</p>
           <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
-          {surface === "square" && (interactive ? <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link> : <span className="square-vote-link">{t(owner ? "poll.squareResults" : "poll.squareVote")}</span>)}
+          {surface === "square" && (interactive ? <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link> : <span className="square-vote-link">{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")}</span>)}
           {interactive && shareAllowed && <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
             <AppIcon name="share" size={20} />
           </button>}
