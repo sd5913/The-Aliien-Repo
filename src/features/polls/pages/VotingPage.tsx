@@ -7,6 +7,7 @@ import { useAccount } from "../../auth/components/AccountProvider";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
+import { LoadingState } from "../../../components/ui/LoadingState";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
@@ -78,7 +79,7 @@ export function VotingPage() {
     if (!saveDraft(draftKey, { activeId, selectedId, comment })) setDraftNotice("poll.draftUnavailable");
   }, [hydratedKey, draftKey, activeId, selectedId, comment]);
 
-  if (accountLoading || loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+  if (accountLoading || loading) return <PageShell backTo="/" showNavigation={false}><LoadingState /></PageShell>;
   if (error) return <PageShell backTo={returnTo} showNavigation={false}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
   if (!poll) return <PageShell backTo={returnTo} showNavigation={false}><div className="empty-state"><h2>{t("poll.missing")}</h2><p>{t("poll.missingDetails")}</p><Link className="purple-button" to="/">{t("common.home")}</Link></div></PageShell>;
 
