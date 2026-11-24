@@ -3,6 +3,7 @@ import type { Locale } from "../../../i18n/locale";
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
 import { optionColor } from "./optionColors";
+import logoUrl from "../../../../images/logo.png";
 
 export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
 
@@ -42,6 +43,7 @@ function loadImage(url?: string): Promise<HTMLImageElement | null> {
 // Render once for both the preview and the downloaded PNG, including transparent perforations.
 export async function renderShareTicket(poll: Poll, locale: Locale) {
   const images = await Promise.all(poll.options.map((option) => loadImage(option.imageUrl)));
+  const logoImage = await loadImage(logoUrl);
   const styles = getComputedStyle(document.documentElement);
   const displayFont = styles.getPropertyValue("--font-display").trim();
   const bodyFont = styles.getPropertyValue("--font-body").trim();
@@ -55,8 +57,8 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   fontProbe.remove();
   const brand = translate(locale, "share.ticketBrand");
   const scan = translate(locale, "share.ticketScan");
-  const details = translate(locale, "share.ticketDetails", { count: poll.options.length });
-  const sample = [brand, scan, details, poll.title, ...poll.options.map((option) => option.name)].join(" ");
+  const ticketLabel = translate(locale, "share.ticketLabel");
+  const sample = [brand, scan, ticketLabel, poll.title, ...poll.options.map((option) => option.name)].join(" ");
   await Promise.allSettled([
     document.fonts.load(`700 38px ${displayFamily}`, sample),
     document.fonts.load(`400 21px ${bodyFamily}`, sample),
@@ -242,8 +244,15 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       text(formatNumber(locale, index + 1, { minimumIntegerDigits: 2 }), x + cellWidth / 2 - 26, y + imageHeight / 2 + 16, 100, 48, true);
     }
     if (label && !textOnly) {
+      const letter = String.fromCharCode(65 + index);
+      const labelBaseline = y + cellHeight - 18;
+      const labelSize = 22;
+      ctx.font = `700 ${labelSize}px ${displayFamily}`;
+      ctx.fillStyle = "#7c3aed";
+      ctx.fillText(letter, x + 16, labelBaseline);
+      const letterWidth = ctx.measureText(letter).width;
       ctx.fillStyle = "#5b21b6";
-      text(label, x + 16, y + cellHeight - 18, cellWidth - 32, 22, true);
+      text(label, x + 16 + letterWidth + 8, labelBaseline, cellWidth - letterWidth - 40, labelSize, true);
     }
   });
   ctx.strokeStyle = "#c4a0ef";
@@ -274,17 +283,18 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       }
     }
   }
-  const linkWidth = contentWidth - slotSize - 24;
-  ctx.fillStyle = "#5b21b6";
-  text(scan, margin, height - 158, linkWidth, 25, true);
-  let urlSize = 21;
-  do {
-    ctx.font = `${urlSize}px ${bodyFamily}`;
-    if (ctx.measureText(url).width <= linkWidth) break;
-    urlSize--;
-  } while (urlSize > 8);
-  text(url, margin, height - 114, linkWidth, urlSize);
+  const lockupTitle = `BothPls  |  ${ticketLabel}`;
+  const logoSize = 64;
+  const lockupCenterY = qrY + qrSize / 2;
+  const line1Y = lockupCenterY - 6;
+  const line2Y = lockupCenterY + 26;
+  const logoY = lockupCenterY - logoSize / 2;
+  if (logoImage) ctx.drawImage(logoImage, margin, logoY, logoSize, logoSize);
+  const textX = margin + logoSize + 16;
+  const textWidth = contentWidth - slotSize - 24 - logoSize - 16;
+  ctx.fillStyle = "#4c1d95";
+  text(lockupTitle, textX, line1Y, textWidth, 25, true);
   ctx.fillStyle = "#8969a6";
-  text(details, margin, height - 68, linkWidth, 16);
+  text(scan, textX, line2Y, textWidth, 21);
   return canvas.toDataURL("image/png");
 }
