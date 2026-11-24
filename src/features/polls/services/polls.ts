@@ -5,6 +5,7 @@ import type { ParticipantProfile } from "../../auth/utils/participant";
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
+import { resolveOptionColors } from "../utils/optionColors";
 
 interface PollRow {
   id: string;
@@ -29,6 +30,7 @@ interface OptionRow {
   label: string;
   image_url: string | null;
   position: number | null;
+  color_index?: number | null;
   created_at: string;
 }
 
@@ -67,6 +69,7 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     .map((option) => ({
       id: option.id,
       name: option.label,
+      colorIndex: option.color_index ?? undefined,
       imageUrl: option.image_url ?? undefined,
     }));
 
@@ -81,21 +84,21 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     visibilityReviewedAt: row.visibility_reviewed_at ?? null,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
-    options,
+    options: resolveOptionColors(options),
     votes: votes.map(toVoteView),
     comments: comments.map(toCommentView),
   };
 }
 
 const POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(*)";
 const LEGACY_POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(*)";
 
 const CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(*),votes(count)";
 const LEGACY_CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(*),votes(count)";
 
 function isMissingVisibilityColumn(error: { code?: string; message?: string } | null): boolean {
   // Keep reads available while the frontend and database migration roll out independently.

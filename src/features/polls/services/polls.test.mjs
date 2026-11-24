@@ -50,7 +50,12 @@ const client = createClient("https://square.test", "test-publishable-key", {
   } },
 });
 globalThis.squareTestClient = client;
+const colorSource = readFileSync(new URL("../utils/optionColors.ts", import.meta.url), "utf8");
+const colorJs = ts.transpileModule(colorSource, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
+const colorModule = `data:text/javascript;base64,${Buffer.from(colorJs).toString("base64")}`;
+const { makeOption } = await import(colorModule);
 const source = readFileSync(new URL("./polls.ts", import.meta.url), "utf8")
+  .replace('"../utils/optionColors"', JSON.stringify(colorModule))
   .replace(/import \{ requireAccountId \} from [^;]+;/, "const requireAccountId = async () => null;")
   .replace(/import \{ readParticipant \} from [^;]+;/, "const readParticipant = () => null;")
   .replace(/import \{ supabase \} from [^;]+;/, "const supabase = globalThis.squareTestClient;");
@@ -64,6 +69,18 @@ assert.equal(cards[0].voteCount, 4);
 assert.equal(cards[0].endsAt, undefined);
 assert.equal(cards[1].endsAt, "2026-11-22T00:00:00.000Z");
 assert.equal(requests.length, 1);
+const created = [];
+while (created.length < 5) created.push(makeOption(created));
+const active = rows.find(row => row.id === expected[0]);
+active.poll_options = created.map(({ id }, position) => ({ id, position, label: String(position) }));
+const reloaded = (await fetchSquarePolls())[0].options.map(option => option.colorIndex);
+assert.equal(new Set(reloaded).size, 5);
+assert.deepEqual(reloaded, created.map(option => option.colorIndex));
+active.poll_options = [4, 4, 2].map((prefix, position) => ({
+  id: prefix.toString(16).padStart(8, "0") + "-0000-4000-8000-" + String(position).padStart(12, "0"),
+  position, label: String(position), color_index: position === 2 ? 4 : null,
+}));
+assert.deepEqual((await fetchSquarePolls())[0].options.map(option => option.colorIndex), [0, 1, 4]);
 for (const code of ["42703", "PGRST204"]) {
   requests.length = 0;
   missingColumnCode = code;

@@ -5,6 +5,7 @@ export interface PollOption {
   id: string;
   name: string;
   imageUrl?: string;
+  colorIndex?: number;
 }
 
 export interface VoterIdentity {

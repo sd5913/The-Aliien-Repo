@@ -2,7 +2,7 @@ import { formatNumber, translate } from "../../../i18n/catalog";
 import type { Locale } from "../../../i18n/locale";
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
-import { optionColors } from "./optionColors";
+import { optionColor } from "./optionColors";
 
 export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
 
@@ -144,7 +144,7 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
     const bodyY = bottleY + capHeight + neckHeight * 0.7;
     const bodyHeight = bottleHeight - capHeight - neckHeight * 0.7;
     const radius = bottleWidth * 0.17;
-    const color = optionColors[index % optionColors.length];
+    const color = optionColor(poll.options[index], index);
 
     ctx.fillStyle = "#b59bd5";
     roundRect(bottleX + bottleWidth * 0.3, bottleY, bottleWidth * 0.4, capHeight, capHeight * 0.25);
