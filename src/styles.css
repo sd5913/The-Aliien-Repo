@@ -723,15 +723,15 @@ h1, h2, h3 { color: var(--deep-purple); }
 .share-dialog::backdrop { background: #25133988; backdrop-filter: blur(5px); }
 .share-dialog-content { padding: 24px 30px; }
 .share-dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; }
-.share-dialog-heading h2 { margin: 6px 0 0; font-size: 21px; }
+.share-dialog-heading h2 { flex: 1; margin: 0; font-size: 21px; }
 .share-close { flex: 0 0 auto; width: 36px; height: 36px; border: 1px solid #e7d7fa; border-radius: 50%; font-size: 26px; background: #fff9; cursor: pointer; }
 .share-ticket-preview { filter: drop-shadow(0 8px 10px #69409c20); min-height: 160px; }
 .share-ticket-preview img { display: block; width: 100%; height: auto; }
 .share-ticket-preview p { padding: 40px 12px; text-align: center; font-size: 13px; }
-.share-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-.share-dialog-actions > * { display: flex; align-items: center; justify-content: center; min-height: 45px; border-radius: 16px; font-size: 13px; cursor: pointer; }
+.share-dialog-actions { display: flex; justify-content: center; margin-top: 20px; }
+.share-dialog-actions > * { display: flex; align-items: center; justify-content: center; min-height: 45px; padding: 0 20px; border-radius: 16px; font-size: 13px; cursor: pointer; }
+.share-dialog-actions .app-icon { filter: brightness(0) saturate(100%) invert(27%) sepia(98%) saturate(3962%) hue-rotate(257deg) brightness(96%) contrast(99%); }
 .share-dialog-actions .is-disabled { opacity: .45; cursor: wait; }
-.share-selectable-url { display: block; width: 100%; margin-top: 15px; padding: 7px; border: 0; background: transparent; color: #8969a6; font-size: 11px; text-align: center; }
 .share-dialog-note { margin: 7px 0 0; text-align: center; color: #9673b7; font-size: 11px; }
 .share-dialog .toast-message { z-index: 10; position: fixed; }
 @media (max-width: 380px) { .share-dialog-content { padding: 20px 24px; } }

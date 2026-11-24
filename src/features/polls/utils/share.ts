@@ -55,8 +55,7 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   fontProbe.remove();
   const brand = translate(locale, "share.ticketBrand");
   const scan = translate(locale, "share.ticketScan");
-  const details = translate(locale, "share.ticketDetails", { count: poll.options.length });
-  const sample = [brand, scan, details, poll.title, ...poll.options.map((option) => option.name)].join(" ");
+  const sample = [brand, scan, poll.title, ...poll.options.map((option) => option.name)].join(" ");
   await Promise.allSettled([
     document.fonts.load(`700 38px ${displayFamily}`, sample),
     document.fonts.load(`400 21px ${bodyFamily}`, sample),
@@ -284,7 +283,5 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
     urlSize--;
   } while (urlSize > 8);
   text(url, margin, height - 114, linkWidth, urlSize);
-  ctx.fillStyle = "#8969a6";
-  text(details, margin, height - 68, linkWidth, 16);
   return canvas.toDataURL("image/png");
 }
