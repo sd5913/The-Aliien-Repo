@@ -1,179 +1,172 @@
 import { useEffect, useRef } from "react";
-import type { PointerEvent } from "react";
 import type { PollOption } from "../../../types/poll";
-import { sandBoundary } from "../utils/sandGeometry";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
+import { chartSize, flowingOutline, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
+import type { Contact, Point } from "../utils/resultShapes";
 
-const size = 360;
-const radius = 28;
-const steps = 128;
-
-// Invert the cumulative area of vertical slices. Equal parameter intervals then
-// represent equal areas even when the enclosing top and bottom edges curve.
-function areaCoordinates(thickness: (x: number) => number) {
-  const areas = [0];
-  let previous = thickness(0);
-  for (let i = 1; i <= steps; i++) {
-    const next = thickness(i / steps);
-    areas.push(areas[i - 1] + (previous + next) / 2);
-    previous = next;
-  }
-  return (fraction: number) => {
-    const target = fraction * areas[steps];
-    let low = 0, high = steps;
-    while (high - low > 1) {
-      const mid = (low + high) >> 1;
-      if (areas[mid] < target) low = mid;
-      else high = mid;
-    }
-    return (low + (target - areas[low]) / (areas[high] - areas[low])) / steps;
-  };
-}
-
-function rim(x: number) {
-  const distance = Math.max(0, radius - Math.min(x, size - x));
-  return radius - Math.sqrt(Math.max(0, radius * radius - distance * distance));
-}
-
-const frameX = areaCoordinates(x => size - 2 * rim(x * size));
-
-// Round each cell before mapping it into the moving seams. The straight portions
-// stay close together while the corners pull back into curved pockets of space.
-function liquidPath(
-  point: (u: number, v: number) => readonly [number, number],
-  width: number,
-  height: number,
-) {
-  const insetX = Math.min(1.2 / width, .08);
-  const insetY = Math.min(1.2 / height, .08);
-  const cornerX = (.5 - insetX) * .74;
-  const cornerY = (.5 - insetY) * .74;
-  const corners = [
-    [1 - insetX - cornerX, insetY + cornerY],
-    [1 - insetX - cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, insetY + cornerY],
-  ];
-  const path = new Path2D();
-  path.moveTo(...point(insetX + cornerX, insetY));
-  for (const [index, [x, y]] of corners.entries()) {
-    const start = (index - 1) * Math.PI / 2;
-    const u = x + cornerX * Math.cos(start);
-    const v = y + cornerY * Math.sin(start);
-    const [previousX, previousY] = corners[(index + 3) % 4];
-    // Sample the intervening side so it follows the animated seam as well.
-    for (let i = 1; i <= 20; i++) {
-      const t = i / 20;
-      path.lineTo(...point(u + (previousX - x) * (1 - t), v + (previousY - y) * (1 - t)));
-    }
-    for (let i = 1; i <= 24; i++) {
-      const angle = start + i * Math.PI / 48;
-      path.lineTo(...point(x + cornerX * Math.cos(angle), y + cornerY * Math.sin(angle)));
-    }
-  }
-  path.closePath();
-  return path;
-}
-
-export function LiquidResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
+export function LiquidResults({ pollId, options, counts }: { pollId: string; options: PollOption[]; counts: Map<string, number> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pressure = useRef(0);
-  const active = options.map((option, index) => ({ index, count: counts.get(option.id) ?? 0 })).filter(item => item.count > 0);
-  const total = active.reduce((sum, item) => sum + item.count, 0);
-  const weights = options.map(option => counts.get(option.id) ?? 0).join(",");
+  const votes = options.map(option => counts.get(option.id) ?? 0);
+  const total = votes.reduce((sum, count) => sum + count, 0);
+  const weights = votes.join(",");
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !total) return;
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvas.height = size * ratio;
-    ctx.scale(ratio, ratio);
+    const pixels = Math.round(chartSize * Math.min(window.devicePixelRatio || 1, 2));
+    canvas.width = canvas.height = pixels;
+    const ratio = pixels / chartSize;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const shapes = resultShapes(pollId, votes);
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0, previous = -Infinity, phase = 0, tilt = 0;
-    // Stagger pairs so the seams meet like neighboring drops, even at a tie.
-    const rows: (typeof active)[] = [];
-    for (let i = 0; i < active.length;) {
-      const length = active.length % 2 && i === 0 ? 1 : 2;
-      rows.push(active.slice(i, i + length));
-      i += length;
-    }
-    function draw(time: number) {
-      if (!ctx) return;
-      if (!motion.matches && !document.hidden) frame = requestAnimationFrame(draw);
-      if (time - previous < 40) return;
-      const dt = Math.min(.06, (time - previous) / 1000);
+    let paths: { path: Path2D; center: Point; points: Point[] }[] = [];
+    let contact: Contact | undefined;
+    let pointerId: number | undefined;
+    let pressedIndex = -1;
+    let bounce: { index: number; start: number } | undefined;
+    let hovering = false;
+    const offsets = shapes.map(shape => shape.points.map(() => ({ x: 0, y: 0 })));
+    let strength = 0, velocity = 0, holdUntil = 0, frame = 0, previous = 0;
+
+    const draw = (time: number) => {
+      cancelAnimationFrame(frame);
+      if (document.hidden) return;
+      const dt = Math.min(60, Math.max(0, time - previous));
       previous = time;
-      phase += motion.matches ? 0 : dt * .42;
-      tilt += ((motion.matches ? 0 : pressure.current) - tilt) * .15;
-      ctx.clearRect(0, 0, size, size);
-      let cumulative = 0;
-      for (const [rowIndex, row] of rows.entries()) {
-        const count = row.reduce((sum, item) => sum + item.count, 0);
-        const start = cumulative / total;
-        cumulative += count;
-        const end = cumulative / total;
-        const boundary = (fraction: number, x: number) => sandBoundary(fraction, x, tilt * .65 - .35, phase);
-        const rowX = areaCoordinates(x => boundary(end, x) - boundary(start, x));
-        const point = (u: number, v: number) => {
-          const x = rowX(u);
-          const px = size * frameX(x);
-          const edge = rim(px);
-          const y = boundary(start, x) * (1 - v) + boundary(end, x) * v;
-          return [px, edge + y * (size - 2 * edge)] as const;
-        };
-        const split = row[0].count / count;
-        const seam = (v: number) => sandBoundary(split, v, (rowIndex % 2 ? .8 : -.8) + tilt * .15, phase + rowIndex + .8);
-        for (const [column, item] of row.entries()) {
-          const left = (v: number) => column === 0 ? 0 : seam(v);
-          const right = (v: number) => column === 0 && row.length > 1 ? seam(v) : 1;
-          const center = (left(.5) + right(.5)) / 2;
-          const width = point(right(.5), .5)[0] - point(left(.5), .5)[0];
-          const height = point(center, 1)[1] - point(center, 0)[1];
-          const path = liquidPath((u, v) => {
-            const start = left(v);
-            return point(start + (right(v) - start) * u, v);
-          }, width, height);
-          ctx.fillStyle = optionColors[item.index % optionColors.length];
-          ctx.fill(path);
-          if (width > 58 && height > 49) {
-            const [x, y] = point(center, .5);
-            ctx.save();
-            ctx.clip(path);
-            ctx.fillStyle = "#411b65";
-            ctx.textAlign = "center";
-            ctx.font = "600 13px sans-serif";
-            ctx.fillText(String.fromCharCode(65 + item.index), x, y - 4);
-            ctx.font = "700 20px sans-serif";
-            ctx.fillText(Math.round(item.count / total * 100) + "%", x, y + 18);
-            ctx.restore();
-          }
+      const target = pointerId !== undefined || hovering || time < holdUntil ? 1 : 0;
+      if (motion.matches) {
+        strength = target;
+        velocity = 0;
+      } else if (contact) {
+        const step = dt / 8000;
+        for (let i = 0; i < 8; i++) {
+          velocity += ((target - strength) * 340 - velocity * 13) * step;
+          strength += velocity * step;
         }
       }
-    }
-    const restart = () => {
-      cancelAnimationFrame(frame);
-      previous = -Infinity;
-      if (!document.hidden) draw(performance.now());
+      if (!target && Math.abs(strength) < .005 && Math.abs(velocity) < .05) {
+        strength = velocity = 0;
+        contact = undefined;
+      }
+      ctx.clearRect(0, 0, chartSize, chartSize);
+      if (bounce && time - bounce.start > 1800) bounce = undefined;
+      paths = shapes.map((shape, index) => {
+        const pose = !motion.matches && bounce?.index === index
+          ? jellyPose(time - bounce.start, shape.height) : { scaleX: 1, scaleY: 1, dy: 0 };
+        const project = (p: Point) => ({
+          x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
+          y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
+        });
+        const outline = motion.matches ? shape.points : flowingOutline(shape, time);
+        const follow = motion.matches ? 1 : 1 - Math.exp(-dt / 48);
+        const points = outline.map((p, i) => {
+          const rest = project(p);
+          const next = contact ? pressPoint(rest, contact, strength) : rest;
+          const offset = offsets[index][i];
+          offset.x += (next.x - rest.x - offset.x) * follow;
+          offset.y += (next.y - rest.y - offset.y) * follow;
+          return { x: rest.x + offset.x, y: rest.y + offset.y };
+        });
+        const path = new Path2D();
+        path.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) path.lineTo(points[i].x, points[i].y);
+        path.closePath();
+        ctx.fillStyle = optionColor(options[shape.index], shape.index);
+        ctx.fill(path);
+        const center = project(shape.center);
+        if (shape.width > 58 && shape.height > 49) {
+          ctx.save();
+          ctx.clip(path);
+          ctx.fillStyle = "#411b65";
+          ctx.textAlign = "center";
+          ctx.font = "600 13px sans-serif";
+          ctx.fillText(String.fromCharCode(65 + shape.index), center.x, center.y - 4);
+          ctx.font = "700 20px sans-serif";
+          ctx.fillText(Math.round(votes[shape.index] / total * 100) + "%", center.x, center.y + 18);
+          ctx.restore();
+        }
+        return { path, center, points };
+      });
+      if (!motion.matches || time < holdUntil) frame = requestAnimationFrame(draw);
     };
+
+    const position = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) / rect.width * chartSize,
+        y: (event.clientY - rect.top) / rect.height * chartSize,
+      };
+    };
+    const updateContact = (focus: Point) => {
+      const index = paths.findIndex(({ path }) => ctx.isPointInPath(path, focus.x * ratio, focus.y * ratio));
+      const hit = paths[index];
+      pressedIndex = index;
+      const nearestEdge = hit ? Math.min(...hit.points.map(p => Math.hypot(p.x - focus.x, p.y - focus.y))) : 0;
+      contact = { focus, origin: hit?.center ?? focus, radius: 78 + nearestEdge * 1.35 };
+    };
+    const press = (event: PointerEvent) => {
+      if (pointerId !== undefined || event.button !== 0) return;
+      const focus = position(event);
+      updateContact(focus);
+      pointerId = event.pointerId;
+      hovering = false;
+      canvas.setPointerCapture(pointerId);
+      const now = performance.now();
+      holdUntil = now + 110;
+      strength = .35;
+      velocity = 0;
+      draw(now);
+    };
+    const move = (event: PointerEvent) => {
+      if (pointerId === undefined) {
+        if (event.pointerType !== "mouse" || event.buttons !== 0) return;
+        hovering = true;
+      } else if (event.pointerId !== pointerId) return;
+      updateContact(position(event));
+      draw(performance.now());
+    };
+    const leave = () => {
+      hovering = false;
+      draw(performance.now());
+    };
+    const release = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerId = undefined;
+      if (event.type === "pointerup" && pressedIndex >= 0 && !motion.matches) {
+        bounce = { index: pressedIndex, start: performance.now() };
+      }
+      if (event.type === "pointercancel") holdUntil = 0;
+      draw(performance.now());
+    };
+    const restart = () => draw(performance.now());
+    const preventMenu = (event: Event) => event.preventDefault();
     restart();
+    canvas.addEventListener("pointerdown", press);
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerleave", leave);
+    canvas.addEventListener("contextmenu", preventMenu);
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
+    canvas.addEventListener("lostpointercapture", release);
     motion.addEventListener("change", restart);
     document.addEventListener("visibilitychange", restart);
     return () => {
       cancelAnimationFrame(frame);
+      canvas.removeEventListener("pointerleave", leave);
+      canvas.removeEventListener("pointermove", move);
+      canvas.removeEventListener("contextmenu", preventMenu);
+      canvas.removeEventListener("pointerdown", press);
+      canvas.removeEventListener("pointerup", release);
+      canvas.removeEventListener("pointercancel", release);
+      canvas.removeEventListener("lostpointercapture", release);
       motion.removeEventListener("change", restart);
       document.removeEventListener("visibilitychange", restart);
     };
-  }, [weights, total]);
+  }, [options, weights, total, pollId]);
 
-  const press = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    pressure.current = Math.max(-1, Math.min(1, 2 * (event.clientX - rect.left) / rect.width - 1));
-  };
-  return <div className="sand-stage" style={{ borderRadius: "7.78%" }}
-    onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); press(event); }}
-    onPointerMove={press} onLostPointerCapture={() => { pressure.current = 0; }}>
-    {total ? <canvas ref={canvasRef} role="img" aria-label={active.map(({ index, count }) => options[index].name + "：" + count + "票").join("，")} /> : <span className="sand-empty">等待第一份心意</span>}
+  return <div className="sand-stage" style={{ borderRadius: "7.78%" }}>
+    {total ? <canvas ref={canvasRef} role="img" aria-label={options.flatMap((option, index) =>
+      votes[index] ? [option.name + "：" + votes[index] + "票"] : []).join("，")} /> : <span className="sand-empty">等待第一份心意</span>}
   </div>;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { PollOption } from "../../../types/poll";
 import { Modal } from "../../../components/ui/Modal";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useLocale } from "../../../i18n/LocaleProvider";
 
@@ -35,7 +35,7 @@ export function OptionCarousel({ options, activeId, onBrowse }: { options: PollO
         setTouchStart(null);
       }}>
         <div className={textOnly ? "carousel-text-wrap" : "carousel-image-wrap"}>
-          {textOnly ? <div className="text-option-bottle" style={{ "--option-liquid-color": optionColors[index % optionColors.length] } as CSSProperties}>
+          {textOnly ? <div className="text-option-bottle" style={{ "--option-liquid-color": optionColor(option, index) } as CSSProperties}>
             <span className="text-option-cap" aria-hidden="true" />
             <span className="text-option-neck" aria-hidden="true" />
             <div className="text-option-bottle-body">

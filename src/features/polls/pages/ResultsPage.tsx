@@ -10,7 +10,7 @@ import { PageShell } from "../../../components/layout/PageShell";
 import { StatusPill, isPollOpen } from "../../../components/ui/StatusPill";
 import { usePolls } from "../hooks/usePolls";
 import { LiquidResults } from "../components/LiquidResults";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 import { CommentList } from "../components/CommentList";
 import { getVoter, isPollOwner } from "../utils/voting";
 import { Modal } from "../../../components/ui/Modal";
@@ -116,7 +116,7 @@ export function ResultsPage() {
       </div>
       {syncError && <p className="field-hint" role="status">{t("results.syncFailed")}</p>}
       {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? t("results.tie", { leaders: leaderText }) : t(open ? "results.leading" : "results.winner", { leader: leaderText })}</p>}
-      <LiquidResults options={poll.options} counts={counts} />
+      <LiquidResults pollId={poll.id} options={poll.options} counts={counts} />
       <section className="results-card" aria-label={t("results.breakdown")}>
         <div className="result-option-list">
           {poll.options.map((option, index) => {
@@ -124,7 +124,7 @@ export function ResultsPage() {
             const ratio = validTotal ? count / validTotal : 0;
             return (
               <div className="result-option-row" key={option.id}>
-                {option.imageUrl && <img className="result-option-image" src={option.imageUrl} alt="" />}<span className="result-color" style={{ background: optionColors[index % optionColors.length] }} />
+                {option.imageUrl && <img className="result-option-image" src={option.imageUrl} alt="" />}<span className="result-color" style={{ background: optionColor(option, index) }} />
                 <strong>{String.fromCharCode(65 + index)} {option.name}</strong>
                 <span>
                   {votes(count)} · {percent(ratio)}

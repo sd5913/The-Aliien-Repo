@@ -13,7 +13,8 @@ import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
 import { getVoter, isPollOwner } from "../utils/voting";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
+import pourSoundUrl from "../../../assets/audio/vote-pour.mp3";
 
 export function VotingPage() {
   const { t, participants } = useLocale();
@@ -39,6 +40,7 @@ export function VotingPage() {
   const [activeId, setActiveId] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [pourSequence, setPourSequence] = useState(0);
+  const pourAudio = useRef<HTMLAudioElement>(null);
   const [comment, setComment] = useState("");
   const [confirmCommentDelete, setConfirmCommentDelete] = useState(false);
   const [toast, setToast] = useState<MessageKey | "">("");
@@ -47,6 +49,10 @@ export function VotingPage() {
   // Seed the form once per poll, after the async fetch resolves.
   // 数据异步返回后才回填，每个投票只回填一次，避免覆盖正在编辑的内容。
   const hydratedPollId = useRef<string | null>(null);
+  useEffect(() => {
+    const audio = pourAudio.current;
+    return () => audio?.pause();
+  }, [id, loading, accountLoading, open]);
   useEffect(() => {
     if (!poll || accountLoading || hydratedPollId.current === `${poll.id}:${voter.id}`) return;
     hydratedPollId.current = `${poll.id}:${voter.id}`;
@@ -84,7 +90,7 @@ export function VotingPage() {
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
-  const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
+  const selectionColor = optionColor(selectedOption ?? activeOption, selectedOption ? selectedIndex : activeIndex);
   const redirectGuestToLogin = () => {
     if (accountUser || authRedirecting.current) return;
     if (!saveDraft(pendingDraftKey, { activeId, selectedId, comment })) {
@@ -140,11 +146,13 @@ export function VotingPage() {
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {
         setActiveId(nextId);
         if (nextId !== activeOption?.id) {
+          pourAudio.current?.pause();
           setSelectedId("");
           setPourSequence(0);
         }
       }} />
       <section className="vote-cup-card">
+        <audio key={id} ref={pourAudio} src={pourSoundUrl} preload="auto" />
         <button className="vote-cup-confirm" disabled={saving || !open || !activeOption} onClick={() => {
           if (!accountUser) {
             const saved = saveDraft("bothpls:draft:vote:pending:" + id, { activeId: activeOption.id, selectedId: activeOption.id, comment });
@@ -156,6 +164,11 @@ export function VotingPage() {
           }
           setSelectedId(activeOption?.id ?? "");
           setPourSequence((sequence) => sequence + 1);
+          const audio = pourAudio.current;
+          if (audio) {
+            audio.currentTime = 0;
+            void audio.play().catch(() => { /* Voting still works if playback is blocked. */ });
+          }
         }} aria-pressed={selectedId === activeOption?.id} aria-label={t("vote.selectAria", { letter: letter(activeIndex), name: activeOption?.name ?? "" })}>
           {selectedId === activeOption?.id ? t("vote.selected", { letter: letter(activeIndex) }) : t("vote.select", { letter: letter(activeIndex) })}
         </button>
