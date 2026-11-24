@@ -118,7 +118,7 @@ export function HomePage() {
         key={poll.id}
         poll={poll}
         surface="square"
-        to={pollPath(poll.id, owner ? "results" : "vote", "/")}
+        to={pollPath(poll.id, owner || poll.participatedByCurrentIdentity ? "results" : "vote", "/")}
         returnTo="/"
         expanded={expandedPollId === poll.id}
         onExpand={(next) => setExpandedPollId(next ? poll.id : null)}
@@ -358,7 +358,8 @@ export function HomePage() {
                   to={pollPath(
                     poll.id,
                     isPollOpen(poll) &&
-                      !isPollOwner(poll, accountUser?.id ?? "")
+                      !isPollOwner(poll, accountUser?.id ?? "") &&
+                      !poll.participatedByCurrentIdentity
                       ? "vote"
                       : "results",
                     "/",

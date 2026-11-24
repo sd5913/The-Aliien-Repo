@@ -126,7 +126,7 @@ function toCard(row: PollRow): Poll {
 
 export const OWNED_POLL_PAGE_SIZE = 12;
 
-export async function fetchSquarePolls(): Promise<Poll[]> {
+export async function fetchSquarePolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
   // PostgREST casts `now` to timestamptz on the server, so a device clock
   // cannot put expired polls back in the square. Filter before limiting.
   const runQuery = (columns: string) => supabase.from("polls").select(columns)
@@ -139,7 +139,14 @@ export async function fetchSquarePolls(): Promise<Poll[]> {
     : initial;
   const { data, error } = result;
   if (error) throw error;
-  return ((data ?? []) as unknown as PollRow[]).map(toCard);
+  const rows = (data ?? []) as unknown as PollRow[];
+  let votedIds = new Set<string>();
+  if (participant) {
+    const votedResult = await supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" });
+    if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
+    votedIds = new Set(((votedResult.data ?? []) as PollRow[]).map((poll) => poll.id));
+  }
+  return rows.map((row) => ({ ...toCard(row), participatedByCurrentIdentity: votedIds.has(row.id) }));
 }
 
 export async function setPollVisibility(pollId: string, isPublic: boolean): Promise<void> {

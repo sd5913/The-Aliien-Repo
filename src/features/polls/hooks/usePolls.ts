@@ -74,7 +74,7 @@ export function usePolls(query: PollQuery) {
       let data = page?.polls ?? [];
       if (votedPage) data = votedPage.polls;
       if (recent) data = await fetchRecentPolls(participant, user?.id);
-      if (square) data = await fetchSquarePolls();
+      if (square) data = await fetchSquarePolls(participant);
       if (pollId) {
         const poll = await fetchPoll(pollId, metadataOnly);
         data = poll ? [poll] : [];
