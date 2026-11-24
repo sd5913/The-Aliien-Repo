@@ -73,8 +73,8 @@ function makeShape(piece: Piece, cell: Point[], random: () => number) {
 
 export function flowingOutline(shape: ReturnType<typeof makeShape>, time: number) {
   const { center, width, height, phase } = shape;
-  const clock = time / 2300;
-  const amplitude = Math.min(2.7, Math.min(width, height) * .023);
+  const clock = time / 1650;
+  const amplitude = Math.min(4.05, Math.min(width, height) * .0345);
   const points = shape.points.map(p => {
     const u = (p.x - center.x) / width, v = (p.y - center.y) / height;
     return {

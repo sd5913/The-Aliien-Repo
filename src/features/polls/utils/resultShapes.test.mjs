@@ -29,10 +29,10 @@ for (let seed = 0; seed < 80; seed++) {
 }
 for (const shape of resultShapes("bounce", [51, 29, 15, 4, 1])) {
   const restArea = area(shape.points);
-  for (let time = 0; time < 3400; time += 16) {
+  for (let time = 0; time < 14000; time += 32) {
     const pose = jellyPose(time, shape.height);
     const flowing = flowingOutline(shape, time);
-    assert.ok(flowing.every((p, i) => Math.hypot(p.x - shape.points[i].x, p.y - shape.points[i].y) < 7));
+    assert.ok(flowing.every((p, i) => Math.hypot(p.x - shape.points[i].x, p.y - shape.points[i].y) < 12));
     const points = flowing.map(p => ({
       x: (p.x - shape.center.x) * pose.scaleX,
       y: (p.y - shape.center.y) * pose.scaleY + pose.dy,
