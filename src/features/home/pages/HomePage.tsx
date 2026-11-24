@@ -2,7 +2,7 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { Modal } from "../../../components/ui/Modal";
@@ -36,7 +36,7 @@ function RetryIconButton({ onClick }: { onClick: () => void }) {
 
 export function HomePage() {
   const { t } = useLocale();
-  const { polls, loading, error, syncError, refresh, removePoll, updatePoll } =
+  const { polls, loading, error, syncError, refresh, removePoll, updatePoll, hasMore, loadingMore, loadMore } =
     usePolls({ recent: true });
   const {
     polls: squarePolls,
@@ -46,7 +46,12 @@ export function HomePage() {
     refresh: refreshSquare,
     removePoll: removeSquarePoll,
     updatePoll: updateSquarePoll,
+    hasMore: squareHasMore,
+    loadingMore: squareLoadingMore,
+    loadMore: loadMoreSquare,
   } = usePolls({ square: true });
+  const squareLoadMoreRef = useRef<HTMLDivElement>(null);
+  const recentLoadMoreRef = useRef<HTMLDivElement>(null);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
@@ -75,6 +80,20 @@ export function HomePage() {
     }, 2000);
     return () => window.clearTimeout(showTimer);
   }, [accountLoading, accountUser, bannerDismissed]);
+
+  useEffect(() => {
+    const squareActive = tab === "square";
+    const ref = squareActive ? squareLoadMoreRef.current : recentLoadMoreRef.current;
+    const activeHasMore = squareActive ? squareHasMore : hasMore;
+    const activeLoadingMore = squareActive ? squareLoadingMore : loadingMore;
+    const activeSyncError = squareActive ? squareSyncError : syncError;
+    if (!activeHasMore || activeLoadingMore || activeSyncError || !ref) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void (squareActive ? loadMoreSquare() : loadMore());
+    }, { rootMargin: "300px" });
+    observer.observe(ref);
+    return () => observer.disconnect();
+  }, [tab, squareHasMore, hasMore, squareLoadingMore, loadingMore, squareSyncError, syncError, loadMoreSquare, loadMore]);
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -296,6 +315,13 @@ export function HomePage() {
         {!squareLoading && !squareError && squarePolls.length > 0 && (
           <>
             <div className="poll-card-list">{squareCards}</div>
+            {squareHasMore && (
+              <div ref={squareLoadMoreRef} className="my-poll-load-more">
+                <button type="button" className="button-soft" disabled={squareLoadingMore} onClick={() => void loadMoreSquare()}>
+                  {squareLoadingMore ? t("poll.moreLoading") : t("poll.more")}
+                </button>
+              </div>
+            )}
             {squareSyncError && (
               <p className="settings-feedback" role="status">
                 {t("home.squareLoadFailed")}
@@ -375,6 +401,13 @@ export function HomePage() {
                 />
               ))}
             </div>
+            {hasMore && (
+              <div ref={recentLoadMoreRef} className="my-poll-load-more">
+                <button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>
+                  {loadingMore ? t("poll.moreLoading") : t("poll.more")}
+                </button>
+              </div>
+            )}
             {syncError && (
               <p className="settings-feedback" role="status">
                 {t("home.recentLoadFailed")}

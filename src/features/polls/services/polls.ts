@@ -125,14 +125,16 @@ function toCard(row: PollRow): Poll {
 }
 
 export const OWNED_POLL_PAGE_SIZE = 12;
+export const SQUARE_POLL_PAGE_SIZE = 10;
+export const RECENT_POLL_PAGE_SIZE = 10;
 
-export async function fetchSquarePolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
+export async function fetchSquarePolls(participant?: ParticipantProfile | null, offset = 0, limit = SQUARE_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
   // PostgREST casts `now` to timestamptz on the server, so a device clock
   // cannot put expired polls back in the square. Filter before limiting.
   const runQuery = (columns: string) => supabase.from("polls").select(columns)
     .eq("is_public", true).eq("status", "open")
     .or("closed_at.is.null,closed_at.gt.now")
-    .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(5);
+    .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + limit);
   const initial = await runQuery(CARD_SELECT);
   const result = isMissingVisibilityColumn(initial.error)
     ? await runQuery(LEGACY_CARD_SELECT)
@@ -146,7 +148,8 @@ export async function fetchSquarePolls(participant?: ParticipantProfile | null):
     if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
     votedIds = new Set(((votedResult.data ?? []) as PollRow[]).map((poll) => poll.id));
   }
-  return rows.map((row) => ({ ...toCard(row), participatedByCurrentIdentity: votedIds.has(row.id) }));
+  const polls = rows.slice(0, limit).map((row) => ({ ...toCard(row), participatedByCurrentIdentity: votedIds.has(row.id) }));
+  return { polls, hasMore: rows.length > limit };
 }
 
 export async function setPollVisibility(pollId: string, isPublic: boolean): Promise<void> {
@@ -196,7 +199,7 @@ function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | u
   return true;
 }
 
-export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string): Promise<Poll[]> {
+export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string, offset = 0, limit = RECENT_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
   const [votedResult, ownedPage] = await Promise.all([
     participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }) : Promise.resolve({ data: [], error: null }),
     ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
@@ -210,7 +213,7 @@ export async function fetchRecentPolls(participant?: ParticipantProfile | null, 
       const activity = (poll: Poll) => Math.max(Date.parse(poll.createdAt), Date.parse(voteActivity.get(poll.id) ?? poll.createdAt));
       return activity(b) - activity(a) || b.id.localeCompare(a.id);
     });
-  return recent.slice(0, 5);
+  return { polls: recent.slice(offset, offset + limit), hasMore: recent.length > offset + limit };
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {

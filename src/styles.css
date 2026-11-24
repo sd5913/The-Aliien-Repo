@@ -218,6 +218,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .section-title-row h2 { margin: 4px 0 0; font-size: var(--type-section); letter-spacing: -.4px; }
 .subtle-link { color: #8b5cf6; font-size: 11px; font-weight: 700; padding-bottom: 3px; }
 .poll-card-list, .my-poll-list { display: flex; flex-direction: column; gap: 12px; }
+.my-poll-load-more { display: flex; justify-content: center; margin-top: 12px; }
 .status-pill { width: fit-content; min-height: 21px; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 9px; font-weight: 700; white-space: nowrap; }
 .status-open { color: #6d28d9; background: #ede9fe; }
 .status-closed { color: #a16207; background: #fef3c7; }
