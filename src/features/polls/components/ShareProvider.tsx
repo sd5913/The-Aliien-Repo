@@ -13,7 +13,6 @@ import type { Poll } from "../../../types/poll";
 import { copyPollLink, renderShareTicket } from "../utils/share";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { canSharePoll } from "../utils/voting";
-import { AppIcon } from "../../../components/ui/AppIcon";
 
 const ShareContext = createContext<(poll: Poll) => void>(() => {});
 export const useSharePoll = () => useContext(ShareContext);
@@ -111,7 +110,12 @@ function ShareDialog({
               if (!image) event.preventDefault();
             }}
           >
-            <AppIcon name="export" size={16} /> {t("share.download")}
+            <svg className="share-download-icon" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+            {t("share.download")}
           </a>
         </div>
         <p className="share-dialog-note">{t("share.note")}</p>
