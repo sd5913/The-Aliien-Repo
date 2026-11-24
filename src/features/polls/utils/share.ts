@@ -241,8 +241,15 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       text(formatNumber(locale, index + 1, { minimumIntegerDigits: 2 }), x + cellWidth / 2 - 26, y + imageHeight / 2 + 16, 100, 48, true);
     }
     if (label && !textOnly) {
+      const letter = String.fromCharCode(65 + index);
+      const labelBaseline = y + cellHeight - 18;
+      const labelSize = 22;
+      ctx.font = `700 ${labelSize}px ${displayFamily}`;
+      ctx.fillStyle = "#7c3aed";
+      ctx.fillText(letter, x + 16, labelBaseline);
+      const letterWidth = ctx.measureText(letter).width;
       ctx.fillStyle = "#5b21b6";
-      text(label, x + 16, y + cellHeight - 18, cellWidth - 32, 22, true);
+      text(label, x + 16 + letterWidth + 8, labelBaseline, cellWidth - letterWidth - 40, labelSize, true);
     }
   });
   ctx.strokeStyle = "#c4a0ef";
