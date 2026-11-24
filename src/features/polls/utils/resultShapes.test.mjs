@@ -4,7 +4,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("./resultShapes.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
-const { resultShapes, pressPoint, flowingOutline, jellyPose, dragPoint } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { resultShapes, pressPoint, flowingOutline, jellyPose } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function area(points) {
   return points.reduce((sum, p, i) => {
@@ -49,12 +49,4 @@ assert.deepEqual(pressPoint(far, gap, 1), far);
 const shape = resultShapes("tap", [6, 4])[0];
 const block = { focus: shape.center, origin: shape.center, radius: 200 };
 assert.ok(area(shape.points.map(p => pressPoint(p, block, 1))) > area(shape.points));
-const box = { left: 100, right: 200, top: 110, bottom: 210 };
-assert.deepEqual(dragPoint({ x: 150, y: 160 }, box, { x: 24, y: -15 }), { x: 174, y: 145 });
-const push = { x: 300, y: 0 };
-const leading = dragPoint({ x: 200, y: 160 }, box, push);
-const trailing = dragPoint({ x: 100, y: 160 }, box, push);
-assert.ok(leading.x < 352 && leading.x - trailing.x < 100);
-assert.ok(dragPoint({ x: 215, y: 160 }, box, push).x > leading.x);
-assert.deepEqual(dragPoint(far, box, push), far);
-console.log("Verified proportional outlines, bounce bounds, local touch, drag travel and compression.");
+console.log("Verified proportional outlines, bounce bounds and local pressure.");

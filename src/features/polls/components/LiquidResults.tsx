@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { PollOption } from "../../../types/poll";
 import { optionColor } from "../utils/optionColors";
-import { chartSize, dragPoint, flowingOutline, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
+import { chartSize, flowingOutline, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
 import type { Contact, Point } from "../utils/resultShapes";
 
 export function LiquidResults({ pollId, options, counts }: { pollId: string; options: PollOption[]; counts: Map<string, number> }) {
@@ -25,9 +25,8 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     let pointerId: number | undefined;
     let pressedIndex = -1;
     let bounce: { index: number; start: number } | undefined;
-    let holdTimer: number | undefined;
-    let holdStart: Point | undefined;
-    let drag: { box: typeof shapes[number]["box"]; start: Point; delta: Point; releasing: boolean } | undefined;
+    let hovering = false;
+    const offsets = shapes.map(shape => shape.points.map(() => ({ x: 0, y: 0 })));
     let strength = 0, velocity = 0, holdUntil = 0, frame = 0, previous = 0;
 
     const draw = (time: number) => {
@@ -35,12 +34,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       if (document.hidden) return;
       const dt = Math.min(60, Math.max(0, time - previous));
       previous = time;
-      if (drag?.releasing) {
-        const decay = motion.matches ? 0 : Math.exp(-dt / 95);
-        drag.delta = { x: drag.delta.x * decay, y: drag.delta.y * decay };
-        if (Math.hypot(drag.delta.x, drag.delta.y) < .1) drag = undefined;
-      }
-      const target = pointerId !== undefined || time < holdUntil ? 1 : 0;
+      const target = pointerId !== undefined || hovering || time < holdUntil ? 1 : 0;
       if (motion.matches) {
         strength = target;
         velocity = 0;
@@ -60,22 +54,41 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       paths = shapes.map((shape, index) => {
         const pose = !motion.matches && bounce?.index === index
           ? jellyPose(time - bounce.start, shape.height) : { scaleX: 1, scaleY: 1, dy: 0 };
-        const project = (p: Point) => {
-          const rest = {
-            x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
-            y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
-          };
-          const displaced = drag ? dragPoint(rest, drag.box, drag.delta) : rest;
-          return contact ? pressPoint(displaced, contact, strength) : displaced;
-        };
+        const project = (p: Point) => ({
+          x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
+          y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
+        });
         const outline = motion.matches ? shape.points : flowingOutline(shape, time);
-        const points = outline.map(project);
+        const follow = motion.matches ? 1 : 1 - Math.exp(-dt / 48);
+        const points = outline.map((p, i) => {
+          const rest = project(p);
+          const next = contact ? pressPoint(rest, contact, strength) : rest;
+          const offset = offsets[index][i];
+          offset.x += (next.x - rest.x - offset.x) * follow;
+          offset.y += (next.y - rest.y - offset.y) * follow;
+          return { x: rest.x + offset.x, y: rest.y + offset.y };
+        });
         const path = new Path2D();
         path.moveTo(points[0].x, points[0].y);
         for (let i = 1; i < points.length; i++) path.lineTo(points[i].x, points[i].y);
         path.closePath();
         ctx.fillStyle = optionColor(options[shape.index], shape.index);
         ctx.fill(path);
+        // Model the lit face and shaded rim of the bulge even inside a flat fill.
+        if (contact && pressedIndex === index && strength > .01) {
+          const { x, y } = contact.focus;
+          const radius = Math.min(45, 19 + Math.min(shape.width, shape.height) * .13);
+          const light = ctx.createRadialGradient(x - radius * .24, y - radius * .28, 0, x, y, radius);
+          light.addColorStop(0, "rgba(255,255,255,.56)");
+          light.addColorStop(.55, "rgba(255,255,255,.12)");
+          light.addColorStop(.80, "rgba(74,40,99,.10)");
+          light.addColorStop(1, "rgba(74,40,99,0)");
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, strength);
+          ctx.fillStyle = light;
+          ctx.fill(path);
+          ctx.restore();
+        }
         const center = project(shape.center);
         if (shape.width > 58 && shape.height > 49) {
           ctx.save();
@@ -106,19 +119,13 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       pressedIndex = index;
       const nearestEdge = hit ? Math.min(...hit.points.map(p => Math.hypot(p.x - focus.x, p.y - focus.y))) : 0;
       contact = { focus, origin: hit?.center ?? focus, radius: 78 + nearestEdge * 1.35 };
-      return index;
     };
     const press = (event: PointerEvent) => {
       if (pointerId !== undefined || event.button !== 0) return;
       const focus = position(event);
-      const index = updateContact(focus);
+      updateContact(focus);
       pointerId = event.pointerId;
-      holdStart = focus;
-      if (index >= 0) holdTimer = window.setTimeout(() => {
-        holdTimer = undefined;
-        drag = { box: shapes[index].box, start: focus, delta: { x: 0, y: 0 }, releasing: false };
-        draw(performance.now());
-      }, 350);
+      hovering = false;
       canvas.setPointerCapture(pointerId);
       const now = performance.now();
       holdUntil = now + 110;
@@ -127,23 +134,20 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       draw(now);
     };
     const move = (event: PointerEvent) => {
-      if (event.pointerId !== pointerId) return;
-      const p = position(event);
-      if (drag && !drag.releasing) {
-        const clamp = (n: number) => Math.max(0, Math.min(chartSize, n));
-        drag.delta = { x: clamp(p.x) - drag.start.x, y: clamp(p.y) - drag.start.y };
-      } else if (holdStart && Math.hypot(p.x - holdStart.x, p.y - holdStart.y) > 9) {
-        window.clearTimeout(holdTimer);
-      }
-      updateContact(p);
+      if (pointerId === undefined) {
+        if (event.pointerType !== "mouse" || event.buttons !== 0) return;
+        hovering = true;
+      } else if (event.pointerId !== pointerId) return;
+      updateContact(position(event));
+      draw(performance.now());
+    };
+    const leave = () => {
+      hovering = false;
       draw(performance.now());
     };
     const release = (event: PointerEvent) => {
       if (event.pointerId !== pointerId) return;
       pointerId = undefined;
-      holdStart = undefined;
-      window.clearTimeout(holdTimer);
-      if (drag) drag.releasing = true;
       if (event.type === "pointerup" && pressedIndex >= 0 && !motion.matches) {
         bounce = { index: pressedIndex, start: performance.now() };
       }
@@ -155,6 +159,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     restart();
     canvas.addEventListener("pointerdown", press);
     canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerleave", leave);
     canvas.addEventListener("contextmenu", preventMenu);
     canvas.addEventListener("pointerup", release);
     canvas.addEventListener("pointercancel", release);
@@ -163,7 +168,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     document.addEventListener("visibilitychange", restart);
     return () => {
       cancelAnimationFrame(frame);
-      window.clearTimeout(holdTimer);
+      canvas.removeEventListener("pointerleave", leave);
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("contextmenu", preventMenu);
       canvas.removeEventListener("pointerdown", press);

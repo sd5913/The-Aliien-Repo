@@ -68,7 +68,7 @@ function makeShape(piece: Piece, cell: Point[], random: () => number) {
   const scale = Math.sqrt(inkFraction * area(cell) / signedArea);
   const points = outline.map(p => mix(center, p, scale));
   const box = bounds(points);
-  return { ...piece, center, points, phase, box, outlineArea: area(points), width: box.right - box.left, height: box.bottom - box.top };
+  return { ...piece, center, points, phase, outlineArea: area(points), width: box.right - box.left, height: box.bottom - box.top };
 }
 
 export function flowingOutline(shape: ReturnType<typeof makeShape>, time: number) {
@@ -127,42 +127,6 @@ export function resultShapes(pollId: string, counts: number[]) {
 }
 
 export type Contact = { focus: Point; origin: Point; radius: number };
-
-// Move both edges of the grabbed shape. The leading edge yields first near
-// a wall; neighboring contours share the same continuous compression field.
-function dragAxis(value: number, from: number, to: number, delta: number) {
-  const reach = Math.abs(delta) + 52;
-  const low = Math.min(from, Math.max(8, from - reach));
-  const high = Math.max(to, Math.min(chartSize - 8, to + reach));
-  if (value <= low || value >= high || !delta) return value;
-  const shift = (edge: number) => Math.max((low - edge) * .84, Math.min((high - edge) * .84, delta));
-  const a = shift(from), b = shift(to);
-  const blend = Math.min(10, (from - low) / 2, (high - to) / 2, (to - from) / 3);
-  const innerSlope = (b - a) / (to - from);
-  // Round the change in compression across each edge of the dragged region.
-  if (blend > 0 && (Math.abs(value - from) < blend || Math.abs(value - to) < blend)) {
-    const first = Math.abs(value - from) < blend;
-    const offset = value - (first ? from : to);
-    const before = first ? a / (from - low) : innerSlope;
-    const after = first ? innerSlope : -b / (high - to);
-    return value + (first ? a : b) + before * offset + (after - before) * (offset + blend) ** 2 / (4 * blend);
-  }
-  if (value < from) return value + a * (value - low) / (from - low);
-  if (value > to) return value + b * (high - value) / (high - to);
-  return value + a + (b - a) * (value - from) / (to - from);
-}
-
-function proximity(value: number, low: number, high: number) {
-  const t = Math.max(0, 1 - Math.max(0, low - value, value - high) / 52);
-  return t * t * (3 - 2 * t);
-}
-
-export function dragPoint(point: Point, box: ReturnType<typeof bounds>, delta: Point): Point {
-  const x = dragAxis(point.x, box.left, box.right, delta.x * proximity(point.y, box.top, box.bottom));
-  const left = dragAxis(box.left, box.left, box.right, delta.x);
-  const right = dragAxis(box.right, box.left, box.right, delta.x);
-  return { x, y: dragAxis(point.y, box.top, box.bottom, delta.y * proximity(x, left, right)) };
-}
 
 // A short hop ends in a squash and a damped rebound. Reciprocal axis
 // scales preserve the outline's area throughout the animation.
