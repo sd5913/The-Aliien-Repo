@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "../../../lib/supabase/client";
 import { PageShell } from "../../../components/layout/PageShell";
+import { LoadingState } from "../../../components/ui/LoadingState";
 
 const AccountContext = createContext<{ user: User | null; loading: boolean }>({ user: null, loading: true });
 export const useAccount = () => useContext(AccountContext);
@@ -26,7 +27,7 @@ export function RequireAccount({ children }: { children: ReactNode }) {
   const { t } = useLocale();
   const { user, loading } = useAccount();
   const location = useLocation();
-  if (loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline" role="status">{t("auth.checking")}</p></PageShell>;
+  if (loading) return <PageShell backTo="/" showNavigation={false}><LoadingState message={t("auth.checking")} /></PageShell>;
   if (!user) return <Navigate replace to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search + location.hash)}`} />;
   return <>{children}</>;
 }

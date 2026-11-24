@@ -2,6 +2,7 @@ import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
+import { LoadingState, LoadingSpinner } from "../../../components/ui/LoadingState";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
@@ -304,7 +305,7 @@ export function HomePage() {
           </div>
         </div>
         {squareLoading && (
-          <p className="empty-inline">{t("home.squareLoading")}</p>
+          <LoadingState message={t("home.squareLoading")} />
         )}
         {!squareLoading && squareError && (
           <p className="settings-feedback" role="alert">
@@ -318,6 +319,7 @@ export function HomePage() {
             {squareHasMore && (
               <div ref={squareLoadMoreRef} className="my-poll-load-more">
                 <button type="button" className="button-soft" disabled={squareLoadingMore} onClick={() => void loadMoreSquare()}>
+                  {squareLoadingMore && <LoadingSpinner />}
                   {squareLoadingMore ? t("poll.moreLoading") : t("poll.more")}
                 </button>
               </div>
@@ -368,7 +370,7 @@ export function HomePage() {
           </div>
         </div>
         {loading ? (
-          <p className="empty-inline">{t("poll.loading")}</p>
+          <LoadingState />
         ) : error ? (
           <p className="settings-feedback" role="alert">
             {t("home.recentLoadFailed")}
@@ -404,6 +406,7 @@ export function HomePage() {
             {hasMore && (
               <div ref={recentLoadMoreRef} className="my-poll-load-more">
                 <button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>
+                  {loadingMore && <LoadingSpinner />}
                   {loadingMore ? t("poll.moreLoading") : t("poll.more")}
                 </button>
               </div>
