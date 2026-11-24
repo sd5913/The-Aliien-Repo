@@ -3,6 +3,7 @@ import type { Locale } from "../../../i18n/locale";
 import type { Poll } from "../../../types/poll";
 import QRCode from "qrcode";
 import { optionColors } from "./optionColors";
+import logoUrl from "../../../../images/logo.png";
 
 export const pollUrl = (id: string) => `${window.location.origin}/poll/${encodeURIComponent(id)}`;
 
@@ -42,6 +43,7 @@ function loadImage(url?: string): Promise<HTMLImageElement | null> {
 // Render once for both the preview and the downloaded PNG, including transparent perforations.
 export async function renderShareTicket(poll: Poll, locale: Locale) {
   const images = await Promise.all(poll.options.map((option) => loadImage(option.imageUrl)));
+  const logoImage = await loadImage(logoUrl);
   const styles = getComputedStyle(document.documentElement);
   const displayFont = styles.getPropertyValue("--font-display").trim();
   const bodyFont = styles.getPropertyValue("--font-body").trim();
@@ -280,15 +282,21 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       }
     }
   }
-  const linkWidth = contentWidth - slotSize - 24;
+  const logoSize = 64;
+  const logoX = margin;
+  const logoY = height - 175;
+  if (logoImage) ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+  const textX = margin + logoSize + 16;
+  const linkWidth = contentWidth - slotSize - 24 - logoSize - 16;
   ctx.fillStyle = "#5b21b6";
-  text(scan, margin, height - 158, linkWidth, 25, true);
+  text(scan, textX, height - 158, linkWidth, 25, true);
   let urlSize = 21;
   do {
     ctx.font = `${urlSize}px ${bodyFamily}`;
     if (ctx.measureText(url).width <= linkWidth) break;
     urlSize--;
   } while (urlSize > 8);
-  text(url, margin, height - 114, linkWidth, urlSize);
+  ctx.fillStyle = "#8969a6";
+  text(url, textX, height - 114, linkWidth, urlSize);
   return canvas.toDataURL("image/png");
 }
