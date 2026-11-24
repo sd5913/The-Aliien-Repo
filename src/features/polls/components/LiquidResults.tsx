@@ -37,47 +37,42 @@ function rim(x: number) {
 
 const frameX = areaCoordinates(x => size - 2 * rim(x * size));
 
-// Round each cell before mapping it into the moving seams. The straight portions
-// stay close together while the corners pull back into curved pockets of space.
+// A rounded superellipse flattens at its contacts and curves away at the corners.
 function liquidPath(
   point: (u: number, v: number) => readonly [number, number],
   width: number,
   height: number,
+  compression: number,
 ) {
-  const insetX = Math.min(1.2 / width, .08);
-  const insetY = Math.min(1.2 / height, .08);
-  const cornerX = (.5 - insetX) * .74;
-  const cornerY = (.5 - insetY) * .74;
-  const corners = [
-    [1 - insetX - cornerX, insetY + cornerY],
-    [1 - insetX - cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, insetY + cornerY],
-  ];
+  const rx = .5 - Math.min(1.2 / width, .08);
+  const ry = .5 - Math.min(1.2 / height, .08);
+  const exponent = .78 - compression * .14;
   const path = new Path2D();
-  path.moveTo(...point(insetX + cornerX, insetY));
-  for (const [index, [x, y]] of corners.entries()) {
-    const start = (index - 1) * Math.PI / 2;
-    const u = x + cornerX * Math.cos(start);
-    const v = y + cornerY * Math.sin(start);
-    const [previousX, previousY] = corners[(index + 3) % 4];
-    // Sample the intervening side so it follows the animated seam as well.
-    for (let i = 1; i <= 20; i++) {
-      const t = i / 20;
-      path.lineTo(...point(u + (previousX - x) * (1 - t), v + (previousY - y) * (1 - t)));
-    }
-    for (let i = 1; i <= 24; i++) {
-      const angle = start + i * Math.PI / 48;
-      path.lineTo(...point(x + cornerX * Math.cos(angle), y + cornerY * Math.sin(angle)));
-    }
+  for (let i = 0; i < steps; i++) {
+    const angle = 2 * Math.PI * i / steps;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const u = .5 + rx * Math.sign(cos) * Math.abs(cos) ** exponent;
+    const v = .5 + ry * Math.sign(sin) * Math.abs(sin) ** exponent;
+    const [x, y] = point(u, v);
+    if (i === 0) path.moveTo(x, y);
+    else path.lineTo(x, y);
   }
   path.closePath();
   return path;
 }
 
+// The cosine has zero mean across the seam. A dent under the pointer pushes
+// material out on either side while both neighbors follow the same contour.
+function contact(fraction: number, along: number, across: number, at: number, strength: number) {
+  const distance = (fraction - across) / .30;
+  return .052 * strength * Math.exp(-distance * distance) * Math.sin(Math.PI * fraction)
+    * Math.cos(2 * Math.PI * (along - at));
+}
+
 export function LiquidResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pressure = useRef(0);
+  const pressure = useRef({ x: .5, y: .5, down: false });
+  const impact = useRef(false);
   const active = options.map((option, index) => ({ index, count: counts.get(option.id) ?? 0 })).filter(item => item.count > 0);
   const total = active.reduce((sum, item) => sum + item.count, 0);
   const weights = options.map(option => counts.get(option.id) ?? 0).join(",");
@@ -90,7 +85,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
     canvas.width = canvas.height = size * ratio;
     ctx.scale(ratio, ratio);
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0, previous = -Infinity, phase = 0, tilt = 0;
+    let frame = 0, previous = -Infinity, phase = 0, compression = 0, velocity = 0;
     // Stagger pairs so the seams meet like neighboring drops, even at a tie.
     const rows: (typeof active)[] = [];
     for (let i = 0; i < active.length;) {
@@ -105,7 +100,15 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
       const dt = Math.min(.06, (time - previous) / 1000);
       previous = time;
       phase += motion.matches ? 0 : dt * .42;
-      tilt += ((motion.matches ? 0 : pressure.current) - tilt) * .15;
+      const pointer = pressure.current;
+      const target = pointer.down && !motion.matches ? 1 : 0;
+      if (impact.current) { velocity += 3; impact.current = false; }
+      // Substeps keep the damped spring stable on slower frames.
+      for (let i = 0; i < 4; i++) {
+        velocity += ((target - compression) * 190 - velocity * 12) * dt / 4;
+        compression += velocity * dt / 4;
+      }
+      if (motion.matches) { compression = 0; velocity = 0; }
       ctx.clearRect(0, 0, size, size);
       let cumulative = 0;
       for (const [rowIndex, row] of rows.entries()) {
@@ -113,7 +116,8 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
         const start = cumulative / total;
         cumulative += count;
         const end = cumulative / total;
-        const boundary = (fraction: number, x: number) => sandBoundary(fraction, x, tilt * .65 - .35, phase);
+        const boundary = (fraction: number, x: number) => sandBoundary(fraction, x, -.35, phase)
+          + contact(fraction, x, pointer.y, pointer.x, compression) * Math.tanh((fraction - pointer.y) * 7);
         const rowX = areaCoordinates(x => boundary(end, x) - boundary(start, x));
         const point = (u: number, v: number) => {
           const x = rowX(u);
@@ -123,7 +127,10 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
           return [px, edge + y * (size - 2 * edge)] as const;
         };
         const split = row[0].count / count;
-        const seam = (v: number) => sandBoundary(split, v, (rowIndex % 2 ? .8 : -.8) + tilt * .15, phase + rowIndex + .8);
+        const localY = (pointer.y - start) / (end - start);
+        const influence = Math.exp(-4 * (localY - Math.max(0, Math.min(1, localY))) ** 2);
+        const seam = (v: number) => sandBoundary(split, v, rowIndex % 2 ? .8 : -.8, phase + rowIndex + .8)
+          + contact(split, v, pointer.x, localY, compression * influence) * Math.tanh((split - pointer.x) * 7);
         for (const [column, item] of row.entries()) {
           const left = (v: number) => column === 0 ? 0 : seam(v);
           const right = (v: number) => column === 0 && row.length > 1 ? seam(v) : 1;
@@ -133,7 +140,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
           const path = liquidPath((u, v) => {
             const start = left(v);
             return point(start + (right(v) - start) * u, v);
-          }, width, height);
+          }, width, height, compression * influence);
           ctx.fillStyle = optionColor(options[item.index], item.index);
           ctx.fill(path);
           if (width > 58 && height > 49) {
@@ -169,11 +176,15 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
   const press = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    pressure.current = Math.max(-1, Math.min(1, 2 * (event.clientX - rect.left) / rect.width - 1));
+    pressure.current = {
+      x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
+      down: true,
+    };
   };
   return <div className="sand-stage" style={{ borderRadius: "7.78%" }}
-    onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); press(event); }}
-    onPointerMove={press} onLostPointerCapture={() => { pressure.current = 0; }}>
+    onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); impact.current = true; press(event); }}
+    onPointerMove={press} onLostPointerCapture={() => { pressure.current.down = false; }}>
     {total ? <canvas ref={canvasRef} role="img" aria-label={active.map(({ index, count }) => options[index].name + "：" + count + "票").join("，")} /> : <span className="sand-empty">等待第一份心意</span>}
   </div>;
 }
