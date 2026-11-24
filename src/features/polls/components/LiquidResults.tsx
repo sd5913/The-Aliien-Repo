@@ -8,6 +8,15 @@ const size = 360;
 const radius = 28;
 const steps = 128;
 
+function layoutRandom(pollId: string) {
+  let state = 2166136261;
+  for (const letter of pollId) state = Math.imul(state ^ letter.charCodeAt(0), 16777619);
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
 // Invert the cumulative area of vertical slices. Equal parameter intervals then
 // represent equal areas even when the enclosing top and bottom edges curve.
 function areaCoordinates(thickness: (x: number) => number) {
@@ -43,10 +52,11 @@ function liquidPath(
   width: number,
   height: number,
   compression: number,
+  roundness: number,
 ) {
   const rx = .5 - Math.min(1.2 / width, .08);
   const ry = .5 - Math.min(1.2 / height, .08);
-  const exponent = .78 - compression * .14;
+  const exponent = roundness - compression * .06;
   const path = new Path2D();
   for (let i = 0; i < steps; i++) {
     const angle = 2 * Math.PI * i / steps;
@@ -69,7 +79,7 @@ function contact(fraction: number, along: number, across: number, at: number, st
     * Math.cos(2 * Math.PI * (along - at));
 }
 
-export function LiquidResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
+export function LiquidResults({ pollId, options, counts }: { pollId: string; options: PollOption[]; counts: Map<string, number> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pressure = useRef({ x: .5, y: .5, down: false });
   const impact = useRef(false);
@@ -89,13 +99,18 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0, previous: number | undefined;
     let { phase, compression, velocity } = animation.current;
-    // Stagger pairs so the seams meet like neighboring drops, even at a tie.
-    const rows: (typeof active)[] = [];
-    for (let i = 0; i < active.length;) {
-      const length = active.length % 2 && i === 0 ? 1 : 2;
-      rows.push(active.slice(i, i + length));
-      i += length;
+    const random = layoutRandom(pollId);
+    const transpose = random() < .5;
+    const wavePhase = random() * 2 * Math.PI;
+    const tilt = random() * .8 - .4;
+    const shuffled = [...active];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    const cut = random() < .5 ? Math.ceil(active.length / 2) : Math.floor(active.length / 2);
+    const rows = [shuffled.slice(0, cut), shuffled.slice(cut)].filter(row => row.length);
+    const roundness = options.map(() => .87 + random() * .10);
     function draw(time: number) {
       if (!ctx) return;
       if (!motion.matches && !document.hidden) frame = requestAnimationFrame(draw);
@@ -103,7 +118,8 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
       const dt = previous === undefined ? 0 : Math.min(.06, (time - previous) / 1000);
       previous = time;
       if (!motion.matches) phase = (phase + dt * .42) % (2 * Math.PI);
-      const pointer = pressure.current;
+      const touch = pressure.current;
+      const pointer = transpose ? { x: touch.y, y: touch.x, down: touch.down } : touch;
       const target = pointer.down && !motion.matches ? 1 : 0;
       if (impact.current) { velocity += 3; impact.current = false; }
       // Substeps keep the damped spring stable on slower frames.
@@ -119,7 +135,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
         const start = cumulative / total;
         cumulative += count;
         const end = cumulative / total;
-        const boundary = (fraction: number, x: number) => sandBoundary(fraction, x, -.35, phase)
+        const boundary = (fraction: number, x: number) => sandBoundary(fraction, x, tilt, phase + wavePhase)
           + contact(fraction, x, pointer.y, pointer.x, compression) * Math.tanh((fraction - pointer.y) * 7);
         const rowX = areaCoordinates(x => boundary(end, x) - boundary(start, x));
         const point = (u: number, v: number) => {
@@ -129,25 +145,30 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
           const y = boundary(start, x) * (1 - v) + boundary(end, x) * v;
           return [px, edge + y * (size - 2 * edge)] as const;
         };
-        const split = row[0].count / count;
         const localY = (pointer.y - start) / (end - start);
         const influence = Math.exp(-4 * (localY - Math.max(0, Math.min(1, localY))) ** 2);
-        const seam = (v: number) => sandBoundary(split, v, rowIndex % 2 ? .8 : -.8, phase + rowIndex + .8)
+        const seam = (split: number, v: number) => sandBoundary(split, v, rowIndex % 2 ? .35 : -.35, phase + wavePhase + rowIndex + .8)
           + contact(split, v, pointer.x, localY, compression * influence) * Math.tanh((split - pointer.x) * 7);
-        for (const [column, item] of row.entries()) {
-          const left = (v: number) => column === 0 ? 0 : seam(v);
-          const right = (v: number) => column === 0 && row.length > 1 ? seam(v) : 1;
+        let rowVotes = 0;
+        for (const item of row) {
+          const from = rowVotes / count;
+          rowVotes += item.count;
+          const to = rowVotes / count;
+          const left = (v: number) => seam(from, v);
+          const right = (v: number) => seam(to, v);
           const center = (left(.5) + right(.5)) / 2;
           const width = point(right(.5), .5)[0] - point(left(.5), .5)[0];
           const height = point(center, 1)[1] - point(center, 0)[1];
           const path = liquidPath((u, v) => {
             const start = left(v);
-            return point(start + (right(v) - start) * u, v);
-          }, width, height, compression * influence);
+            const [x, y] = point(start + (right(v) - start) * u, v);
+            return transpose ? [y, x] : [x, y];
+          }, width, height, compression * influence, roundness[item.index]);
           ctx.fillStyle = optionColor(options[item.index], item.index);
           ctx.fill(path);
-          if (width > 58 && height > 49) {
-            const [x, y] = point(center, .5);
+          if ((transpose ? height : width) > 58 && (transpose ? width : height) > 49) {
+            const [cx, cy] = point(center, .5);
+            const [x, y] = transpose ? [cy, cx] : [cx, cy];
             ctx.save();
             ctx.clip(path);
             ctx.fillStyle = "#411b65";
@@ -175,7 +196,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
       motion.removeEventListener("change", restart);
       document.removeEventListener("visibilitychange", restart);
     };
-  }, [options, weights, total]);
+  }, [options, weights, total, pollId]);
 
   const press = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
