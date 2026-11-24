@@ -147,7 +147,7 @@ export function PollCard({
   return (
     <div className={`swipe-card${owner && expanded ? " swipe-card-expanded" : ""}`}>
       {owner && <div className="swipe-actions" style={{ width: actionWidth, clipPath: `inset(0 0 0 calc(100% + ${offset}px))`, transition: dragOffset === null ? undefined : "none" }} aria-label={t("poll.actions")} aria-hidden={!expanded}>
-        {isPollOpen(poll) && <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
+        {isPollOpen(poll) && <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}&returnTo=${encodeURIComponent(returnTo)}`); }}>
           <AppIcon name="edit" size={20} />
           <span>{t("common.edit")}</span>
         </button>}

@@ -1,7 +1,7 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import { isPollOpen } from "../../../components/ui/StatusPill";
@@ -13,6 +13,7 @@ export function OwnerPollActions({ poll, onShare, onEnd, onDelete }: { poll: Pol
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<MessageKey | "">("");
   const navigate = useNavigate();
+  const location = useLocation();
   const confirm = async () => {
     if (busy || (mode !== "end" && mode !== "delete")) return;
     setBusy(true);
@@ -28,7 +29,7 @@ export function OwnerPollActions({ poll, onShare, onEnd, onDelete }: { poll: Pol
     <button className="settings-nav-button" aria-label={t("poll.manage")} onClick={() => setMode("menu")}>···</button>
     {mode === "menu" && <Modal title={t("poll.manage")} onClose={() => setMode(null)}>
       <div className="owner-action-menu">
-        {isPollOpen(poll) && <button className="button-soft" onClick={() => navigate(`/create?id=${poll.id}`)}>{t("poll.editDeadline")}</button>}
+        {isPollOpen(poll) && <button className="button-soft" onClick={() => navigate(`/create?id=${poll.id}&returnTo=${encodeURIComponent(location.pathname)}`)}>{t("poll.editDeadline")}</button>}
         <button className="button-soft" onClick={() => { setMode(null); onShare(); }}>{t("poll.share")}</button>
         {isPollOpen(poll) && <button className="button-soft" onClick={() => setMode("end")}>{t("poll.end")}</button>}
         <button className="danger-button" onClick={() => setMode("delete")}>{t("poll.delete")}</button>
