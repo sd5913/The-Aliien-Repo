@@ -149,6 +149,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .nav-item svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .nav-item small { font-size: 11px; font-weight: 600; }
 .nav-item.active { color: var(--purple); }
+.nav-item:not(.active) .app-icon { filter: saturate(.4) brightness(1.18); }
 .nav-item.active::before { content: ""; position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 2px; right: 2px; border-radius: 18px; background: #f1ecff; }
 .nav-create { height: 48px; align-self: center; border-radius: 50%; color: #a78bca; background: transparent; box-shadow: none; font-size: 32px; font-weight: 400; line-height: 1; }
 .nav-create.active { color: #a78bca; }
