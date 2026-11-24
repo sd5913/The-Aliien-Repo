@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import jellySoundUrl from "../../../assets/audio/jelly-touch.mp3";
 import type { PollOption } from "../../../types/poll";
 import { optionColor } from "../utils/optionColors";
 import { chartSize, flowingOutline, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
@@ -9,6 +10,44 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
   const votes = options.map(option => counts.get(option.id) ?? 0);
   const total = votes.reduce((sum, count) => sum + count, 0);
   const weights = votes.join(",");
+  const sound = useRef<{ context: AudioContext; buffer: Promise<AudioBuffer> }>();
+
+  const prepareSound = () => {
+    if (!window.AudioContext) return;
+    if (!sound.current) {
+      const context = new AudioContext();
+      const buffer = fetch(jellySoundUrl)
+        .then(response => response.arrayBuffer())
+        .then(bytes => context.decodeAudioData(bytes));
+      sound.current = { context, buffer };
+      void buffer.catch(() => {
+        if (sound.current?.context === context) {
+          sound.current = undefined;
+          void context.close();
+        }
+      });
+    }
+    const { context } = sound.current;
+    if (context.state !== "running") void context.resume().catch(() => {});
+  };
+
+  const playSound = (isHover: boolean) => {
+    const audio = sound.current;
+    if (!audio) return;
+    void audio.buffer.then(buffer => {
+      if (sound.current !== audio || (isHover && audio.context.state !== "running")) return;
+      const source = audio.context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audio.context.destination);
+      source.start();
+    }).catch(() => {});
+  };
+
+  useEffect(() => () => {
+    const audio = sound.current;
+    sound.current = undefined;
+    if (audio) void audio.context.close();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,6 +140,10 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     const updateContact = (focus: Point) => {
       const index = paths.findIndex(({ path }) => ctx.isPointInPath(path, focus.x * ratio, focus.y * ratio));
       const hit = paths[index];
+      if (hit && index !== pressedIndex) {
+        if (pointerId === undefined) prepareSound();
+        playSound(pointerId === undefined);
+      }
       pressedIndex = index;
       const nearestEdge = hit ? Math.min(...hit.points.map(p => Math.hypot(p.x - focus.x, p.y - focus.y))) : 0;
       contact = { focus, origin: hit?.center ?? focus, radius: 78 + nearestEdge * 1.35 };
@@ -108,8 +151,10 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     const press = (event: PointerEvent) => {
       if (pointerId !== undefined || event.button !== 0) return;
       const focus = position(event);
-      updateContact(focus);
       pointerId = event.pointerId;
+      pressedIndex = -1;
+      prepareSound();
+      updateContact(focus);
       hovering = false;
       canvas.setPointerCapture(pointerId);
       const now = performance.now();
@@ -128,6 +173,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     };
     const leave = () => {
       hovering = false;
+      if (pointerId === undefined) pressedIndex = -1;
       draw(performance.now());
     };
     const release = (event: PointerEvent) => {
