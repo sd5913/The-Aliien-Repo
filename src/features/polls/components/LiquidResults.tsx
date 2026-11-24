@@ -74,21 +74,6 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
         path.closePath();
         ctx.fillStyle = optionColor(options[shape.index], shape.index);
         ctx.fill(path);
-        // Model the lit face and shaded rim of the bulge even inside a flat fill.
-        if (contact && pressedIndex === index && strength > .01) {
-          const { x, y } = contact.focus;
-          const radius = Math.min(45, 19 + Math.min(shape.width, shape.height) * .13);
-          const light = ctx.createRadialGradient(x - radius * .24, y - radius * .28, 0, x, y, radius);
-          light.addColorStop(0, "rgba(255,255,255,.56)");
-          light.addColorStop(.55, "rgba(255,255,255,.12)");
-          light.addColorStop(.80, "rgba(74,40,99,.10)");
-          light.addColorStop(1, "rgba(74,40,99,0)");
-          ctx.save();
-          ctx.globalAlpha = Math.min(1, strength);
-          ctx.fillStyle = light;
-          ctx.fill(path);
-          ctx.restore();
-        }
         const center = project(shape.center);
         if (shape.width > 58 && shape.height > 49) {
           ctx.save();
