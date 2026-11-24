@@ -4,7 +4,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("./resultShapes.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
-const { resultShapes, pressPoint, jellyPose, dragPoint } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { resultShapes, pressPoint, flowingOutline, jellyPose, dragPoint } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function area(points) {
   return points.reduce((sum, p, i) => {
@@ -30,8 +30,10 @@ for (let seed = 0; seed < 80; seed++) {
 for (const shape of resultShapes("bounce", [51, 29, 15, 4, 1])) {
   const restArea = area(shape.points);
   for (let time = 0; time < 3400; time += 16) {
-    const pose = jellyPose(time, shape.phase, shape.height);
-    const points = shape.points.map(p => ({
+    const pose = jellyPose(time, shape.height);
+    const flowing = flowingOutline(shape, time);
+    assert.ok(flowing.every((p, i) => Math.hypot(p.x - shape.points[i].x, p.y - shape.points[i].y) < 7));
+    const points = flowing.map(p => ({
       x: (p.x - shape.center.x) * pose.scaleX,
       y: (p.y - shape.center.y) * pose.scaleY + pose.dy,
     }));

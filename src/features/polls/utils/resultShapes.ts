@@ -43,15 +43,20 @@ function bounds(points: Point[]) {
   return { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
 }
 
-function shape(piece: Piece, cell: Point[], random: () => number) {
+function makeShape(piece: Piece, cell: Point[], random: () => number) {
   const phase = random() * 2 * Math.PI;
-  const corners = cell.map((p, i) => {
-    const t = .34 + random() * .14;
-    return { p, a: mix(p, cell[(i + cell.length - 1) % cell.length], t), b: mix(p, cell[(i + 1) % cell.length], t) };
+  const middle = cell.reduce((c, p) => ({ x: c.x + p.x / cell.length, y: c.y + p.y / cell.length }), { x: 0, y: 0 });
+  const controls = cell.flatMap((p, i) => {
+    const edge = mix(p, cell[(i + 1) % cell.length], .28 + .44 * random());
+    return [p, mix(edge, middle, .02 + .28 * random())];
   });
-  const outline = corners.flatMap(({ p, a, b }) => Array.from({ length: 25 }, (_, i) => {
-    const t = i / 24;
-    return mix(mix(a, p, t), mix(p, b, t), t);
+  // A periodic cubic B-spline keeps the tangent and curvature continuous at every join.
+  const outline = controls.flatMap((a, i) => Array.from({ length: 20 }, (_, j) => {
+    const b = controls[(i + 1) % controls.length], c = controls[(i + 2) % controls.length], d = controls[(i + 3) % controls.length];
+    const t = j / 20, u = 1 - t;
+    const wa = u ** 3 / 6, wb = (4 - 6 * t * t + 3 * t ** 3) / 6;
+    const wd = t ** 3 / 6, wc = 1 - wa - wb - wd;
+    return { x: wa * a.x + wb * b.x + wc * c.x + wd * d.x, y: wa * a.y + wb * b.y + wc * c.y + wd * d.y };
   }));
   // Use the polygon centroid so the label stays inside asymmetric contours.
   const signedArea = area(outline);
@@ -63,7 +68,22 @@ function shape(piece: Piece, cell: Point[], random: () => number) {
   const scale = Math.sqrt(inkFraction * area(cell) / signedArea);
   const points = outline.map(p => mix(center, p, scale));
   const box = bounds(points);
-  return { ...piece, center, points, phase, box, width: box.right - box.left, height: box.bottom - box.top };
+  return { ...piece, center, points, phase, box, outlineArea: area(points), width: box.right - box.left, height: box.bottom - box.top };
+}
+
+export function flowingOutline(shape: ReturnType<typeof makeShape>, time: number) {
+  const { center, width, height, phase } = shape;
+  const clock = time / 2300;
+  const amplitude = Math.min(2.1, Math.min(width, height) * .018);
+  const points = shape.points.map(p => {
+    const u = (p.x - center.x) / width, v = (p.y - center.y) / height;
+    return {
+      x: p.x + amplitude * (Math.sin(v * 6 + clock + phase) - Math.sin(clock + phase)),
+      y: p.y + amplitude * (Math.sin(u * 5 - clock * .76 + phase) - Math.sin(phase - clock * .76)),
+    };
+  });
+  const scale = Math.sqrt(shape.outlineArea / area(points));
+  return points.map(p => mix(center, p, scale));
 }
 export function resultShapes(pollId: string, counts: number[]) {
   const random = layoutRandom(pollId);
@@ -73,10 +93,10 @@ export function resultShapes(pollId: string, counts: number[]) {
     const j = Math.floor(random() * (i + 1));
     [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
   }
-  const shapes: ReturnType<typeof shape>[] = [];
+  const shapes: ReturnType<typeof makeShape>[] = [];
   function divide(group: Piece[], weight: number, cell: Point[]) {
     if (group.length === 1) {
-      shapes.push(shape(group[0], cell, random));
+      shapes.push(makeShape(group[0], cell, random));
       return;
     }
     // Split near half the votes along the longer axis to avoid narrow stripes.
@@ -117,6 +137,16 @@ function dragAxis(value: number, from: number, to: number, delta: number) {
   if (value <= low || value >= high || !delta) return value;
   const shift = (edge: number) => Math.max((low - edge) * .84, Math.min((high - edge) * .84, delta));
   const a = shift(from), b = shift(to);
+  const blend = Math.min(10, (from - low) / 2, (high - to) / 2, (to - from) / 3);
+  const innerSlope = (b - a) / (to - from);
+  // Round the change in compression across each edge of the dragged region.
+  if (blend > 0 && (Math.abs(value - from) < blend || Math.abs(value - to) < blend)) {
+    const first = Math.abs(value - from) < blend;
+    const offset = value - (first ? from : to);
+    const before = first ? a / (from - low) : innerSlope;
+    const after = first ? innerSlope : -b / (high - to);
+    return value + (first ? a : b) + before * offset + (after - before) * (offset + blend) ** 2 / (4 * blend);
+  }
   if (value < from) return value + a * (value - low) / (from - low);
   if (value > to) return value + b * (high - value) / (high - to);
   return value + a + (b - a) * (value - from) / (to - from);
@@ -136,8 +166,8 @@ export function dragPoint(point: Point, box: ReturnType<typeof bounds>, delta: P
 
 // A short hop ends in a squash and a damped rebound. Reciprocal axis
 // scales preserve the outline's area throughout the animation.
-export function jellyPose(time: number, phase: number, height: number) {
-  const cycle = (time / 1000 + phase * .44) % 3.4;
+export function jellyPose(time: number, height: number) {
+  const cycle = time / 1000;
   const flight = .46;
   const landing = Math.max(0, cycle - flight);
   const arc = cycle < flight ? Math.sin(Math.PI * cycle / flight) : 0;
