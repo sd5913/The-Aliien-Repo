@@ -42,6 +42,9 @@ export function OptionImageInput({ url, index, onChange, onBusy }: {
             <button type="button" onClick={chooseCamera}>{t("image.take")}</button>
             <button type="button" onClick={chooseGallery}>{t("image.chooseFromAlbum")}</button>
           </div>
+          <div className="source-sheet-group">
+            <button type="button" onClick={close}>{t("common.cancel")}</button>
+          </div>
         </div>
       </div>,
       document.querySelector(".app-shell") ?? document.body,
