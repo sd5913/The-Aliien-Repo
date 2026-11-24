@@ -219,8 +219,6 @@ h1, h2, h3 { color: var(--deep-purple); }
 .subtle-link { color: #8b5cf6; font-size: 11px; font-weight: 700; padding-bottom: 3px; }
 .poll-card-list, .my-poll-list { display: flex; flex-direction: column; gap: 12px; }
 .my-poll-load-more { display: flex; justify-content: center; margin-top: 12px; }
-.my-poll-load-more button { display: inline-flex; align-items: center; gap: 7px; }
-.my-poll-load-more .loading-spinner { border-color: #ddd0f7; }
 .status-pill { width: fit-content; min-height: 21px; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 9px; font-weight: 700; white-space: nowrap; }
 .status-open { color: #6d28d9; background: #ede9fe; }
 .status-closed { color: #a16207; background: #fef3c7; }
@@ -548,8 +546,10 @@ h1, h2, h3 { color: var(--deep-purple); }
 .locked-bottom { position: sticky; bottom: -30px; margin: 0 -22px -30px; padding: 16px 15px calc(17px + env(safe-area-inset-bottom)); text-align: center; color: #866c9e; background: #fffc; backdrop-filter: blur(14px); font-size: 11px; font-weight: 600; }
 .result-vote-button { margin-bottom: 11px; }
 .empty-inline { margin: 10px 0 0; color: #a18ab6; font-size: 11px; text-align: center; }
-.loading-state { margin: 10px 0 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: #a18ab6; font-size: 11px; text-align: center; }
-.loading-spinner { width: 14px; height: 14px; flex: none; border: 2px solid #ede9fe; border-top-color: var(--purple); border-radius: 50%; animation: loading-spin .8s linear infinite; }
+.loading-state, .loading-inline { display: flex; align-items: center; justify-content: center; gap: 8px; color: #a18ab6; font-size: 11px; text-align: center; }
+.loading-state { margin: 10px 0 0; }
+.loading-inline { color: #7c3aed; }
+.loading-spinner { width: 15px; height: 15px; flex: none; fill: var(--purple); animation: loading-spin .8s linear infinite; }
 @keyframes loading-spin { to { transform: rotate(360deg); } }
 
 .modal-backdrop { position: absolute; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 22px; background: #32115466; backdrop-filter: blur(5px); }

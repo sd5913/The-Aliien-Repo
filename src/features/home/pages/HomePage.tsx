@@ -318,10 +318,16 @@ export function HomePage() {
             <div className="poll-card-list">{squareCards}</div>
             {squareHasMore && (
               <div ref={squareLoadMoreRef} className="my-poll-load-more">
-                <button type="button" className="button-soft" disabled={squareLoadingMore} onClick={() => void loadMoreSquare()}>
-                  {squareLoadingMore && <LoadingSpinner />}
-                  {squareLoadingMore ? t("poll.moreLoading") : t("poll.more")}
-                </button>
+                {squareLoadingMore ? (
+                  <span className="loading-inline">
+                    <LoadingSpinner />
+                    <span>{t("poll.moreLoading")}</span>
+                  </span>
+                ) : (
+                  <button type="button" className="button-soft" onClick={() => void loadMoreSquare()}>
+                    {t("poll.more")}
+                  </button>
+                )}
               </div>
             )}
             {squareSyncError && (
@@ -405,10 +411,16 @@ export function HomePage() {
             </div>
             {hasMore && (
               <div ref={recentLoadMoreRef} className="my-poll-load-more">
-                <button type="button" className="button-soft" disabled={loadingMore} onClick={() => void loadMore()}>
-                  {loadingMore && <LoadingSpinner />}
-                  {loadingMore ? t("poll.moreLoading") : t("poll.more")}
-                </button>
+                {loadingMore ? (
+                  <span className="loading-inline">
+                    <LoadingSpinner />
+                    <span>{t("poll.moreLoading")}</span>
+                  </span>
+                ) : (
+                  <button type="button" className="button-soft" onClick={() => void loadMore()}>
+                    {t("poll.more")}
+                  </button>
+                )}
               </div>
             )}
             {syncError && (
