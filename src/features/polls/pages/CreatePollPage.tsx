@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
+import { LoadingState } from "../../../components/ui/LoadingState";
 import { usePolls } from "../hooks/usePolls";
 import { isPollOwner, isPollOpen } from "../utils/voting";
 import { accountReturnTo } from "../../auth/utils/navigation";
@@ -79,7 +80,7 @@ export function CreatePollPage() {
   }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, isPublic, options]);
 
   if (loading)
-    return <PageShell showNavigation={false} backTo={backTo} title={t("poll.create")} showHeaderTitle><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+    return <PageShell showNavigation={false} backTo={backTo} title={t("poll.create")} showHeaderTitle><LoadingState /></PageShell>;
 
   if (pollsError)
     return <PageShell showNavigation={false} backTo={backTo} title={t("poll.create")} showHeaderTitle><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;

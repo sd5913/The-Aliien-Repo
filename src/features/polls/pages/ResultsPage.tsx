@@ -17,6 +17,7 @@ import { Modal } from "../../../components/ui/Modal";
 import { Toast } from "../../../components/ui/Toast";
 import type { PollComment } from "../../../types/poll";
 import { AppIcon } from "../../../components/ui/AppIcon";
+import { LoadingState } from "../../../components/ui/LoadingState";
 
 export function ResultsPage() {
   const { t, locale, votes, participants, percent } = useLocale();
@@ -74,7 +75,7 @@ export function ResultsPage() {
   );
 
   if (accountLoading || loading)
-    return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+    return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><LoadingState /></PageShell>;
 
   if (error)
     return <PageShell showNavigation={false} title={t("results.heading")} showHeaderTitle headerAction={closeButton}><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
