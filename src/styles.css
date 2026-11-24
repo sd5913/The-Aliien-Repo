@@ -724,7 +724,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .share-dialog-content { padding: 24px 30px; }
 .share-dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; }
 .share-dialog-heading h2 { flex: 1; margin: 0; font-size: 21px; }
-.share-close { flex: 0 0 auto; width: 36px; height: 36px; border: 1px solid #e7d7fa; border-radius: 50%; font-size: 26px; background: #fff9; cursor: pointer; }
+.share-close { flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 1px solid #e7d7fa; border-radius: 50%; font-size: 26px; line-height: 1; background: #fff9; cursor: pointer; }
 .share-ticket-preview { filter: drop-shadow(0 8px 10px #69409c20); min-height: 160px; }
 .share-ticket-preview img { display: block; width: 100%; height: auto; }
 .share-ticket-preview p { padding: 40px 12px; text-align: center; font-size: 13px; }
