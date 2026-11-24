@@ -13,7 +13,7 @@ import { Toast } from "../../../components/ui/Toast";
 import { usePolls } from "../hooks/usePolls";
 import { OptionCarousel } from "../components/OptionCarousel";
 import { getVoter, isPollOwner } from "../utils/voting";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 
 export function VotingPage() {
   const { t, participants } = useLocale();
@@ -84,7 +84,7 @@ export function VotingPage() {
   const letter = (index: number) => String.fromCharCode(65 + index);
   const selectedIndex = poll.options.findIndex((option) => option.id === selectedId);
   const selectedOption = selectedIndex >= 0 ? poll.options[selectedIndex] : undefined;
-  const selectionColor = optionColors[Math.max(0, selectedIndex) % optionColors.length];
+  const selectionColor = optionColor(selectedOption ?? activeOption, selectedOption ? selectedIndex : activeIndex);
   const redirectGuestToLogin = () => {
     if (accountUser || authRedirecting.current) return;
     if (!saveDraft(pendingDraftKey, { activeId, selectedId, comment })) {

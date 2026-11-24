@@ -12,12 +12,7 @@ import { usePolls } from "../hooks/usePolls";
 import { isPollOwner, isPollOpen } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
-function makeOption(): PollOption {
-  return {
-    id: crypto.randomUUID(),
-    name: "",
-  };
-}
+import { freshOptions, makeOption, optionColor } from "../utils/optionColors";
 
 export function CreatePollPage() {
   const { t, number } = useLocale();
@@ -46,7 +41,11 @@ export function CreatePollPage() {
   const [deadline, setDeadline] = useState("none");
   const [isPublic, setIsPublic] = useState(false);
   const [options, setOptions] = useState<PollOption[]>(
-    editingPoll?.options ?? [makeOption(), makeOption()],
+    () => {
+      if (editingPoll) return editingPoll.options;
+      const first = makeOption([]);
+      return [first, makeOption([first])];
+    },
   );
   const [error, setError] = useState<MessageKey | "">("");
 
@@ -58,11 +57,11 @@ export function CreatePollPage() {
     initialized.current = key;
     const saved = readDraft(draftKey, isCreateDraft);
     if (saved) {
-      setTitle(saved.title); setDescription(saved.description); setOptions(saved.options);
+      setTitle(saved.title); setDescription(saved.description); setOptions(saved.options.map((option, index) => ({ ...option, colorIndex: option.colorIndex ?? index })));
       setDeadline(saved.deadline); setIsPublic(saved.isPublic ?? (editingId ? Boolean(source?.isPublic) : false)); setNewPollId(saved.pollId); setDraftNotice("poll.restored");
     } else if (source) {
       setTitle(source.title); setDescription(source.description);
-      setOptions(editingId ? source.options : source.options.map((option) => ({ ...option, id: crypto.randomUUID() })));
+      setOptions(editingId ? source.options : freshOptions(source.options));
       setDeadline(editingId && source.endsAt ? "custom" : "none");
       setIsPublic(editingId ? Boolean(source.isPublic) : false);
     }
@@ -209,6 +208,7 @@ export function CreatePollPage() {
                 onBusy={(busy) => setUploadCount((count) => Math.max(0, count + (busy ? 1 : -1)))} />
               <div className="option-fields">
                 <span className="option-letter">
+                  <span className="option-color-dot" aria-hidden="true" style={{ backgroundColor: optionColor(option, index) }} />
                   {t("poll.optionalOption", { letter: String.fromCharCode(65 + index) })}
                 </span>
                 <input
@@ -247,7 +247,7 @@ export function CreatePollPage() {
             onClick={() =>
               setOptions((current) => [
                 ...current,
-                makeOption(),
+                makeOption(current),
               ])
             }
           >

@@ -29,6 +29,7 @@ interface OptionRow {
   label: string;
   image_url: string | null;
   position: number | null;
+  color_index?: number | null;
   created_at: string;
 }
 
@@ -64,9 +65,10 @@ function toCommentView(row: CommentRow): PollComment {
 function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Poll {
   const options = [...(row.poll_options ?? [])]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .map((option) => ({
+    .map((option, index) => ({
       id: option.id,
       name: option.label,
+      colorIndex: option.color_index ?? index,
       imageUrl: option.image_url ?? undefined,
     }));
 
@@ -88,14 +90,14 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
 }
 
 const POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(*)";
 const LEGACY_POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(*)";
 
 const CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(*),votes(count)";
 const LEGACY_CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(*),votes(count)";
 
 function isMissingVisibilityColumn(error: { code?: string; message?: string } | null): boolean {
   // Keep reads available while the frontend and database migration roll out independently.

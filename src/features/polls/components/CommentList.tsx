@@ -4,7 +4,7 @@ import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import type { PollComment, PollOption } from "../../../types/poll";
 import { useUserSettings } from "../../settings/hooks/useUserSettings";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 
 interface CommentListProps {
   comments: PollComment[];
@@ -68,7 +68,7 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
                 </div>
               ) : <p>{comment.text}</p>}
             </div>
-            {!editing && optionIndex >= 0 && <span className="comment-color-dot" style={{ background: optionColors[optionIndex % optionColors.length] }} title={options[optionIndex].name} />}
+            {!editing && optionIndex >= 0 && <span className="comment-color-dot" style={{ background: optionColor(options[optionIndex], optionIndex) }} title={options[optionIndex].name} />}
             {!editing && (canEdit || canDelete) && <div className="comment-management-actions">
               {canEdit && <button disabled={saving} aria-label={t("comment.editBy", { name: comment.voter.nickname })} onClick={() => startEdit(comment)}><AppIcon name="edit" size={16} />{t("common.editShort")}</button>}
               {canDelete && <button disabled={saving} className="comment-delete-button" aria-label={t("comment.deleteBy", { name: comment.voter.nickname })} onClick={() => onDelete?.(comment)}><AppIcon name="bin" size={16} />{t("common.delete")}</button>}

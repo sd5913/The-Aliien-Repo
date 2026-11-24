@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { PollOption } from "../../../types/poll";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 import { useLocale } from "../../../i18n/LocaleProvider";
 
 export function PollOptionPreviews({ options }: { options: PollOption[] }) {
@@ -11,7 +11,7 @@ export function PollOptionPreviews({ options }: { options: PollOption[] }) {
     {options.slice(0, 2).map((option, index) => textOnly ? (
       <div className="poll-preview-bottle" key={option.id} role="img"
         aria-label={t("poll.previewOption", { letter: String.fromCharCode(65 + index), name: option.name })}
-        title={option.name} style={{ "--option-liquid-color": optionColors[index % optionColors.length] } as CSSProperties}>
+        title={option.name} style={{ "--option-liquid-color": optionColor(option, index) } as CSSProperties}>
         <span className="poll-preview-cap" aria-hidden="true" />
         <div className="poll-preview-body" aria-hidden="true">
           <span className="poll-preview-label">{option.name || t("image.option", { index: index + 1 })}</span>

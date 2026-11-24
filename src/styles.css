@@ -341,6 +341,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .option-editor { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 17px; background: #ffffffb8; border: 1px solid #f4eafe; }
 .option-editor-image { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 14px; object-fit: cover; background: linear-gradient(140deg, #fbcfe8, #c4b5fd); }
 .option-fields { min-width: 0; flex: 1; }
+.option-color-dot { display: inline-block; width: 10px; height: 10px; margin-inline-end: 5px; border-radius: 50%; vertical-align: middle; }
 .option-letter { display: block; margin: 0 0 5px; color: #a276cd; font-size: 9px; font-weight: 700; }
 .compact-input { min-height: 35px; margin: 0; padding: 7px 10px; border-radius: 10px; }
 .remove-option-button { position: absolute; right: 7px; top: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: #fce7f3; color: #be185d; font-size: 17px; line-height: 1; cursor: pointer; }

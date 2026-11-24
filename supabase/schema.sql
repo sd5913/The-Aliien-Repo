@@ -26,6 +26,8 @@ create table if not exists public.poll_options (
   created_at timestamptz not null default now()
 );
 
+alter table public.poll_options add column if not exists color_index smallint check (color_index between 0 and 4);
+
 -- 投票记录；ranking 为选项 id 的有序数组，单选时只含一个元素
 create table if not exists public.votes (
   id uuid primary key default gen_random_uuid(),
@@ -141,10 +143,11 @@ begin
     on po.id = (o->>'id')::uuid where po.poll_id <> target_poll_id) then
     raise exception 'OPTION_BELONGS_TO_ANOTHER_POLL' using errcode = '42501';
   end if;
-  insert into public.poll_options(id,poll_id,label,image_url,position)
-    select (o->>'id')::uuid,target_poll_id,btrim(o->>'name'),o->>'imageUrl',ord::int - 1
+  insert into public.poll_options(id,poll_id,label,image_url,position,color_index)
+    select (o->>'id')::uuid,target_poll_id,btrim(o->>'name'),o->>'imageUrl',ord::int - 1,(o->>'colorIndex')::smallint
     from jsonb_array_elements(p_poll->'options') with ordinality as x(o,ord)
-  on conflict(id) do update set label = excluded.label, image_url = excluded.image_url, position = excluded.position;
+  on conflict(id) do update set label = excluded.label, image_url = excluded.image_url, position = excluded.position,
+    color_index = coalesce(excluded.color_index, public.poll_options.color_index);
   delete from public.poll_options po where po.poll_id = target_poll_id
     and po.id not in(select (o->>'id')::uuid from jsonb_array_elements(p_poll->'options') o);
   return target_poll_id;

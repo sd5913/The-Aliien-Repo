@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { PointerEvent } from "react";
 import type { PollOption } from "../../../types/poll";
 import { sandBoundary } from "../utils/sandGeometry";
-import { optionColors } from "../utils/optionColors";
+import { optionColor } from "../utils/optionColors";
 
 const size = 360;
 const radius = 28;
@@ -134,7 +134,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
             const start = left(v);
             return point(start + (right(v) - start) * u, v);
           }, width, height);
-          ctx.fillStyle = optionColors[item.index % optionColors.length];
+          ctx.fillStyle = optionColor(options[item.index], item.index);
           ctx.fill(path);
           if (width > 58 && height > 49) {
             const [x, y] = point(center, .5);
@@ -164,7 +164,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
       motion.removeEventListener("change", restart);
       document.removeEventListener("visibilitychange", restart);
     };
-  }, [weights, total]);
+  }, [options, weights, total]);
 
   const press = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
