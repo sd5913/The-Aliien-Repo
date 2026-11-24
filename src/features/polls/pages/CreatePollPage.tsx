@@ -12,7 +12,7 @@ import { usePolls } from "../hooks/usePolls";
 import { isPollOwner, isPollOpen } from "../utils/voting";
 import type { Poll, PollOption } from "../../../types/poll";
 
-import { freshOptions, makeOption, optionColor } from "../utils/optionColors";
+import { freshOptions, makeOption, optionColor, resolveOptionColors } from "../utils/optionColors";
 
 export function CreatePollPage() {
   const { t, number } = useLocale();
@@ -57,7 +57,7 @@ export function CreatePollPage() {
     initialized.current = key;
     const saved = readDraft(draftKey, isCreateDraft);
     if (saved) {
-      setTitle(saved.title); setDescription(saved.description); setOptions(saved.options.map((option, index) => ({ ...option, colorIndex: option.colorIndex ?? index })));
+      setTitle(saved.title); setDescription(saved.description); setOptions(resolveOptionColors(saved.options));
       setDeadline(saved.deadline); setIsPublic(saved.isPublic ?? (editingId ? Boolean(source?.isPublic) : false)); setNewPollId(saved.pollId); setDraftNotice("poll.restored");
     } else if (source) {
       setTitle(source.title); setDescription(source.description);

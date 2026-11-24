@@ -5,6 +5,7 @@ import type { ParticipantProfile } from "../../auth/utils/participant";
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
+import { resolveOptionColors } from "../utils/optionColors";
 
 interface PollRow {
   id: string;
@@ -65,10 +66,10 @@ function toCommentView(row: CommentRow): PollComment {
 function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Poll {
   const options = [...(row.poll_options ?? [])]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .map((option, index) => ({
+    .map((option) => ({
       id: option.id,
       name: option.label,
-      colorIndex: option.color_index ?? index,
+      colorIndex: option.color_index ?? undefined,
       imageUrl: option.image_url ?? undefined,
     }));
 
@@ -83,7 +84,7 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     visibilityReviewedAt: row.visibility_reviewed_at ?? null,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
-    options,
+    options: resolveOptionColors(options),
     votes: votes.map(toVoteView),
     comments: comments.map(toCommentView),
   };
