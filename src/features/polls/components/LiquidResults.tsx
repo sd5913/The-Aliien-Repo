@@ -41,21 +41,17 @@ const frameX = areaCoordinates(x => size - 2 * rim(x * size));
 // stay close together while the corners pull back into curved pockets of space.
 function liquidPath(
   point: (u: number, v: number) => readonly [number, number],
-  width: number,
-  height: number,
+  cornerX: number,
+  cornerY: number,
 ) {
-  const insetX = Math.min(1.2 / width, .08);
-  const insetY = Math.min(1.2 / height, .08);
-  const cornerX = (.5 - insetX) * .74;
-  const cornerY = (.5 - insetY) * .74;
   const corners = [
-    [1 - insetX - cornerX, insetY + cornerY],
-    [1 - insetX - cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, 1 - insetY - cornerY],
-    [insetX + cornerX, insetY + cornerY],
+    [1 - cornerX, cornerY],
+    [1 - cornerX, 1 - cornerY],
+    [cornerX, 1 - cornerY],
+    [cornerX, cornerY],
   ];
   const path = new Path2D();
-  path.moveTo(...point(insetX + cornerX, insetY));
+  path.moveTo(...point(cornerX, 0));
   for (const [index, [x, y]] of corners.entries()) {
     const start = (index - 1) * Math.PI / 2;
     const u = x + cornerX * Math.cos(start);
@@ -66,13 +62,53 @@ function liquidPath(
       const t = i / 20;
       path.lineTo(...point(u + (previousX - x) * (1 - t), v + (previousY - y) * (1 - t)));
     }
-    for (let i = 1; i <= 24; i++) {
+    for (let i = 1; cornerX > 0 && i <= 24; i++) {
       const angle = start + i * Math.PI / 48;
       path.lineTo(...point(x + cornerX * Math.cos(angle), y + cornerY * Math.sin(angle)));
     }
   }
   path.closePath();
   return path;
+}
+
+function paintBubble(ctx: CanvasRenderingContext2D, path: Path2D, color: string,
+  x: number, y: number, width: number, height: number) {
+  ctx.save();
+  ctx.clip(path);
+  ctx.fillStyle = color;
+  ctx.fill(path);
+
+  // Stretch the lighting with the cell, so thin minorities keep their hue.
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(width, height);
+  const dome = ctx.createRadialGradient(-.27, -.30, .02, -.06, -.08, .78);
+  dome.addColorStop(0, "rgba(255,255,255,.50)");
+  dome.addColorStop(.45, "rgba(255,255,255,.12)");
+  dome.addColorStop(.78, "rgba(55,37,81,.05)");
+  dome.addColorStop(1, "rgba(55,37,81,.25)");
+  ctx.fillStyle = dome;
+  ctx.fillRect(-3, -3, 6, 6);
+  ctx.restore();
+
+  // Nested strokes follow the actual contact contour; clipping keeps the
+  // reflected light and the darker fold inside this option's allotted area.
+  const film = Math.min(1, width / 65, height / 65);
+  const reflection = ctx.createLinearGradient(x - width * .45, y - height * .5,
+    x + width * .45, y + height * .5);
+  reflection.addColorStop(0, "rgba(255,255,255,.96)");
+  reflection.addColorStop(.35, "rgba(255,255,255,.4)");
+  reflection.addColorStop(.58, "rgba(61,42,82,.24)");
+  reflection.addColorStop(.85, "rgba(255,255,255,.78)");
+  reflection.addColorStop(1, "rgba(255,255,255,.28)");
+  ctx.lineJoin = "round";
+  for (const [weight, stroke] of [[15, "rgba(65,45,85,.07)"],
+    [9, reflection], [4, "rgba(61,44,78,.22)"], [1.6, reflection]] as const) {
+    ctx.lineWidth = weight * film;
+    ctx.strokeStyle = stroke;
+    ctx.stroke(path);
+  }
+  ctx.restore();
 }
 
 export function LiquidResults({ options, counts }: { options: PollOption[]; counts: Map<string, number> }) {
@@ -130,14 +166,22 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
           const center = (left(.5) + right(.5)) / 2;
           const width = point(right(.5), .5)[0] - point(left(.5), .5)[0];
           const height = point(center, 1)[1] - point(center, 0)[1];
-          const path = liquidPath((u, v) => {
+          const cellPoint = (u: number, v: number) => {
             const start = left(v);
             return point(start + (right(v) - start) * u, v);
-          }, width, height);
-          ctx.fillStyle = optionColor(options[item.index], item.index);
-          ctx.fill(path);
+          };
+          const color = optionColor(options[item.index], item.index);
+          // The liquid in each junction still belongs to the same weighted cell.
+          const cell = liquidPath(cellPoint, 0, 0);
+          ctx.fillStyle = color;
+          ctx.fill(cell);
+          ctx.fillStyle = "rgba(72,47,88,.20)";
+          ctx.fill(cell);
+          const bend = Math.min(width, height) * .34;
+          const path = liquidPath(cellPoint, bend / width, bend / height);
+          const [x, y] = point(center, .5);
+          paintBubble(ctx, path, color, x, y, width, height);
           if (width > 58 && height > 49) {
-            const [x, y] = point(center, .5);
             ctx.save();
             ctx.clip(path);
             ctx.fillStyle = "#411b65";
