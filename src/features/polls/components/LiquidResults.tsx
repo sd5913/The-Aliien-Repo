@@ -73,6 +73,7 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pressure = useRef({ x: .5, y: .5, down: false });
   const impact = useRef(false);
+  const animation = useRef({ phase: 0, compression: 0, velocity: 0 });
   const active = options.map((option, index) => ({ index, count: counts.get(option.id) ?? 0 })).filter(item => item.count > 0);
   const total = active.reduce((sum, item) => sum + item.count, 0);
   const weights = options.map(option => counts.get(option.id) ?? 0).join(",");
@@ -82,10 +83,12 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !total) return;
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvas.height = size * ratio;
-    ctx.scale(ratio, ratio);
+    const pixels = Math.round(size * ratio);
+    if (canvas.width !== pixels || canvas.height !== pixels) canvas.width = canvas.height = pixels;
+    ctx.setTransform(pixels / size, 0, 0, pixels / size, 0, 0);
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0, previous = -Infinity, phase = 0, compression = 0, velocity = 0;
+    let frame = 0, previous: number | undefined;
+    let { phase, compression, velocity } = animation.current;
     // Stagger pairs so the seams meet like neighboring drops, even at a tie.
     const rows: (typeof active)[] = [];
     for (let i = 0; i < active.length;) {
@@ -96,10 +99,10 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
     function draw(time: number) {
       if (!ctx) return;
       if (!motion.matches && !document.hidden) frame = requestAnimationFrame(draw);
-      if (time - previous < 40) return;
-      const dt = Math.min(.06, (time - previous) / 1000);
+      if (previous !== undefined && time - previous < 40) return;
+      const dt = previous === undefined ? 0 : Math.min(.06, (time - previous) / 1000);
       previous = time;
-      phase += motion.matches ? 0 : dt * .42;
+      if (!motion.matches) phase = (phase + dt * .42) % (2 * Math.PI);
       const pointer = pressure.current;
       const target = pointer.down && !motion.matches ? 1 : 0;
       if (impact.current) { velocity += 3; impact.current = false; }
@@ -160,13 +163,14 @@ export function LiquidResults({ options, counts }: { options: PollOption[]; coun
     }
     const restart = () => {
       cancelAnimationFrame(frame);
-      previous = -Infinity;
+      previous = undefined;
       if (!document.hidden) draw(performance.now());
     };
     restart();
     motion.addEventListener("change", restart);
     document.addEventListener("visibilitychange", restart);
     return () => {
+      animation.current = { phase, compression, velocity };
       cancelAnimationFrame(frame);
       motion.removeEventListener("change", restart);
       document.removeEventListener("visibilitychange", restart);
