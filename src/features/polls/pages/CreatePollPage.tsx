@@ -5,11 +5,12 @@ import { OptionImageInput } from "../components/OptionImageInput";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { PurpleButton } from "../../../components/ui/PurpleButton";
 import { usePolls } from "../hooks/usePolls";
 import { isPollOwner, isPollOpen } from "../utils/voting";
+import { accountReturnTo } from "../../auth/utils/navigation";
 import type { Poll, PollOption } from "../../../types/poll";
 
 import { freshOptions, makeOption, optionColor, resolveOptionColors } from "../utils/optionColors";
@@ -17,9 +18,13 @@ import { freshOptions, makeOption, optionColor, resolveOptionColors } from "../u
 export function CreatePollPage() {
   const { t, number } = useLocale();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const editingId = params.get("id");
   const copyId = params.get("copy");
+  const rawReturnTo = (location.state as { returnTo?: unknown } | null)?.returnTo ??
+    new URLSearchParams(location.search).get("returnTo");
+  const backTo = accountReturnTo(typeof rawReturnTo === "string" ? rawReturnTo : null);
   const initialized = useRef("");
   const [newPollId, setNewPollId] = useState<string>(() => crypto.randomUUID());
   const [uploadCount, setUploadCount] = useState(0);
@@ -74,10 +79,10 @@ export function CreatePollPage() {
   }, [draftReady, draftKey, loading, user, newPollId, title, description, deadline, isPublic, options]);
 
   if (loading)
-    return <PageShell showNavigation={false} backTo="/" title={t("poll.create")} showHeaderTitle><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
+    return <PageShell showNavigation={false} backTo={backTo} title={t("poll.create")} showHeaderTitle><p className="empty-inline">{t("poll.loading")}</p></PageShell>;
 
   if (pollsError)
-    return <PageShell showNavigation={false} backTo="/" title={t("poll.create")} showHeaderTitle><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
+    return <PageShell showNavigation={false} backTo={backTo} title={t("poll.create")} showHeaderTitle><p className="settings-feedback" role="alert">{t("poll.loadFailed")}</p></PageShell>;
 
   if (!canEdit || !canCopy)
     return (
@@ -144,7 +149,7 @@ export function CreatePollPage() {
       await savePoll(poll);
       clearDraft(draftKey);
       navigate(`/poll/${poll.id}/results${editingPoll ? "" : "?share=1"}`, {
-        state: { returnTo: "/settings", published: !editingPoll, saved: Boolean(editingPoll) },
+        state: { returnTo: backTo, published: !editingPoll, saved: Boolean(editingPoll) },
       });
     } catch (saveError) {
       console.error("Could not save poll.", saveError);
@@ -155,7 +160,7 @@ export function CreatePollPage() {
   return (
     <PageShell
       showNavigation={false}
-      backTo="/"
+      backTo={backTo}
       title={editingPoll ? t("poll.edit") : copyId ? t("poll.copy") : t("poll.create")}
       showHeaderTitle
       footer={
