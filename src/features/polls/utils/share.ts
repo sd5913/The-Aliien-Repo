@@ -57,7 +57,8 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
   fontProbe.remove();
   const brand = translate(locale, "share.ticketBrand");
   const scan = translate(locale, "share.ticketScan");
-  const sample = [brand, scan, poll.title, ...poll.options.map((option) => option.name)].join(" ");
+  const ticketLabel = translate(locale, "share.ticketLabel");
+  const sample = [brand, scan, ticketLabel, poll.title, ...poll.options.map((option) => option.name)].join(" ");
   await Promise.allSettled([
     document.fonts.load(`700 38px ${displayFamily}`, sample),
     document.fonts.load(`400 21px ${bodyFamily}`, sample),
@@ -282,21 +283,18 @@ export async function renderShareTicket(poll: Poll, locale: Locale) {
       }
     }
   }
+  const lockupTitle = `BothPls  |  ${ticketLabel}`;
   const logoSize = 64;
-  const logoX = margin;
-  const logoY = height - 175;
-  if (logoImage) ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+  const lockupCenterY = qrY + qrSize / 2;
+  const line1Y = lockupCenterY - 6;
+  const line2Y = lockupCenterY + 26;
+  const logoY = lockupCenterY - logoSize / 2;
+  if (logoImage) ctx.drawImage(logoImage, margin, logoY, logoSize, logoSize);
   const textX = margin + logoSize + 16;
-  const linkWidth = contentWidth - slotSize - 24 - logoSize - 16;
-  ctx.fillStyle = "#5b21b6";
-  text(scan, textX, height - 158, linkWidth, 25, true);
-  let urlSize = 21;
-  do {
-    ctx.font = `${urlSize}px ${bodyFamily}`;
-    if (ctx.measureText(url).width <= linkWidth) break;
-    urlSize--;
-  } while (urlSize > 8);
+  const textWidth = contentWidth - slotSize - 24 - logoSize - 16;
+  ctx.fillStyle = "#4c1d95";
+  text(lockupTitle, textX, line1Y, textWidth, 25, true);
   ctx.fillStyle = "#8969a6";
-  text(url, textX, height - 114, linkWidth, urlSize);
+  text(scan, textX, line2Y, textWidth, 21);
   return canvas.toDataURL("image/png");
 }

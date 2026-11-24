@@ -311,6 +311,7 @@ export default {
   "share.note": "Send the ticket to your friends and see what they choose",
   "share.ticketBrand": "BothPls  /  Let everyone weigh in",
   "share.ticketScan": "Scan to help me choose",
+  "share.ticketLabel": "Vote ticket",
   "profile.settings": "Settings",
   "profile.signedIn": "Signed in",
   "profile.signedOut": "Signed out",

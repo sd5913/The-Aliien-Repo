@@ -311,6 +311,7 @@ export default {
   "share.note": "친구들에게 티켓을 보내고 어떤 선택을 하는지 확인해 보세요",
   "share.ticketBrand": "BothPls  /  다 같이 골라요",
   "share.ticketScan": "스캔하고 골라 주세요",
+  "share.ticketLabel": "투표 티켓",
   "profile.settings": "설정",
   "profile.signedIn": "로그인됨",
   "profile.signedOut": "로그아웃 상태",
