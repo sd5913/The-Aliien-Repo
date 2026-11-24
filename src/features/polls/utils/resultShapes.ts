@@ -1,10 +1,10 @@
 export type Point = { x: number; y: number };
 type Cell = Point & { width: number; height: number };
-type Piece = { index: number; weight: number; main: boolean };
+type Piece = { index: number; weight: number };
 
 export const chartSize = 360;
 const samples = 96;
-const inkFraction = .76;
+const inkFraction = .71;
 
 function layoutRandom(pollId: string) {
   let state = 2166136261;
@@ -16,7 +16,7 @@ function layoutRandom(pollId: string) {
 }
 
 // Fit the actual sampled outline to a common filled fraction of each cell.
-// This keeps the total visible area proportional even after splitting an option.
+// Leave room around each outline for its rebound.
 function shape(piece: Piece, cell: Cell, random: () => number) {
   const phase = random() * 2 * Math.PI;
   const exponent = .69 + random() * .12;
@@ -45,16 +45,7 @@ function shape(piece: Piece, cell: Cell, random: () => number) {
 export function resultShapes(pollId: string, counts: number[]) {
   const random = layoutRandom(pollId);
   const total = counts.reduce((a, b) => a + b, 0);
-  const pieces: Piece[] = [];
-  counts.forEach((weight, index) => {
-    const chance = random(), second = random(), fraction = .11 + random() * .07;
-    if (!weight) return;
-    const share = weight / total;
-    const satellites = share >= .30 && chance < .80 ? (share >= .44 && second < .55 ? 2 : 1) : 0;
-    const small = weight * fraction;
-    pieces.push({ index, main: true, weight: weight - satellites * small });
-    for (let i = 0; i < satellites; i++) pieces.push({ index, main: false, weight: small });
-  });
+  const pieces = counts.map((weight, index) => ({ index, weight })).filter(piece => piece.weight > 0);
   for (let i = pieces.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
@@ -82,6 +73,19 @@ export function resultShapes(pollId: string, counts: number[]) {
 }
 
 export type Contact = { focus: Point; origin: Point; radius: number };
+
+// A short hop ends in a squash and a damped rebound. Reciprocal axis
+// scales preserve the outline's area throughout the animation.
+export function jellyPose(time: number, phase: number, height: number) {
+  const cycle = (time / 1000 + phase * .44) % 3.4;
+  const flight = .46;
+  const landing = Math.max(0, cycle - flight);
+  const arc = cycle < flight ? Math.sin(Math.PI * cycle / flight) : 0;
+  const rebound = Math.exp(-6 * landing) * Math.sin(19 * landing);
+  const scaleY = 1 + .032 * arc - .085 * rebound;
+  const dy = -Math.min(5, height * .012) * arc + Math.max(0, 1 - scaleY) * height * .33;
+  return { scaleY, scaleX: 1 / scaleY, dy };
+}
 
 // A single smooth displacement field moves both sides of a gap consistently.
 // Beyond the contact radius every vertex stays at its resting position.

@@ -4,7 +4,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("./resultShapes.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2020 } }).outputText;
-const { resultShapes, pressPoint } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { resultShapes, pressPoint, jellyPose } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function area(points) {
   return points.reduce((sum, p, i) => {
@@ -13,7 +13,6 @@ function area(points) {
   }, 0);
 }
 
-const splitSizes = new Set();
 for (let seed = 0; seed < 80; seed++) {
   for (const counts of [[1, 1, 1, 1, 1], [999, 1, 0], [1, 0], [31, 44, 25], [0, 0]]) {
     const shapes = resultShapes(String(seed), counts);
@@ -23,17 +22,23 @@ for (let seed = 0; seed < 80; seed++) {
     const ink = areas.reduce((a, b) => a + b, 0);
     counts.forEach((count, index) => {
       const pieces = shapes.filter(shape => shape.index === index);
-      assert.equal(pieces.filter(p => p.main).length, Number(count > 0));
+      assert.equal(pieces.length, Number(count > 0));
       if (votes) assert.ok(Math.abs(areas[index] / ink - count / votes) < 1e-10);
-      if (count === 999) splitSizes.add(pieces.length);
-      if (pieces.length > 1) {
-        assert.ok(pieces.length <= 3);
-        assert.ok(pieces.find(p => p.main).weight > count / 2);
-      }
     });
   }
 }
-assert.deepEqual([...splitSizes].sort(), [1, 2, 3]);
+for (const shape of resultShapes("bounce", [51, 29, 15, 4, 1])) {
+  const restArea = area(shape.points);
+  for (let time = 0; time < 3400; time += 16) {
+    const pose = jellyPose(time, shape.phase, shape.height);
+    const points = shape.points.map(p => ({
+      x: (p.x - shape.center.x) * pose.scaleX,
+      y: (p.y - shape.center.y) * pose.scaleY + pose.dy,
+    }));
+    assert.ok(Math.abs(area(points) / restArea - 1) < 1e-10);
+    assert.ok(points.every(p => Math.abs(p.x) < shape.width / 2 && Math.abs(p.y) < shape.height / 2));
+  }
+}
 const gap = { focus: { x: 50, y: 50 }, origin: { x: 50, y: 50 }, radius: 78 };
 assert.ok(pressPoint({ x: 45, y: 50 }, gap, 1).x < 45);
 assert.ok(pressPoint({ x: 55, y: 50 }, gap, 1).x > 55);
@@ -42,4 +47,4 @@ assert.deepEqual(pressPoint(far, gap, 1), far);
 const shape = resultShapes("tap", [6, 4])[0];
 const block = { focus: shape.center, origin: shape.center, radius: 200 };
 assert.ok(area(shape.points.map(p => pressPoint(p, block, 1))) > area(shape.points));
-console.log("Verified visible area shares, split sizes, local expansion and unaffected distant points.");
+console.log("Verified one shape per option, area and bounds throughout a bounce, and local touch response.");

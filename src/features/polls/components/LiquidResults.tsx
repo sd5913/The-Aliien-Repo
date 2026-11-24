@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { PollOption } from "../../../types/poll";
 import { optionColor } from "../utils/optionColors";
-import { chartSize, pressPoint, resultShapes } from "../utils/resultShapes";
+import { chartSize, jellyPose, pressPoint, resultShapes } from "../utils/resultShapes";
 import type { Contact, Point } from "../utils/resultShapes";
 
 export function LiquidResults({ pollId, options, counts }: { pollId: string; options: PollOption[]; counts: Map<string, number> }) {
@@ -23,7 +23,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     let paths: { path: Path2D; center: Point; points: Point[] }[] = [];
     let contact: Contact | undefined;
     let pointerId: number | undefined;
-    let strength = 0, holdUntil = 0, frame = 0, previous = 0;
+    let strength = 0, velocity = 0, holdUntil = 0, frame = 0, previous = 0;
 
     const draw = (time: number) => {
       cancelAnimationFrame(frame);
@@ -31,15 +31,28 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       const dt = Math.min(60, Math.max(0, time - previous));
       previous = time;
       const target = pointerId !== undefined || time < holdUntil ? 1 : 0;
-      strength = motion.matches ? target : target + (strength - target) * Math.exp(-dt / (target ? 65 : 105));
-      if (!target && strength < .005) { strength = 0; contact = undefined; }
+      if (motion.matches) {
+        strength = target;
+        velocity = 0;
+      } else if (contact) {
+        const step = dt / 8000;
+        for (let i = 0; i < 8; i++) {
+          velocity += ((target - strength) * 340 - velocity * 13) * step;
+          strength += velocity * step;
+        }
+      }
+      if (!target && Math.abs(strength) < .005 && Math.abs(velocity) < .05) {
+        strength = velocity = 0;
+        contact = undefined;
+      }
       ctx.clearRect(0, 0, chartSize, chartSize);
       paths = shapes.map(shape => {
-        // Subpixel drift translates each outline without changing its area.
-        const dx = motion.matches ? 0 : Math.min(.55, shape.width * .003) * Math.sin(time / 5300 + shape.phase);
-        const dy = motion.matches ? 0 : Math.min(.45, shape.height * .003) * Math.cos(time / 6100 + shape.phase);
+        const pose = motion.matches ? { scaleX: 1, scaleY: 1, dy: 0 } : jellyPose(time, shape.phase, shape.height);
         const project = (p: Point) => {
-          const rest = { x: p.x + dx, y: p.y + dy };
+          const rest = {
+            x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
+            y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
+          };
           return contact ? pressPoint(rest, contact, strength) : rest;
         };
         const points = shape.points.map(project);
@@ -50,7 +63,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
         ctx.fillStyle = optionColor(options[shape.index], shape.index);
         ctx.fill(path);
         const center = project(shape.center);
-        if (shape.main && shape.width > 58 && shape.height > 49) {
+        if (shape.width > 58 && shape.height > 49) {
           ctx.save();
           ctx.clip(path);
           ctx.fillStyle = "#411b65";
@@ -81,6 +94,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       const now = performance.now();
       holdUntil = now + 110;
       strength = .35;
+      velocity = 0;
       draw(now);
     };
     const release = (event: PointerEvent) => {
