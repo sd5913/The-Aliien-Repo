@@ -116,7 +116,7 @@ export function ResultsPage() {
       </div>
       {syncError && <p className="field-hint" role="status">{t("results.syncFailed")}</p>}
       {highest > 0 && <p className="result-leader-summary" role="status">{leaders.length > 1 ? t("results.tie", { leaders: leaderText }) : t(open ? "results.leading" : "results.winner", { leader: leaderText })}</p>}
-      <LiquidResults options={poll.options} counts={counts} />
+      <LiquidResults pollId={poll.id} options={poll.options} counts={counts} />
       <section className="results-card" aria-label={t("results.breakdown")}>
         <div className="result-option-list">
           {poll.options.map((option, index) => {
