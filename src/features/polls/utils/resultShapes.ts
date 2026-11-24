@@ -74,7 +74,7 @@ function makeShape(piece: Piece, cell: Point[], random: () => number) {
 export function flowingOutline(shape: ReturnType<typeof makeShape>, time: number) {
   const { center, width, height, phase } = shape;
   const clock = time / 2300;
-  const amplitude = Math.min(2.1, Math.min(width, height) * .018);
+  const amplitude = Math.min(2.7, Math.min(width, height) * .023);
   const points = shape.points.map(p => {
     const u = (p.x - center.x) / width, v = (p.y - center.y) / height;
     return {
@@ -184,6 +184,6 @@ export function pressPoint(point: Point, contact: Contact, strength: number): Po
   if (distance >= contact.radius || !strength) return point;
   const dx = point.x - contact.origin.x, dy = point.y - contact.origin.y;
   const falloff = (1 - (distance / contact.radius) ** 2) ** 2;
-  const scale = strength * falloff * Math.min(.23, 7 / (Math.hypot(dx, dy) || 1));
+  const scale = strength * falloff * Math.min(.30, 10 / (Math.hypot(dx, dy) || 1));
   return { x: point.x + dx * scale, y: point.y + dy * scale };
 }

@@ -26,6 +26,7 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
     let pressedIndex = -1;
     let bounce: { index: number; start: number } | undefined;
     let holdTimer: number | undefined;
+    let holdStart: Point | undefined;
     let drag: { box: typeof shapes[number]["box"]; start: Point; delta: Point; releasing: boolean } | undefined;
     let strength = 0, velocity = 0, holdUntil = 0, frame = 0, previous = 0;
 
@@ -64,8 +65,8 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
             x: shape.center.x + (p.x - shape.center.x) * pose.scaleX,
             y: shape.center.y + (p.y - shape.center.y) * pose.scaleY + pose.dy,
           };
-          if (drag) return dragPoint(rest, drag.box, drag.delta);
-          return contact ? pressPoint(rest, contact, strength) : rest;
+          const displaced = drag ? dragPoint(rest, drag.box, drag.delta) : rest;
+          return contact ? pressPoint(displaced, contact, strength) : displaced;
         };
         const outline = motion.matches ? shape.points : flowingOutline(shape, time);
         const points = outline.map(project);
@@ -99,19 +100,23 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
         y: (event.clientY - rect.top) / rect.height * chartSize,
       };
     };
-    const press = (event: PointerEvent) => {
-      if (pointerId !== undefined || event.button !== 0) return;
-      const focus = position(event);
+    const updateContact = (focus: Point) => {
       const index = paths.findIndex(({ path }) => ctx.isPointInPath(path, focus.x * ratio, focus.y * ratio));
       const hit = paths[index];
       pressedIndex = index;
       const nearestEdge = hit ? Math.min(...hit.points.map(p => Math.hypot(p.x - focus.x, p.y - focus.y))) : 0;
       contact = { focus, origin: hit?.center ?? focus, radius: 78 + nearestEdge * 1.35 };
+      return index;
+    };
+    const press = (event: PointerEvent) => {
+      if (pointerId !== undefined || event.button !== 0) return;
+      const focus = position(event);
+      const index = updateContact(focus);
       pointerId = event.pointerId;
-      if (hit) holdTimer = window.setTimeout(() => {
+      holdStart = focus;
+      if (index >= 0) holdTimer = window.setTimeout(() => {
         holdTimer = undefined;
         drag = { box: shapes[index].box, start: focus, delta: { x: 0, y: 0 }, releasing: false };
-        contact = undefined;
         draw(performance.now());
       }, 350);
       canvas.setPointerCapture(pointerId);
@@ -127,14 +132,16 @@ export function LiquidResults({ pollId, options, counts }: { pollId: string; opt
       if (drag && !drag.releasing) {
         const clamp = (n: number) => Math.max(0, Math.min(chartSize, n));
         drag.delta = { x: clamp(p.x) - drag.start.x, y: clamp(p.y) - drag.start.y };
-        draw(performance.now());
-      } else if (contact && Math.hypot(p.x - contact.focus.x, p.y - contact.focus.y) > 9) {
+      } else if (holdStart && Math.hypot(p.x - holdStart.x, p.y - holdStart.y) > 9) {
         window.clearTimeout(holdTimer);
       }
+      updateContact(p);
+      draw(performance.now());
     };
     const release = (event: PointerEvent) => {
       if (event.pointerId !== pointerId) return;
       pointerId = undefined;
+      holdStart = undefined;
       window.clearTimeout(holdTimer);
       if (drag) drag.releasing = true;
       if (event.type === "pointerup" && pressedIndex >= 0 && !motion.matches) {
