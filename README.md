@@ -14,9 +14,20 @@ Open **个人 (Me) → the gear icon at the top right → 语言**. The choice i
 
 The screenshots below are historical examples. Search crawlers that read only the static HTML see the Simplified Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
 
-| Main Page | Create poll | My Page |
-| --- | --- | --- |
-| ![Main Page](images/image.png) | ![Create poll](images/image-2.png) | ![My Page](images/image-1.png) |
+<table>
+  <tr>
+    <th width="25%">Main Page</th>
+    <th width="25%">Create Poll</th>
+    <th width="25%">My Page</th>
+    <th width="25%">Settings</th>
+  </tr>
+  <tr>
+    <td align="center" valign="top"><img src="images/main.png" alt="Main Page" width="180" style="width: 180px; height: auto;"></td>
+    <td align="center" valign="top"><img src="images/add.png" alt="Create Poll" width="180" style="width: 180px; height: auto;"></td>
+    <td align="center" valign="top"><img src="images/my.png" alt="My Page" width="180" style="width: 180px; height: auto;"></td>
+    <td align="center" valign="top"><img src="images/setting.png" alt="Settings" width="180" style="width: 180px; height: auto;"></td>
+  </tr>
+</table>
 
 &nbsp;
 > **Project status:** In Development&nbsp;
