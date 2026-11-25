@@ -1,5 +1,6 @@
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
+import { languageNames, type Locale } from "../../../i18n/locale";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { LoadingState, LoadingSpinner } from "../../../components/ui/LoadingState";
@@ -36,7 +37,7 @@ function RetryIconButton({ onClick }: { onClick: () => void }) {
 }
 
 export function HomePage() {
-  const { t } = useLocale();
+  const { t, locale, setLocale } = useLocale();
   const { polls, loading, error, syncError, refresh, removePoll, updatePoll, hasMore, loadingMore, loadMore } =
     usePolls({ recent: true });
   const {
@@ -73,6 +74,7 @@ export function HomePage() {
   });
   const recent = accountUser ? polls : [];
   const [tab, setTab] = useState<"recent" | "square">("square");
+  const [languageOpen, setLanguageOpen] = useState(false);
 
   useEffect(() => {
     if (accountLoading || accountUser || bannerDismissed) return;
@@ -152,7 +154,17 @@ export function HomePage() {
   });
 
   return (
-    <PageShell>
+    <PageShell headerAction={
+      <button
+        className="settings-nav-button home-language-button"
+        type="button"
+        aria-label={t("app.language")}
+        aria-haspopup="dialog"
+        onClick={() => setLanguageOpen(true)}
+      >
+        <AppIcon name="globe" size={23} />
+      </button>
+    }>
       {!accountLoading && !accountUser && bannerVisible && !bannerDismissed && (
         <aside className="home-auth-banner" aria-label={t("home.authPrompt")}>
           <button
@@ -498,6 +510,27 @@ export function HomePage() {
           }
         >
           <p>{t("poll.deleteDetails", { title: deleting.title })}</p>
+        </Modal>
+      )}
+      {languageOpen && (
+        <Modal title={t("app.language")} onClose={() => setLanguageOpen(false)}>
+          <div className="language-options">
+            {Object.entries(languageNames).map(([code, label]) => {
+              const selected = locale === code;
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  aria-pressed={selected}
+                  className={`settings-row-button${selected ? " language-selected" : ""}`}
+                  onClick={() => { setLocale(code as Locale); setLanguageOpen(false); }}
+                >
+                  <span className="settings-row-label">{label}</span>
+                  {selected && <span className="language-check" aria-hidden="true">✓</span>}
+                </button>
+              );
+            })}
+          </div>
         </Modal>
       )}
       {toast && <Toast message={t(toast)} onClose={() => setToast("")} />}

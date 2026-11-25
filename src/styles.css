@@ -96,6 +96,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .page-header-title { margin: 0; color: var(--deep-purple); font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
 .settings-nav-button { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 12px; color: #7c3aed; background: #ffffffa8; box-shadow: 0 4px 12px #7c3aed18; }
 .settings-nav-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.home-language-button { border: 0; background: transparent; box-shadow: none; }
+.language-check { color: #7c3aed; font-weight: 800; }
 .topbar-spacer { flex: 1; }
 .language-select {
   flex: 0 0 auto;
@@ -661,6 +663,7 @@ h1, h2, h3 { color: var(--deep-purple); }
 .profile-avatar-preview { display: block; width: 180px; max-width: 70vw; height: 180px; margin: 0 auto; border-radius: 24px; object-fit: cover; }
 .language-options .settings-row-button { padding: 0 8px; }
 .language-options .language-selected { color: #7c3aed; }
+.language-options .settings-row-label { color: var(--deep-purple); font-size: 13px; font-weight: 700; }
 
 .auth-page { position: relative; padding: 12px 4px 32px; }
 .auth-page > .eyebrow { display: block; margin-top: 25px; }
