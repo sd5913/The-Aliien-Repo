@@ -1,9 +1,11 @@
+import { requireAccountId } from "../../auth/services/auth";
 import { readParticipant } from "../../auth/utils/participant";
 import type { ParticipantProfile } from "../../auth/utils/participant";
 // Supabase persistence for polls, aligned with the normalized three-table schema.
 // 投票数据对接 Supabase 三表：polls / poll_options / votes。
 import type { Poll, PollComment, PollStatus, Vote } from "../../../types/poll";
 import { supabase } from "../../../lib/supabase/client";
+import { resolveOptionColors } from "../utils/optionColors";
 
 interface PollRow {
   id: string;
@@ -13,9 +15,11 @@ interface PollRow {
   author_name: string | null;
   owner_id: string | null;
   is_public: boolean | null;
+  visibility_reviewed_at?: string | null;
   emoji: string | null;
   created_at: string;
   closed_at: string | null;
+  last_voted_at?: string;
   poll_options: OptionRow[] | null;
   votes?: { count: number }[] | null;
 }
@@ -26,6 +30,7 @@ interface OptionRow {
   label: string;
   image_url: string | null;
   position: number | null;
+  color_index?: number | null;
   created_at: string;
 }
 
@@ -64,6 +69,7 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     .map((option) => ({
       id: option.id,
       name: option.label,
+      colorIndex: option.color_index ?? undefined,
       imageUrl: option.image_url ?? undefined,
     }));
 
@@ -75,64 +81,159 @@ function toPollView(row: PollRow, votes: VoteRow[], comments: CommentRow[]): Pol
     createdAt: row.created_at,
     creatorId: row.owner_id ?? undefined,
     isPublic: row.is_public ?? false,
+    visibilityReviewedAt: row.visibility_reviewed_at ?? null,
     ...(row.closed_at ? { endsAt: row.closed_at } : {}),
     status: row.status,
-    options,
+    options: resolveOptionColors(options),
     votes: votes.map(toVoteView),
     comments: comments.map(toCommentView),
   };
 }
 
 const POLL_SELECT =
-  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(id,label,image_url,position,created_at)";
+  "id,title,description,status,author_name,owner_id,is_public,visibility_reviewed_at,emoji,created_at,closed_at,poll_options(*)";
+const LEGACY_POLL_SELECT =
+  "id,title,description,status,author_name,owner_id,is_public,emoji,created_at,closed_at,poll_options(*)";
 
 const CARD_SELECT =
-  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(id,label,image_url,position),votes(count)";
+  "id,title,description,status,owner_id,is_public,visibility_reviewed_at,created_at,closed_at,poll_options(*),votes(count)";
+const LEGACY_CARD_SELECT =
+  "id,title,description,status,owner_id,is_public,created_at,closed_at,poll_options(*),votes(count)";
+
+function isMissingVisibilityColumn(error: { code?: string; message?: string } | null): boolean {
+  // Keep reads available while the frontend and database migration roll out independently.
+  return Boolean(error && ["42703", "PGRST204"].includes(error.code ?? "")
+    && error.message?.includes("visibility_reviewed_at"));
+}
+
+interface SupabaseReadError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}
+
+function isLegacyAccountReadError(error: SupabaseReadError | null, endpoint: string): boolean {
+  if (!error) return false;
+  const text = [error.message, error.details, error.hint].filter(Boolean).join(" ");
+  return (error.code === "42501" && text.includes("PARTICIPANT_REQUIRED"))
+    || (error.code === "PGRST202" && text.includes(endpoint));
+}
 
 function toCard(row: PollRow): Poll {
   return { ...toPollView(row, [], []), voteCount: row.votes?.[0]?.count ?? 0 };
 }
 
 export const OWNED_POLL_PAGE_SIZE = 12;
+export const SQUARE_POLL_PAGE_SIZE = 10;
+export const RECENT_POLL_PAGE_SIZE = 10;
+
+export async function fetchSquarePolls(participant?: ParticipantProfile | null, offset = 0, limit = SQUARE_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  // PostgREST casts `now` to timestamptz on the server, so a device clock
+  // cannot put expired polls back in the square. Filter before limiting.
+  const runQuery = (columns: string) => supabase.from("polls").select(columns)
+    .eq("is_public", true).eq("status", "open")
+    .or("closed_at.is.null,closed_at.gt.now")
+    .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + limit);
+  const initial = await runQuery(CARD_SELECT);
+  const result = isMissingVisibilityColumn(initial.error)
+    ? await runQuery(LEGACY_CARD_SELECT)
+    : initial;
+  const { data, error } = result;
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as PollRow[];
+  let votedIds = new Set<string>();
+  if (participant) {
+    const votedResult = await supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" });
+    if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
+    votedIds = new Set(((votedResult.data ?? []) as PollRow[]).map((poll) => poll.id));
+  }
+  const polls = rows.slice(0, limit).map((row) => ({ ...toCard(row), participatedByCurrentIdentity: votedIds.has(row.id) }));
+  return { polls, hasMore: rows.length > limit };
+}
+
+export async function setPollVisibility(pollId: string, isPublic: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_poll_visibility", { p_poll_id: pollId, p_public: isPublic });
+  if (error) throw error;
+}
 
 export async function fetchOwnedPollsPage(ownerId: string, offset: number, filter?: "active" | "ended"): Promise<{ polls: Poll[]; hasMore: boolean }> {
-  let query = supabase.from("polls").select(CARD_SELECT).eq("owner_id", ownerId)
-    .order("created_at", { ascending: false }).order("id", { ascending: false })
-    .range(offset, offset + OWNED_POLL_PAGE_SIZE);
   const now = new Date().toISOString();
-  if (filter === "active") query = query.eq("status", "open").or(`closed_at.is.null,closed_at.gt.${now}`);
-  if (filter === "ended") query = query.or(`status.eq.closed,closed_at.lte.${now}`);
-  const { data, error } = await query;
+  const runQuery = (columns: string) => {
+    let query = supabase.from("polls").select(columns).eq("owner_id", ownerId)
+      .order("created_at", { ascending: false }).order("id", { ascending: false })
+      .range(offset, offset + OWNED_POLL_PAGE_SIZE);
+    if (filter === "active") query = query.eq("status", "open").or(`closed_at.is.null,closed_at.gt.${now}`);
+    if (filter === "ended") query = query.or(`status.eq.closed,closed_at.lte.${now}`);
+    return query;
+  };
+  let result = await runQuery(CARD_SELECT);
+  if (isMissingVisibilityColumn(result.error)) result = await runQuery(LEGACY_CARD_SELECT);
+  const { data, error } = result;
   if (error) throw error;
   const rows = (data ?? []) as unknown as PollRow[];
   return { polls: rows.slice(0, OWNED_POLL_PAGE_SIZE).map(toCard), hasMore: rows.length > OWNED_POLL_PAGE_SIZE };
 }
 
-export async function fetchRecentPolls(participant?: ParticipantProfile | null): Promise<Poll[]> {
-  const latestQuery = supabase.from("polls").select(CARD_SELECT).eq("is_public", true)
-    .order("created_at", { ascending: false }).limit(5);
-  const [latestResult, votedResult] = await Promise.all([
-    latestQuery,
-    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: participant.participantToken }) : Promise.resolve({ data: [], error: null }),
+export async function fetchVotedPollsPage(participant: ParticipantProfile, filter?: "active" | "ended"): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  const now = Date.now();
+  const { data, error } = await supabase.rpc("my_voted_polls", {
+    p_voter_id: participant.id,
+    p_token: "",
+  });
+  if (error) {
+    if (isLegacyAccountReadError(error, "my_voted_polls")) return { polls: [], hasMore: false };
+    throw error;
+  }
+  let polls = ((data ?? []) as unknown as PollRow[])
+    .map(toCard)
+    .filter((poll) => isNotDeletedAndMatchesFilter(poll, filter, now));
+  polls = polls.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return { polls, hasMore: false };
+}
+
+function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | undefined, now: number): boolean {
+  const active = poll.status === "open" && (!poll.endsAt || Date.parse(poll.endsAt) > now);
+  if (filter === "active") return active;
+  if (filter === "ended") return !active;
+  return true;
+}
+
+export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string, offset = 0, limit = RECENT_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  const [votedResult, ownedPage] = await Promise.all([
+    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }) : Promise.resolve({ data: [], error: null }),
+    ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
   ]);
-  if (latestResult.error) throw latestResult.error;
-  if (votedResult.error) throw votedResult.error;
+  if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
   const voted = (votedResult.data ?? []) as unknown as PollRow[];
-  const publicRows = (latestResult.data ?? []) as unknown as PollRow[];
-  return [...new Map([...voted, ...publicRows].map((row) => [row.id, row])).values()].slice(0, 5).map(toCard);
+  const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
+  const recent = [...new Map([...voted.map(toCard), ...ownedPage.polls].map((poll) => [poll.id, poll])).values()]
+    .map((poll) => ({ ...poll, participatedByCurrentIdentity: voteActivity.has(poll.id) }))
+    .sort((a, b) => {
+      const activity = (poll: Poll) => Math.max(Date.parse(poll.createdAt), Date.parse(voteActivity.get(poll.id) ?? poll.createdAt));
+      return activity(b) - activity(a) || b.id.localeCompare(a.id);
+    });
+  return { polls: recent.slice(offset, offset + limit), hasMore: recent.length > offset + limit };
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {
   if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(pollId)) return null;
 
-  const { data, error } = await supabase.from("polls").select(POLL_SELECT).eq("id", pollId).maybeSingle();
+  const initial = await supabase.from("polls").select(POLL_SELECT).eq("id", pollId).maybeSingle();
+  const result = isMissingVisibilityColumn(initial.error)
+    ? await supabase.from("polls").select(LEGACY_POLL_SELECT).eq("id", pollId).maybeSingle()
+    : initial;
+  const { data, error } = result;
   if (error) throw error;
   if (!data) {
     const participant = readParticipant();
     const { data: linked, error: linkError } = await supabase.rpc("get_poll_by_link", {
-      p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null,
+      p_poll_id: pollId, p_voter_id: participant?.id ?? null, p_token: null,
     });
-    if (linkError) throw linkError;
+    if (linkError) {
+      if (isLegacyAccountReadError(linkError, "get_poll_by_link")) return null;
+      throw linkError;
+    }
     if (!linked) return null;
     const detail = linked as { poll: PollRow; votes: VoteRow[]; comments: CommentRow[] };
     return toPollView(detail.poll, metadataOnly ? [] : detail.votes, metadataOnly ? [] : detail.comments);
@@ -146,12 +247,12 @@ export async function fetchPoll(pollId: string, metadataOnly = false): Promise<P
     supabase.from("votes").select("id,poll_id,voter_id,ranking,created_at").eq("poll_id", row.id),
     supabase.from("poll_comments").select("id,poll_id,voter_id,nickname,avatar,body,option_id,created_at").eq("poll_id", row.id),
     participant
-      ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: participant.participantToken }).eq("poll_id", row.id)
+      ? supabase.rpc("own_comments", { p_voter_id: participant.id, p_token: "" }).eq("poll_id", row.id)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (votesResult.error) throw votesResult.error;
   if (commentsResult.error) throw commentsResult.error;
-  if (ownResult.error) throw ownResult.error;
+  if (ownResult.error && !isLegacyAccountReadError(ownResult.error, "own_comments")) throw ownResult.error;
 
   const merged = new Map<string, CommentRow>();
   for (const comment of [...(commentsResult.data ?? []), ...(ownResult.data ?? [])] as CommentRow[]) {
@@ -177,11 +278,12 @@ export async function updatePollMeta(poll: Poll): Promise<void> {
 }
 
 export async function submitVote(pollId: string, voterId: string, ranking: string[], comment = ""): Promise<void> {
+  const accountId = await requireAccountId();
   const participant = readParticipant();
-  if (!participant || participant.id !== voterId) throw new Error("请先完成软登录。");
+  if (!participant || participant.id !== accountId || accountId !== voterId) throw new Error("请先登录。");
   const { error } = await supabase.rpc("submit_ballot", {
     p_poll_id: pollId, p_voter_id: participant.id,
-    p_token: participant.participantToken, p_ranking: ranking,
+    p_token: "", p_ranking: ranking,
     p_comment: comment, p_nickname: participant.nickname, p_avatar: participant.avatar,
   });
   if (error) throw error;
@@ -200,15 +302,17 @@ export async function deletePollRemote(pollId: string): Promise<void> {
 
 export async function updateCommentRemote(commentId: string, text: string): Promise<void> {
   const participant = readParticipant();
-  if (!participant) throw new Error("请先完成软登录。");
+  const accountId = await requireAccountId();
+  if (!participant || participant.id !== accountId) throw new Error("请先登录。");
   const { error } = await supabase.rpc("update_comment", { p_comment_id: commentId,
-    p_voter_id: participant.id, p_token: participant.participantToken, p_body: text });
+    p_voter_id: participant.id, p_token: "", p_body: text });
   if (error) throw error;
 }
 
 export async function deleteCommentRemote(commentId: string): Promise<void> {
+  await requireAccountId();
   const participant = readParticipant();
   const { error } = await supabase.rpc("delete_comment", { p_comment_id: commentId,
-    p_voter_id: participant?.id ?? null, p_token: participant?.participantToken ?? null });
+    p_voter_id: participant?.id ?? null, p_token: null });
   if (error) throw error;
 }

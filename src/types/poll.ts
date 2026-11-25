@@ -5,6 +5,7 @@ export interface PollOption {
   id: string;
   name: string;
   imageUrl?: string;
+  colorIndex?: number;
 }
 
 export interface VoterIdentity {
@@ -39,12 +40,14 @@ export interface Poll {
   createdAt: string;
   creatorId?: string;
   isPublic?: boolean;
+  visibilityReviewedAt?: string | null;
   commentsPublic?: boolean;
   endsAt?: string;
   status: PollStatus;
   options: PollOption[];
   votes: Vote[];
   voteCount?: number;
+  participatedByCurrentIdentity?: boolean;
   comments: PollComment[];
 }
 

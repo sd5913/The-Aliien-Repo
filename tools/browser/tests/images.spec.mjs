@@ -11,7 +11,6 @@ test('image upload previews the photo and removal only clears the form reference
   await expect(page.getByRole('button', { name: '添加选项 1 信息' }).locator('img')).toBeVisible();
   expect(state.calls.find((call) => call.name === 'image_upload').path).toContain(`/poll-images/${owner}/`);
   await expect(page.getByLabel('选项 1 相机文件')).toHaveAttribute('capture', 'environment');
-  await page.getByRole('button', { name: '添加选项 1 信息' }).click();
   await page.getByRole('button', { name: '移除当前内容' }).click();
   await expect(page.getByRole('button', { name: '添加选项 1 信息' }).locator('img')).toHaveCount(0);
   expect(state.calls.filter((call) => call.name === 'image_upload')).toHaveLength(1);

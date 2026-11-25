@@ -5,11 +5,11 @@ export const optionB = '30000000-0000-4000-8000-000000000002';
 
 // Browser/API contract tests use synthetic sessions and intercept every external
 // request; they never authenticate or mutate production data.
-export async function mockApp(page, { accountId = owner, closed = false } = {}) {
-  const user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
-    user_metadata: { nickname: '测试账号' }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
+export async function mockApp(page, { accountId = owner, closed = false, legacyAccountReads = false, nickname = '测试账号', avatar = '' } = {}) {
+  let user = accountId ? { id: accountId, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid',
+    user_metadata: avatar ? { nickname, avatar } : { nickname }, app_metadata: {}, is_anonymous: false, created_at: '2026-01-01T00:00:00Z' } : null;
   const state = { calls: [], requests: [], polls: [{ id: pollId, title: '浏览器测试投票', description: '测试说明', owner_id: owner,
-    author_name: owner, status: closed ? 'closed' : 'open', is_public: true, closed_at: null, created_at: '2026-01-01T00:00:00Z',
+    author_name: owner, status: closed ? 'closed' : 'open', is_public: true, visibility_reviewed_at: '2026-11-20T00:00:00Z', closed_at: null, created_at: '2026-01-01T00:00:00Z',
     poll_options: [{ id: optionA, poll_id: pollId, label: '选项甲', position: 0 }, { id: optionB, poll_id: pollId, label: '选项乙', position: 1 }] }] };
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const token = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: accountId, role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now()/1000)+3600 })}.${Buffer.from('synthetic-test-signature').toString('base64url')}`;
@@ -18,7 +18,10 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
   await page.addInitScript(({ user, token, storageKey }) => {
     if (user) localStorage.setItem(storageKey, JSON.stringify({ access_token: token,
       refresh_token: 'synthetic-refresh-token', expires_at: Math.floor(Date.now()/1000)+3600, expires_in: 3600, token_type: 'bearer', user }));
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => {} } });
+    window.shareClipboardWrites = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText: async (value) => { window.shareClipboardWrites.push(value); },
+    } });
   }, { user, token, storageKey });
   await page.route('**/*', async (route) => {
     const request = route.request(); const url = new URL(request.url());
@@ -27,6 +30,7 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
     const headers = { 'access-control-allow-origin': '*', 'content-type': 'application/json' };
     const reply = (data) => route.fulfill({ status: 200, headers, body: JSON.stringify(data) });
+    const reject = (data) => route.fulfill({ status: 400, headers, body: JSON.stringify(data) });
     if (url.pathname.startsWith('/storage/v1/object/') && request.method() === 'POST') {
       state.calls.push({ name: 'image_upload', path: url.pathname });
       return reply({ Key: url.pathname.split('/object/')[1] });
@@ -39,21 +43,36 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON();
       state.calls.push({ name, body });
+      if (legacyAccountReads && name === 'own_comments') {
+        return reject({ code: '42501', message: 'PARTICIPANT_REQUIRED' });
+      }
+      if (legacyAccountReads && ['my_voted_polls', 'get_poll_by_link'].includes(name)) {
+        return reject({ code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` });
+      }
       if (name === 'save_poll') {
         const poll = body.p_poll;
-        state.polls = [{ ...poll, is_public: poll.isPublic ?? false, owner_id: accountId, author_name: accountId, created_at: poll.createdAt, closed_at: poll.endsAt ?? null,
+        state.polls = [{ ...poll, is_public: poll.isPublic ?? false, visibility_reviewed_at: new Date().toISOString(), owner_id: accountId, author_name: accountId, created_at: poll.createdAt, closed_at: poll.endsAt ?? null,
           poll_options: poll.options.map((o,i) => ({ id: o.id, poll_id: poll.id, label: o.name, image_url: o.imageUrl, position: i })) }];
         return reply(poll.id);
       }
       if (name === 'close_poll') state.polls[0].status = 'closed';
+      if (name === 'set_poll_visibility') {
+        const poll = state.polls.find((item) => item.id === body.p_poll_id && item.owner_id === accountId);
+        if (poll) { poll.is_public = body.p_public; poll.visibility_reviewed_at = new Date().toISOString(); }
+        return reply(null);
+      }
       if (name === 'register_participant') return reply('70000000-0000-4000-8000-000000000001');
       if (name === 'get_poll_by_link') {
         const poll = state.polls.find((item) => item.id === body.p_poll_id);
         return reply(poll ? { poll, votes: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id), comments: [] } : null);
       }
       if (name === 'my_voted_polls') {
-        const votedIds = new Set((state.votes ?? []).filter((vote) => vote.voter_id === body.p_voter_id).map((vote) => vote.poll_id));
-        return reply(state.polls.filter((poll) => votedIds.has(poll.id)).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
+        const votes = (state.votes ?? []).filter((vote) => vote.voter_id === body.p_voter_id);
+        const latestVoteByPoll = new Map(votes.map((vote) => [vote.poll_id, vote.created_at]));
+        return reply(state.polls.filter((poll) => latestVoteByPoll.has(poll.id)).map((poll) => ({
+          ...poll, last_voted_at: latestVoteByPoll.get(poll.id),
+          votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }],
+        })));
       }
       if (name === 'submit_ballot') {
         const vote = { id: '90000000-0000-4000-8000-000000000001', poll_id: body.p_poll_id, voter_id: body.p_voter_id, ranking: body.p_ranking, created_at: new Date().toISOString() };
@@ -83,7 +102,24 @@ export async function mockApp(page, { accountId = owner, closed = false } = {}) 
       return reply(rows.slice(offset, offset + limit).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
     }
     if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
+    if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);
+    // Production still has no deployed profiles table: mirroring must never block a profile save.
+    if (url.pathname === '/rest/v1/profiles') {
+      (state.profileWrites ??= []).push({ method: request.method(), body: request.method() === 'GET' ? null : request.postDataJSON() });
+      return route.fulfill({ status: 404, headers, body: JSON.stringify({
+        code: 'PGRST205', message: "Could not find the table 'public.profiles' in the schema cache" }) });
+    }
     return reply([]);
   });
+  state.signIn = async (id = owner) => {
+    accountId = id;
+    user = { id, aud: 'authenticated', role: 'authenticated', email: 'test@example.invalid', user_metadata: avatar ? { nickname, avatar } : { nickname }, app_metadata: {}, is_anonymous: false };
+    const access_token = encode({ alg: 'HS256', typ: 'JWT' }) + '.' + encode({ sub: id, role: 'authenticated', exp: Math.floor(Date.now()/1000)+3600 }) + '.' + encode({ signature: 'synthetic' });
+    await page.evaluate(async (session) => {
+      const { supabase } = await import('/src/lib/supabase/client.ts');
+      const result = await supabase.auth.setSession(session);
+      if (result.error) throw result.error;
+    }, { access_token, refresh_token: 'synthetic-refresh-token' });
+  };
   return state;
 }

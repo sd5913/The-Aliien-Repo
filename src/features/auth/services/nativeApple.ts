@@ -1,5 +1,5 @@
 import { registerPlugin } from "@capacitor/core";
-import { supabase } from "../../../lib/supabase/client";
+import { setSessionPersistence, supabase } from "../../../lib/supabase/client";
 
 type AppleAuthorization =
   | { status: "cancelled" }
@@ -18,6 +18,7 @@ export async function signInWithNativeApple() {
     throw new Error("Missing Apple authorization credentials");
   }
 
+  setSessionPersistence(true);
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: "apple",
     token: identityToken,

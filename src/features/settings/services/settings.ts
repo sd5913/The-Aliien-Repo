@@ -6,6 +6,7 @@ export interface UserSettings {
   nickname: string;
   email: string;
   avatar: string;
+  bio: string;
   cameraEnabled: boolean;
   photosEnabled: boolean;
   showNickname: boolean;
@@ -15,6 +16,7 @@ export const defaultUserSettings: UserSettings = {
   nickname: "",
   email: "",
   avatar: "",
+  bio: "",
   cameraEnabled: false,
   photosEnabled: true,
   showNickname: true,
@@ -27,6 +29,7 @@ function isUserSettings(value: unknown): value is UserSettings {
     "nickname" in value && typeof value.nickname === "string" &&
     "email" in value && typeof value.email === "string" &&
     "avatar" in value && typeof value.avatar === "string" &&
+    "bio" in value && typeof value.bio === "string" &&
     "cameraEnabled" in value && typeof value.cameraEnabled === "boolean" &&
     "photosEnabled" in value && typeof value.photosEnabled === "boolean" &&
     "showNickname" in value && typeof value.showNickname === "boolean");

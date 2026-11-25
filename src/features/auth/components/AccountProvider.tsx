@@ -1,8 +1,11 @@
+import { setAccountIdentity } from "../utils/participant";
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "../../../lib/supabase/client";
 import { PageShell } from "../../../components/layout/PageShell";
+import { LoadingState } from "../../../components/ui/LoadingState";
 
 const AccountContext = createContext<{ user: User | null; loading: boolean }>({ user: null, loading: true });
 export const useAccount = () => useContext(AccountContext);
@@ -12,17 +15,19 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user;
+      setAccountIdentity(user ?? null);
       setAccount({ user: user && !user.is_anonymous ? user : null, loading: false });
     });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); setAccountIdentity(null); };
   }, []);
   return <AccountContext.Provider value={account}>{children}</AccountContext.Provider>;
 }
 
 export function RequireAccount({ children }: { children: ReactNode }) {
+  const { t } = useLocale();
   const { user, loading } = useAccount();
   const location = useLocation();
-  if (loading) return <PageShell backTo="/" showNavigation={false}><p className="empty-inline" role="status">正在确认账号登录状态…</p></PageShell>;
+  if (loading) return <PageShell backTo="/" showNavigation={false}><LoadingState message={t("auth.checking")} /></PageShell>;
   if (!user) return <Navigate replace to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search + location.hash)}`} />;
   return <>{children}</>;
 }

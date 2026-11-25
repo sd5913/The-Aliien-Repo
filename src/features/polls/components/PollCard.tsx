@@ -1,18 +1,22 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { isPollOwner } from "../utils/voting";
+import { canSharePoll, isPollOwner } from "../utils/voting";
 import { useSharePoll } from "./ShareProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Poll } from "../../../types/poll";
 import { isPollOpen } from "../../../components/ui/StatusPill";
+import { PollOptionPreviews } from "./PollOptionPreviews";
 
-const ACTION_WIDTH = 192;
+const ACTION_ITEM_WIDTH = 64;
 
 interface PollCardProps {
   poll: Poll;
   to: string;
+  interactive?: boolean;
   compact?: boolean;
+  surface?: "personal" | "square";
   returnTo?: string;
   expanded: boolean;
   onExpand: (expanded: boolean) => void;
@@ -23,15 +27,20 @@ interface PollCardProps {
 export function PollCard({
   poll,
   to,
+  interactive = true,
   compact = false,
+  surface = "personal",
   returnTo = "/",
   expanded,
   onExpand,
   onDelete,
   onEnd,
 }: PollCardProps) {
+  const { t, locale, votes } = useLocale();
   const { user: accountUser } = useAccount();
   const owner = isPollOwner(poll, accountUser?.id ?? "");
+  const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
+  const actionWidth = (isPollOpen(poll) ? 3 : 1) * ACTION_ITEM_WIDTH;
   const [dragOffset, setDragOffset] = useState<number | null>(null);
   const gesture = useRef<{
     startX: number;
@@ -43,28 +52,28 @@ export function PollCard({
   } | null>(null);
   const suppressClick = useRef(false);
   const navigate = useNavigate();
-  const offset = owner ? dragOffset ?? (expanded ? -ACTION_WIDTH : 0) : 0;
+  const offset = owner ? dragOffset ?? (expanded ? -actionWidth : 0) : 0;
   const deadlineDate = poll.endsAt ? new Date(poll.endsAt) : null;
   const deadline =
     deadlineDate && !Number.isNaN(deadlineDate.getTime())
-      ? deadlineDate.toLocaleString("zh-CN", {
+      ? deadlineDate.toLocaleString(locale, {
           year: "numeric",
           month: "numeric",
           day: "numeric",
           hour: "2-digit",
           minute: "2-digit",
         })
-      : "未设置";
+      : t("common.notSet");
 
   const openShare = useSharePoll();
-  const share = () => openShare(poll);
+  const share = () => { if (shareAllowed) openShare(poll); };
 
   const startDrag = (event: React.PointerEvent<HTMLElement>) => {
     if (!owner) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     gesture.current = {
       startX: event.clientX,
-      origin: expanded ? -ACTION_WIDTH : 0,
+      origin: expanded ? -actionWidth : 0,
       lastX: event.clientX,
       lastTime: event.timeStamp,
       velocity: 0,
@@ -87,7 +96,7 @@ export function PollCard({
       activeGesture.velocity = (event.clientX - activeGesture.lastX) / elapsed;
       activeGesture.lastX = event.clientX;
       activeGesture.lastTime = event.timeStamp;
-      setDragOffset(Math.max(-ACTION_WIDTH, Math.min(0, activeGesture.origin + delta)));
+      setDragOffset(Math.max(-actionWidth, Math.min(0, activeGesture.origin + delta)));
     }
   };
 
@@ -96,9 +105,9 @@ export function PollCard({
     if (!activeGesture) return;
     gesture.current = null;
     if (activeGesture.moved) {
-      const threshold = Math.min(ACTION_WIDTH, event.currentTarget.getBoundingClientRect().width / 3);
+      const threshold = Math.min(actionWidth, event.currentTarget.getBoundingClientRect().width / 3);
       const finalOffset = Math.max(
-        -ACTION_WIDTH,
+        -actionWidth,
         Math.min(
           0,
           activeGesture.origin +
@@ -117,6 +126,7 @@ export function PollCard({
   };
 
   const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!interactive) return;
     if (suppressClick.current) {
       event.preventDefault();
       event.stopPropagation();
@@ -125,7 +135,7 @@ export function PollCard({
     }
     const target = event.target as HTMLElement;
     if (target.closest(".my-poll-share")) return;
-    if (expanded) {
+    if (owner && expanded) {
       event.preventDefault();
       onExpand(false);
       return;
@@ -135,20 +145,20 @@ export function PollCard({
   };
 
   return (
-    <div className={`swipe-card${expanded ? " swipe-card-expanded" : ""}`}>
-      {owner && <div className="swipe-actions" aria-label="投票操作" aria-hidden={!expanded}>
-        <button className="swipe-action swipe-edit" disabled={!isPollOpen(poll)} tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}`); }}>
+    <div className={`swipe-card${owner && expanded ? " swipe-card-expanded" : ""}`}>
+      {owner && <div className="swipe-actions" style={{ width: actionWidth, clipPath: `inset(0 0 0 calc(100% + ${offset}px))`, transition: dragOffset === null ? undefined : "none" }} aria-label={t("poll.actions")} aria-hidden={!expanded}>
+        {isPollOpen(poll) && <button className="swipe-action swipe-edit" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); navigate(`/create?id=${poll.id}&returnTo=${encodeURIComponent(returnTo)}`); }}>
           <AppIcon name="edit" size={20} />
-          <span>编辑</span>
-        </button>
+          <span>{t("common.edit")}</span>
+        </button>}
         <button className="swipe-action swipe-delete" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onDelete(poll); }}>
           <AppIcon name="bin" size={20} />
-          <span>删除</span>
+          <span>{t("common.delete")}</span>
         </button>
-        <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }} disabled={!isPollOpen(poll)}>
+        {isPollOpen(poll) && <button className="swipe-action swipe-end" tabIndex={expanded ? 0 : -1} onClick={() => { onExpand(false); onEnd(poll); }}>
           <AppIcon name="finished" size={20} />
-          <span>结束</span>
-        </button>
+          <span>{t("poll.endShort")}</span>
+        </button>}
       </div>}
       <article
         className={`my-poll-card poll-card${compact ? " poll-card-compact" : ""}`}
@@ -158,22 +168,26 @@ export function PollCard({
         onPointerMove={moveDrag}
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
-        onClick={handleCardClick}
+        onClick={interactive ? handleCardClick : undefined}
       >
-        <div className="my-poll-thumbnails" aria-hidden="true">
-          {[poll.options[0], poll.options[1]].map((option, index) => (
-            <img key={option?.id ?? index} src={option?.imageUrl ?? `https://picsum.photos/seed/bothpls-option-${index}/180/180`} alt="" draggable="false" />
-          ))}
-        </div>
+        <PollOptionPreviews options={poll.options} />
         <div className="my-poll-ticket-copy">
-          <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
-            <h3>{poll.title}</h3>
-          </Link>
-          <p className="my-poll-ticket-status">{isPollOpen(poll) ? "进行中" : "已结束"} · {poll.voteCount ?? poll.votes.length} 票</p>
-          <p className="my-poll-deadline">截止时间：{deadline}</p>
-          <button className="my-poll-share" onClick={share} aria-label="分享投票">
+          {(owner || (surface !== "square" && poll.participatedByCurrentIdentity)) && <div className="poll-identity-badges">{owner && <span>{t("poll.createdByMe")}</span>}{!owner && surface !== "square" && poll.participatedByCurrentIdentity && <span>{t("poll.votedByMe")}</span>}</div>}
+          {interactive ? (
+            <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
+              <h3>{poll.title}</h3>
+            </Link>
+          ) : (
+            <div className="my-poll-ticket-main">
+              <h3>{poll.title}</h3>
+            </div>
+          )}
+          <p className="my-poll-ticket-status">{t(isPollOpen(poll) ? "poll.open" : "poll.closed")} · {surface === "square" ? t("poll.squareParticipants", { count: poll.voteCount ?? poll.votes.length }) : votes(poll.voteCount ?? poll.votes.length)}</p>
+          <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
+          {surface === "square" && (interactive ? <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link> : <span className="square-vote-link">{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")}</span>)}
+          {interactive && shareAllowed && <button className="my-poll-share" onClick={share} aria-label={t("poll.share")}>
             <AppIcon name="share" size={20} />
-          </button>
+          </button>}
         </div>
       </article>
     </div>

@@ -1,24 +1,25 @@
+import { useLocale } from "../../../i18n/LocaleProvider";
 import { AppIcon } from "../../../components/ui/AppIcon";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount } from "../../auth/components/AccountProvider";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
-import { useUserSettings } from "../hooks/useUserSettings";
 import { MyPollsSection } from "../../polls/pages/MyPollsPage";
-import { useParticipant } from "../../auth/utils/useParticipant";
+import { Modal } from "../../../components/ui/Modal";
+import { displayAvatar, isImageAvatar, profileDraftFromUser } from "../utils/profile";
 
 export function SettingsPage() {
-  const { settings, error } = useUserSettings();
-  const participant = useParticipant();
+  const { t } = useLocale();
   const auth = useAccount();
   const location = useLocation();
+  const navigate = useNavigate();
   const pollsRef = useRef<HTMLDivElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const user = auth.user;
-  const hasMatchingProfile = Boolean(user?.email && settings.email.toLowerCase() === user.email.toLowerCase());
-  const metadataNickname = typeof user?.user_metadata.nickname === "string" ? user.user_metadata.nickname.trim() : "";
-  const nickname = hasMatchingProfile ? settings.nickname : metadataNickname || user?.email?.split("@")[0] || "已登录";
-  const avatar = hasMatchingProfile ? settings.avatar : typeof user?.user_metadata.avatar === "string" ? user.user_metadata.avatar : nickname.slice(0, 1).toUpperCase();
+  const profile = profileDraftFromUser(user);
+  const nickname = profile.nickname || t("profile.signedIn");
+  const avatar = displayAvatar(profile.avatar);
 
   useEffect(() => {
     if (location.hash === "#my-polls") {
@@ -27,33 +28,29 @@ export function SettingsPage() {
   }, [location.hash]);
 
   return (
-    <PageShell title="个人" showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label="设置"><AppIcon name="setting" size={23} /></Link>}>
+    <PageShell title={t("nav.profile")} showHeaderTitle headerAction={<Link className="settings-nav-button" to="/settings/preferences" aria-label={t("profile.settings")}><AppIcon name="setting" size={23} /></Link>}>
       <section className="settings-profile-intro">
         <div className="settings-section-heading"></div>
-        {user && error && <p className="settings-feedback" role="alert">个人资料加载失败，请稍后重试。</p>}
         {auth.loading ? (
-          <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>正在确认登录状态…</span></div></div>
+          <div className="profile-summary" role="status"><div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div><div className="profile-summary-copy"><span>{t("profile.checking")}</span></div></div>
         ) : user ? (
-          <div className="profile-summary">
-            <div className="profile-avatar" aria-label={`当前头像 ${avatar}`}>{avatar}</div>
+          <div className="profile-summary profile-summary-editable" role="link" tabIndex={0} aria-label={t("profile.edit")} onClick={() => navigate("/edit-profile")} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate("/edit-profile"); } }}>
+            <button className="profile-avatar profile-avatar-button" type="button" aria-label={t("profile.previewAvatar")} onClick={(event) => { event.stopPropagation(); if (isImageAvatar(avatar)) setAvatarPreview(avatar); }}>{isImageAvatar(avatar) ? <img className="profile-avatar-image" src={avatar} alt={nickname} /> : avatar}</button>
             <div className="profile-summary-copy"><strong>{nickname}</strong><span>{user.email ?? ""}</span></div>
-          </div>
-        ) : participant ? (
-          <div className="profile-summary">
-            <div className="profile-avatar" aria-label="投票者头像">{participant.avatar}</div>
-            <div className="profile-summary-copy"><strong>{participant.nickname}</strong><span>投票者身份 · 已保存在当前浏览器</span></div>
+            <Link className="profile-edit-entry" to="/edit-profile" aria-label={t("profile.edit")} onClick={(event) => event.stopPropagation()}><AppIcon name="edit" size={19} /></Link>
           </div>
         ) : (
           <div className="profile-summary profile-summary-empty">
             <div className="profile-avatar profile-avatar-empty" aria-hidden="true"><AppIcon name="my" size={28} /></div>
-            <div className="profile-summary-copy"><strong>未登录</strong><span>登录后查看个人信息</span></div>
-            <Link className="profile-login-link" to="/auth?returnTo=%2Fsettings">登录 / 注册</Link>
+            <div className="profile-summary-copy"><strong>{t("profile.signedOut")}</strong><span>{t("profile.signInToView")}</span></div>
+            <Link className="profile-login-link" to="/auth?returnTo=%2Fsettings">{t("auth.loginRegister")}</Link>
           </div>
         )}
       </section>
       <div ref={pollsRef} id="my-polls" style={{ scrollMarginTop: 80 }}>
         <MyPollsSection showCreateButton={false} personalPageStyle />
       </div>
+      {avatarPreview && <Modal title={t("profile.previewAvatar")} onClose={() => setAvatarPreview(null)}><img className="profile-avatar-preview" src={avatarPreview} alt={t("profile.previewAvatar")} /></Modal>}
     </PageShell>
   );
 }
