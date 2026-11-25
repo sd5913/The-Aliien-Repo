@@ -15,7 +15,7 @@ export function buildNumber(run, attempt) {
 }
 
 export function individualToken(key, keyId, now = Math.floor(Date.now() / 1000)) {
-  if (!key || !/^[A-Z0-9]{10}$/.test(keyId ?? '')) {
+  if (!key || !/^[A-Z0-9]{12}$/.test(keyId ?? '')) {
     throw new Error('Missing or invalid App Store Connect individual key configuration');
   }
   let privateKey;
