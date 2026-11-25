@@ -1,18 +1,44 @@
 # BothPls
 
-**BothPls — A Social Shopping Decision App**
+**Turn “I can't decide” into a decision shared with friends.**
 
-BothPls is an interactive project designed to help people who struggle to make decisions, especially when choosing between different products, styles, or colours while shopping.
+BothPls is an interactive web app that helps people choose between products, styles, or colours. Users create a single-choice poll, share it with friends, and collect votes and opinions in one place.
 
-Instead of making a decision alone, users can share their options with friends and collect votes and opinions. BothPls aims to make everyday decisions easier, more interactive, and more enjoyable.
+Built by **The Aliien**, a two-person team, for **SD5913 Creative Programming**.
 
-### App language
+- **Status:** Core functionality implemented; iteration and user testing ongoing
+- **Application version:** 1.5.0
+- **Requirements baseline:** PRD v1.6, corrected baseline and pending requirements
+- **Primary platform:** Mobile web
+- **Final deadline:** 6 December 2026, 23:59 Hong Kong time
 
-Three languages are live: **中文（简体）** (default), **English**, and **한국어**. Japanese is planned but **not supported yet**.
+## Contents
 
-Open **个人 (Me) → the gear icon at the top right → 语言**. The choice is saved in the current browser and applies to localized interface text and newly generated share tickets. Poll titles, descriptions, options, comments, and nicknames stay in their original language.
+- [1. Links and Screenshots](#1-links-and-screenshots)
+- [2. The Problem](#2-the-problem)
+- [3. Users and Permissions](#3-users-and-permissions)
+- [4. Implemented Features](#4-implemented-features)
+- [5. How It Works](#5-how-it-works)
+- [6. Languages](#6-languages)
+- [7. Technology](#7-technology)
+- [8. Run Locally](#8-run-locally)
+- [9. Timeline and Progress](#9-timeline-and-progress)
+- [10. Team Contributions](#10-team-contributions)
+- [11. Testing and Feedback](#11-testing-and-feedback)
+- [12. Current Limitations and Next Steps](#12-current-limitations-and-next-steps)
+- [13. Credits and AI Usage](#13-credits-and-ai-usage)
+- [14. Repository and Submission](#14-repository-and-submission)
 
-The screenshots below are historical examples. Search crawlers that read only the static HTML see the Simplified Chinese metadata. GitHub's consent screen and Supabase's sign-in emails are managed by their respective services.
+## 1. Links and Screenshots
+
+- [Live demo](https://the-aliien-repo-bothpls-pages.pages.dev/)
+- [Vercel test deployment](https://the-aliien-repo-oqpi.vercel.app/)
+- [GitHub repository](https://github.com/sd5913/The-Aliien-Repo)
+- [Figma prototype](https://www.figma.com/design/dWtx6LBsB3EmKM5ElXQaR4/SD5913Teamwork)
+- [PRD collection](docs/PRD.md)
+- [Current PRD v1.6](docs/BothPls%20PRD%20v1.6.md)
+
+The application version identifies the current code release; the PRD version identifies the requirements baseline. Some v1.6 requirements remain pending.
 
 <table>
   <tr>
@@ -29,313 +55,215 @@ The screenshots below are historical examples. Search crawlers that read only th
   </tr>
 </table>
 
-&nbsp;
-> **Project status:** In Development&nbsp;
-> **Project type:** Interactive Web App&nbsp;
-> **Course:** Group Project — Build Something Together&nbsp;
-> **Current PRD version:** v1.6, corrected baseline and pending requirements (see [PRD collection](docs/PRD.md))&nbsp;
-> **Final Deadline:** 6 December 2026, 23:59 HKT
+## 2. The Problem
 
----
+Choosing between similar products can be difficult. Asking friends through separate messages means sending the same pictures repeatedly, collecting scattered replies, and counting opinions manually.
 
-## Table of Contents
+BothPls brings the options and feedback into one poll. Voting is **single-choice**: each participant chooses one option and can change that choice while the poll is open. The final decision stays with the creator.
 
-- [1. Project Overview](#1-project-overview)
-- [2. Problem Statement](#2-problem-statement)
-- [3. Target Users](#3-target-users)
-- [4. Core Features](#4-core-features)
-- [5. User Journey](#5-user-journey)
-- [6. Technology Stack](#6-technology-stack)
-- [7. Getting Started](#7-getting-started)
-- [8. Platforms and Limitations](#8-platforms-and-limitations)
-- [9. Project Progress](#9-project-progress)
-- [10. Team Contributions](#10-team-contributions)
-- [11. Testing](#11-testing)
-- [12. Credits and Acknowledgements](#12-credits-and-acknowledgements)
-- [13. Future Improvements](#13-future-improvements)
+## 3. Users and Permissions
 
----
+| Role | Available actions |
+| --- | --- |
+| Guest | Browse the public square and accessible shared polls; sign in when prompted to participate |
+| Signed-in participant | Vote on other people's polls, change a vote while open, comment, manage their own comments, and view results |
+| Poll creator | Create and manage their own polls, share links, view results, end or delete polls, and delete comments |
 
-## 1. Project Overview
+**Creating, voting, and commenting require an account.** Creators cannot vote or comment on their own polls.
 
-BothPls is a social decision-making app that allows users to ask friends for help when they cannot decide between multiple options.
+## 4. Implemented Features
 
-For example, a user might be unsure which jacket to buy, which colour suits them better, or which of two products is the better choice. They can create a single-choice poll, share it with friends, and use the feedback to help make their final decision.
+The following describes the current code. Deployment settings and ongoing testing are tracked separately.
 
-**Our goal is to turn an individual decision-making problem into a simple, shared, and interactive experience.**
+| Feature | Current behaviour |
+| --- | --- |
+| Email verification codes | Separate registration and login tabs; registration requires an email and nickname, followed by code verification |
+| Third-party sign-in | Google, GitHub, and Apple OAuth flows |
+| Public square | Public, open polls that guests can browse |
+| Recent activity | Polls the signed-in user has created or participated in |
+| Poll creation | Required title, optional description, 2–5 options with optional images, and an optional deadline |
+| Public visibility | Choose whether a poll appears in the square; disabled by default, with link sharing still available |
+| Sharing | A share dialog after publishing, with a link and share-ticket visual |
+| Voting and changing votes | Selection triggers a liquid-fill effect; confirmation saves the vote; choices can change while open |
+| Results | Participant counts, option vote counts and percentages, with periodic refresh |
+| Comments | Stored in the backend; participants can edit or delete their own comments, and creators can delete comments |
+| Poll management | Owners can edit open polls, share, end, or delete them; ending and deletion require confirmation |
+| Profile | Account details and the user's created polls, filtered by All, Open, and Closed |
+| Profile editing | Avatar, nickname, and biography |
+| Settings | Language, version and changelog, sign-out, and account deletion; guests can clear local data |
+| Local drafts | Browser recovery for creation, editing, and participation drafts, separated by account or poll |
 
-### Project Information
+While a poll is open, other participants' comments are not publicly shown. Creators can view comments for moderation, and participants can retrieve their own comment for editing. Public comments appear after the poll ends.
 
-- **Project name:** BothPls
-- **Project category:** Social Shopping Decision App
-- **Primary platform:** Mobile Web App (Android Chrome)
-- **Target audience:** People who need help choosing between multiple options
-- **Development team:** The Aliien (2 members)
-- **Product requirements document (PRD):** [PRD collection](docs/PRD.md) — current v1.6 requirements and version archives. The [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md) distinguishes implemented behavior, pending requirements, and deployment checks. Earlier implementation descriptions in this README still require alignment with that baseline.
-- **Live demo:** [TODO: Add URL]
-- **Design prototype:** [Figma](https://www.figma.com/design/dWtx6LBsB3EmKM5ElXQaR4/SD5913Teamwork)
+Once a poll closes or reaches its deadline, new votes, vote changes, and poll edits are rejected. The backend enforces deadlines and permissions.
 
-## 2. Problem Statement
+## 5. How It Works
 
-People often struggle to choose between similar products, styles, or colours. Too many options can make decisions difficult, and users may want a second opinion before making a choice.
+1. **Browse or sign in.** Explore the square first; sign in to create a poll or participate.
+2. **Create.** Add a title, description, options and optional images. Set a deadline and choose whether to list the poll publicly.
+3. **Share.** Send friends the poll link or a share ticket.
+4. **Vote.** Friends open the link, sign in, select one option, optionally add a comment, and confirm submission.
+5. **Review.** View the current counts and percentages; participants can change their choice while the poll is open.
+6. **Decide.** End the poll manually or wait for its deadline, then use the final results and comments to make a decision.
 
-Asking friends individually can be inconvenient: users have to send images repeatedly in chat apps, collect different opinions across separate conversations, and manually count votes and summarise reasons.
+## 6. Languages
 
-BothPls addresses this problem by providing a shared space where users can present their options and gather friends' opinions in one place. Since most shopping decisions come down to picking one item, the poll is **single-choice by design**, so creators do not need to decide on a voting format.
+The interface supports **Simplified Chinese** (default), **English**, and **Korean**.
 
-## 3. Target Users
+Change the language using the **globe icon on the home page**, or through **Profile → Settings → Language**. The selection is saved in the current browser.
 
-**Creators** (poll initiators) are shoppers who find it hard to decide, often on a limited budget. They register or log in, create single-choice polls, share them, view live results, and edit or delete their polls.
+Language changes apply to interface text. Poll titles, descriptions, options, comments, and nicknames remain in the language entered by the user.
 
-**Participants** are the creators' friends. They open a public link with an automatically generated random username, with **no registration or login required**, pick one option, optionally leave a comment, and then view the results.
+## 7. Technology
 
-BothPls is designed for people who:
+| Area | Technology |
+| --- | --- |
+| Frontend | React 18, TypeScript, React Router 7 |
+| Build tooling | Vite 7 |
+| Authentication | Supabase Auth |
+| Database | Supabase Postgres |
+| Image storage | Supabase Storage |
+| Backend permissions | PostgreSQL functions, RPC, and row-level security (RLS) |
+| Deployment | Cloudflare Pages and GitHub Actions; Vercel configuration retained |
+| Design and collaboration | Figma, Notion, GitHub |
+| Automated tests | Node.js tests, Playwright, SQL database tests |
 
-- Feel uncertain when choosing between multiple products or options.
-- Want to hear friends' opinions before making a decision.
-- Prefer a quick and convenient way to compare alternatives.
-- Enjoy sharing choices and interacting with friends.
+Polls, options, votes, and comments are stored in the backend. Account profiles use authentication metadata and profile-table logic.
 
-Although shopping is the primary use case, the broader concept may also support other everyday decisions in the future.
+Language preferences and unfinished drafts are stored locally in the browser. **Drafts are separated by account but do not sync across devices.**
 
-## 4. Core Features
-
-The table below records the earlier MVP scope and is pending alignment. For current implementation status and remaining requirements, use Sections 2–3 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
-
-| Feature | Description | Status |
-|---|---|---|
-| Creator account | Register with a valid email and a nickname (custom or randomly generated), or log in with email + nickname. Email verification codes are deferred to a later version. | Confirmed (MVP) |
-| Create / edit a poll | Add a poll name (required), optional background, 2–5 options (2 by default) with images, and an optional deadline. Editing reuses the creation page. | Confirmed (MVP) |
-| Share with friends | Publishing generates a public link that friends can open without an account. | Confirmed (MVP) |
-| Vote on options | **Fixed single-choice**: each participant selects exactly one option. Participants join anonymously with a random username and can change their choice while the poll is open (only the latest valid choice counts). | Confirmed (MVP) |
-| View voting results | Display the total number of voters, votes and percentages per option. Ties are shown as ties (no random tie-break). | Confirmed (MVP) |
-| Optional comments | Participants may leave a comment with their vote. Comments are hidden while the poll is open and revealed to everyone after it ends. Commenters can edit or delete their own comments; the creator can delete any comment. Comment actions never affect vote counts. | Confirmed (MVP) |
-| Manage polls (My Polls) | View all polls (newest edit first), poll info (participants, optional closing time, comments, number of options), live results, edit, share, and delete (with a confirmation dialog; creator only). | Confirmed (MVP) |
-| Settings | User settings and system settings. | Planned (P1) |
-
-**MVP priority:** Focus on the core loop of creating a poll, sharing it, collecting single-choice votes, viewing results, and managing or ending the poll.
-
-**Ending a poll:** the creator ends it manually, or it ends automatically when the optional deadline is reached (the backend time is authoritative). After a poll ends, the public link shows final results and comments, and new votes or changes are rejected.
-
-Additional features will be considered based on the team's development progress and testing results.
-
-## 5. User Journey
-
-The intended core interaction is:
-
-1. **Sign in (creator):** The creator registers or logs in with email and nickname. Participants skip this step entirely.
-2. **Create:** The creator builds a poll with a name, optional background, 2–5 options with images, and an optional deadline, then publishes it.
-3. **Share:** The creator copies the public link and sends it to friends.
-4. **Vote:** Friends open the link (anonymously, with a random username), select one option, optionally add a comment, and submit.
-5. **Review:** After submitting, participants see the number of voters, result percentages, and (once the poll has ended) comments. The creator can check live results at any time.
-6. **Manage and decide:** The creator can edit, share, or delete the poll, then considers the feedback and makes their own final decision.
-
-The first interaction to validate is whether users can easily create a poll, share it, and collect votes from friends in under a minute per participant.
-
-For current and target flows, see Section 5 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
-
-## 6. Technology Stack
-
-| Component | Technology |
-|---|---|
-| Frontend | React 18 + Vite 7 + React Router 7 + TypeScript |
-| Backend | Supabase (Postgres, accessed through `@supabase/supabase-js`) |
-| Database | Supabase Postgres: `polls`, `poll_options`, `votes` |
-| UI/UX Design | Figma |
-| Deployment | Vercel, or Cloudflare Pages via GitHub Actions (static SPA) |
-| Development Tools | VS Code, GitHub |
-
-Comments, comment visibility and user preferences are stored in the browser LocalStorage at this stage; the poll, options and votes live in Supabase.
-
-## 7. Getting Started
+## 8. Run Locally
 
 ### Prerequisites
 
 - Node.js 22.x
 - npm 10.x
+- A configured Supabase project
 
 ### Installation
-
-Clone the repository:
 
 ```bash
 git clone https://github.com/sd5913/The-Aliien-Repo.git
 cd The-Aliien-Repo
-```
-
-Install dependencies:
-
-```bash
 npm install
 ```
 
-Copy the environment example and fill in your Supabase project values:
+Copy `.env.example` to `.env` and fill in your own Supabase project URL and publishable or anon key. The example file contains placeholders only. Never use a service-role key in the frontend.
 
-```bash
-cp .env.example .env
-```
+For database setup, migrations, storage, authentication providers, email templates, and redirect URLs, follow the relevant setup documents:
 
-```text
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<publishable or anon key>
-```
+- [Backend permissions and setup](docs/BACKEND_PERMISSIONS.md)
+- [Cloudflare Pages + Supabase](docs/DEPLOYMENT_CLOUDFLARE_PAGES.md)
+- [Vercel + Supabase](docs/DEPLOYMENT_VERCEL_SUPABASE.md)
 
-认证页面位于 `/auth`，当前仅支持邮箱 Magic Link 注册/登录。用户输入邮箱后会收到一次性登录链接，不需要设置密码。暂时使用 Supabase 默认邮件模板和邮件服务，不需要配置自定义 SMTP。需要在 Authentication → Sign In / Providers 中启用 Email，并把本地开发地址（例如 `http://localhost:5173/auth`）及正式站点地址加入 Authentication → URL Configuration 的 Redirect URLs。
-
-### Run Locally
-
-Start the development server:
+### Development and build
 
 ```bash
 npm run dev
 ```
 
-Open the local URL shown in the terminal:
-
-```text
-http://localhost:5173
-```
-
-Other scripts:
+The default development address is `http://localhost:5173`; use the address printed in the terminal.
 
 ```bash
-npm run build     # type-check + production build to dist
-npm run preview   # preview the production build locally
+npm run build
+npm run preview
 ```
 
-### Online Demo
+`build` runs TypeScript checks and generates the production build. `preview` serves that build locally.
 
-- **Live demo:** [TODO: Deployment URL]
-- **Instructions:** [TODO: Any additional access instructions]
+## 9. Timeline and Progress
 
-> Setup and execution instructions will be updated to match the final implementation.
+Historical milestones below come from the [Notion project record](https://app.notion.com/p/420804a7ab24800eb436ea7c0e4db959). Earlier milestones describe the development process; the implemented features above describe the current application.
 
-### Deployment Options
+| Date | Work |
+| --- | --- |
+| 29 October 2026 | PRD v0.5: defined the create, vote, and comment modules |
+| 31 October 2026 | PRD v1.0: organised comment permissions, deletion rules, and technology choices |
+| 1 November 2026 | PRD v1.1: restructured the requirements document |
+| 9 November 2026 | PRD v1.2: fixed voting to single choice and revised creator and participant flows |
+| 14 November 2026 | Supabase backend launch stage recorded |
+| 15 November 2026 | Cloudflare Pages and GitHub Actions deployment stage recorded |
+| 18–22 November 2026 | Iteration on languages, share tickets, voting, and results |
+| 26 November 2026 | Updated authentication documentation and organised the corrected v1.6 PRD and version collection |
 
-- [Cloudflare Pages + Supabase](docs/DEPLOYMENT_CLOUDFLARE_PAGES.md): GitHub Actions workflow, one-time Pages setup, and the five required repository secrets. Pull requests build without real credentials; pushes to `main` deploy after setup.
-- [Vercel + Supabase](docs/DEPLOYMENT_VERCEL_SUPABASE.md): existing Vercel deployment instructions. The Vercel configuration remains supported.
+The [Notion task board](https://app.notion.com/p/ebf804a7ab24836f98fa819ae8c1068e) records the project scaffold, core interactions, cloud deployment, voting-page changes, and data-loading fixes as complete. Login security, sharing, results, debugging, and documentation have ongoing tasks.
 
-Both options keep the existing Supabase backend. No database migration is required.
+The schedule below uses task dates rather than verified completion dates. Status and schedule corrections supplied by the team on 26 November 2026 are included.
 
-## 8. Platforms and Limitations
-
-### Supported Platforms
-
-- **Primary platform:** Mobile Web App (Android Chrome)
-- **Supported browsers:** Chrome (Android)
-- **Mobile compatibility:** Primary target; designed for a fixed viewport (393 × 873 px reference, also tested at 360 px and 412 px)
-- **Desktop compatibility:** Not adapted (mobile-only design)
-
-### Current Limitations
-
-- Voting is **single-choice only**. Multiple-choice mode is not available in the MVP (planned for v1.5).
-- Email verification codes are not implemented yet: creators log in with email + nickname only (planned for a later version).
-- Anonymous participant identity (random username) is device/browser-bound: clearing browser data or switching devices may lose it, and it cannot be recovered.
-- Comments, comment visibility and user preferences are stored in the browser LocalStorage for this stage; they do not sync across devices yet.
-- There is no account system yet: RLS currently allows anonymous read/write for the prototype; production should add Supabase Auth and per-author write restrictions.
-
-Known limitations will be documented as they are identified during development and testing.
-
-## 9. Project Progress
-
-The team will develop BothPls through small, incremental steps and document progress throughout the project.
-
-| Week / Date | Work Completed | Challenges / Next Steps |
-|---|---|---|
-| 2026-10-29 | PRD v0.5 draft: core modules (create poll / vote / comments) defined | [TODO] |
-| 2026-10-31 | PRD v1.0: comment permissions, deletion rules and tech stack confirmed | [TODO] |
-| 2026-11-01 | PRD v1.1: re-organised into the standard PRD template | [TODO] |
-| 2026-11-09 | PRD v1.2: removed the single/multiple-choice mode selection (voting is now fixed single-choice); restructured creator and participant flows based on the two finalised flow charts | [TODO] |
-| [TODO] | UI/UX design and prototype | [TODO] |
-| [TODO] | Core feature implementation | [TODO] |
-| [TODO] | Integration and testing | [TODO] |
-| [TODO] | Final improvements and submission | [TODO] |
-
-This table will be updated regularly. Relevant Git commits and pull requests will also document implementation progress. The full revision history of the requirements is kept in [`docs\PRD.md`](docs/PRD.md).
+| Scheduled date | Task | Status |
+| --- | --- | --- |
+| 22 November 2026 | Sound-effect revisions and bubble-sound research | Completed |
+| 24 November 2026 | User-testing questionnaire preparation | Completed |
+| 26–30 November 2026 | Invite users to try the app and collect feedback | In progress |
+| 3 December 2026 | Consolidate real-user feedback | In progress |
+| 3 December 2026 | Update the public Notion project page | Not started |
 
 ## 10. Team Contributions
 
-Each team member's responsibilities and contributions will be documented to make the development process transparent.
+Responsibilities are based on the [Notion project page](https://app.notion.com/p/3b3804a7ab248302b3d2014a32b9e1bc) and [task assignments](https://app.notion.com/p/ebf804a7ab24836f98fa819ae8c1068e).
 
-| Team Member | Role / Responsibilities | Contributions |
-|---|---|---|
-| Member 1 | [TODO] | [TODO] |
-| Member 2 | [TODO] | [TODO] |
+| Member | Main responsibilities | Shared work |
+| --- | --- | --- |
+| **YITIAN XIAO** | Repository and project scaffold; core interactions and implementation; cloud services, Cloudflare and Supabase deployment; authentication, voting, sharing and data-loading improvements; README and requirements maintenance | Prototypes, other pages and multimedia, results-page iteration, feedback review |
+| **SONGLING HAN** | Product goals, users and interaction planning; scope, page sketches, visual style and assets; debugging, questionnaires and user testing; sound effects and public project-page preparation | Prototypes, other pages and multimedia, results-page iteration, README and asset documentation, feedback review |
 
-Contributions may include planning, UI/UX design, frontend development, backend development, testing, documentation, and integration.
+Shared tasks include prototypes, additional pages and multimedia, results-page improvements, user-feedback review, and documentation of assets and AI usage. Assignments describe responsibility; they do not imply that every assigned task is complete.
 
-## 11. Testing
+## 11. Testing and Feedback
 
-BothPls will be tested through actual interactions with users, rather than relying only on whether the project builds successfully.
+The project combines automated checks with real-user feedback.
 
-### Testing Goals
+Existing test suites cover:
 
-- Check whether users understand how to create a poll.
-- Check whether friends can access a shared link without an account and submit a single-choice vote in under a minute.
-- Check whether voting results (vote counts, percentages, ties) are displayed correctly.
-- Check comment rules: hidden while the poll is open, revealed after it ends, and correct edit/delete permissions.
-- Check ending and deletion rules: manual end, automatic end at the deadline, and delete with confirmation (creator only).
-- Identify confusing interactions and usability issues.
-- Verify the experience on supported mobile devices and browsers.
+- **Module logic:** account and participant identity, navigation, sharing, poll services, and localisation.
+- **Browser flows:** authentication entry points, voting, poll management, images, layouts, and profile synchronisation.
+- **Database permissions:** account and ownership checks, comment permissions, and rejection of invalid operations.
 
-Acceptance criteria and edge cases are listed in Sections 3 and 6–7 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
+User testing focuses on whether people can understand the create–share–vote–review flow, complete sign-in and resume their action, understand vote changes and comment visibility, and comfortably use the mobile layout and sharing features.
 
-**Testing method:** Run the project locally with Node.js/npm and open the local page in the browser to test the interactions. Teammates can also view the same page by configuring the Live Share extension in VS Code.
+The questionnaires are complete, and user testing is scheduled for **26–30 November 2026**:
 
-**Test participants:** [TODO]
+- [Chinese feedback questionnaire](https://wj.qq.com/s2/28781438/zg2n/)
+- [English feedback questionnaire](https://wj.qq.com/s2/28781528/op3v/)
 
-**Key findings and improvements:** [TODO]
+Participant counts, aggregated findings, and final conclusions will be added after feedback is reviewed. The presence of test suites does not indicate that every deployment or device has passed acceptance testing.
 
-## 12. Credits and Acknowledgements
+## 12. Current Limitations and Next Steps
 
-This project may use third-party libraries, design resources, images, icons, fonts, sound effects, or AI-assisted development tools.
+- Voting supports single choice only.
+- Third-party sign-in is implemented; explicit account linking and unlinking remain pending.
+- Email codes do not yet have a client-side resend countdown or automatic verification after six digits.
+- Creation, editing, and participation drafts remain in the current browser.
+- Immediate comment publication and creator-controlled comment hiding are not implemented.
+- Poll details continue polling after closure and need further optimisation.
+- Desktop uses a centred mobile layout rather than a separate desktop interface.
+- The default language is Simplified Chinese; system-language detection is not implemented.
+- Deletion is not implemented as soft deletion.
+- Real devices, email delivery, OAuth, and production deployments require continued regression checks.
 
-All external resources will be credited here, including their sources, licences, and relevant usage details.
+Priorities are improving authentication, comment controls, account linking, and issues found in user testing. Later work may include draft synchronisation, richer sharing, product details, and additional platforms.
 
-| Resource / Tool | Purpose | Source / Licence |
-|---|---|---|
-| [TODO] | [TODO] | [TODO] |
-| [TODO] | [TODO] | [TODO] |
-| [TODO: AI tool] | [TODO: e.g. coding assistance or design exploration] | [TODO: How it was used] |
+See the [corrected PRD v1.6](docs/BothPls%20PRD%20v1.6.md) for the full requirements and acceptance criteria.
 
-AI tools may be used to assist with development, debugging, design exploration, or documentation. Their use will be described transparently, and the team will review and test the resulting work.
+## 13. Credits and AI Usage
 
-All third-party materials must be original or appropriately licensed for their intended use.
+| Tool or resource | Use |
+| --- | --- |
+| React, Vite, React Router, TypeScript | UI, routing, type checking, and builds |
+| Supabase | Authentication, database, and image storage |
+| Cloudflare Pages, GitHub Actions, Vercel | Hosting and deployment |
+| Figma | Prototypes and visual design |
+| Notion | Requirements, assignments, schedules, and feedback |
+| AI assistance | Coding support, design exploration, troubleshooting, and documentation drafting |
 
-## 13. Future Improvements
+The team uses AI assistance and is responsible for deciding which suggestions to adopt and validating changes through code review, testing, and user feedback.
 
-The roadmap below is historical and pending alignment. Current priorities and future versions are recorded in Sections 3 and 7 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
+The source and licence inventory for images, icons, fonts, and sounds is being completed before final submission. Assets with unconfirmed origins are not claimed as original work.
 
-**v1.5 (planned):**
+## 14. Repository and Submission
 
-- Multiple-choice voting mode
-- Cross-device identity sync
-- Voting notifications and reminders
-- Product price and purchase-link fields
-- A simple data dashboard
+Code, the README, requirements, deployment notes, and tests are maintained in the shared GitHub repository.
 
-**v2.0 (exploratory):**
+`.env.example` documents the required frontend configuration. Actual credentials are configured locally or through deployment settings. Repository access, sensitive information, asset credits, and documentation consistency remain part of the final submission review.
 
-- Friend system and public discovery
-- AI-assisted recommendations for decision making
-- Comment replies and reporting
-- Data analytics export
-- Native app exploration
-
-These ideas are possibilities rather than confirmed commitments.
-
----
-
-## Repository and Security Notes
-
-- Do not commit passwords, API tokens, signing keys, or private personal information.
-- Store required secrets in environment variables or the appropriate secure configuration system.
-- Document the required environment variables in an example configuration file, without including real secret values.
-- Keep the repository accessible to the instructor for assessment.
-- Update this README as the project evolves, and keep it consistent with [`docs\PRD.md`](docs/PRD.md).
-
----
-
-**Final Submission Deadline:** Sunday, 6 December 2026, 23:59 Hong Kong time.
-
-BothPls will be submitted through its shared GitHub repository ([The-Aliien-Repo](https://github.com/sd5913/The-Aliien-Repo.git)), including the completed project, source code, an up-to-date README, and relevant development records.
+**Final deadline: 6 December 2026, 23:59 Hong Kong time.**
