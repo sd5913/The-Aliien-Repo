@@ -33,7 +33,7 @@ The screenshots below are historical examples. Search crawlers that read only th
 > **Project status:** In Development&nbsp;
 > **Project type:** Interactive Web App&nbsp;
 > **Course:** Group Project — Build Something Together&nbsp;
-> **Current PRD version:** v1.2 MVP (see [`docs\PRD.md`](docs/PRD.md))&nbsp;
+> **Current PRD version:** v1.6, corrected baseline and pending requirements (see [PRD collection](docs/PRD.md))&nbsp;
 > **Final Deadline:** 6 December 2026, 23:59 HKT
 
 ---
@@ -71,7 +71,7 @@ For example, a user might be unsure which jacket to buy, which colour suits them
 - **Primary platform:** Mobile Web App (Android Chrome)
 - **Target audience:** People who need help choosing between multiple options
 - **Development team:** The Aliien (2 members)
-- **Product requirements document (PRD):** [`docs\PRD.md`](docs/PRD.md) — the full v1.2 PRD (requirements, user flows, rules, edge cases, analytics and roadmap). The PRD is the source of truth for product scope and rules; this README summarises it.
+- **Product requirements document (PRD):** [PRD collection](docs/PRD.md) — current v1.6 requirements and version archives. The [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md) distinguishes implemented behavior, pending requirements, and deployment checks. Earlier implementation descriptions in this README still require alignment with that baseline.
 - **Live demo:** [TODO: Add URL]
 - **Design prototype:** [Figma](https://www.figma.com/design/dWtx6LBsB3EmKM5ElXQaR4/SD5913Teamwork)
 
@@ -100,7 +100,7 @@ Although shopping is the primary use case, the broader concept may also support 
 
 ## 4. Core Features
 
-The following features describe the confirmed MVP scope (PRD v1.2). Their implementation will be updated as development progresses. See [`docs\PRD.md`](docs/PRD.md) for the full feature list and priorities.
+The table below records the earlier MVP scope and is pending alignment. For current implementation status and remaining requirements, use Sections 2–3 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
 
 | Feature | Description | Status |
 |---|---|---|
@@ -132,7 +132,7 @@ The intended core interaction is:
 
 The first interaction to validate is whether users can easily create a poll, share it, and collect votes from friends in under a minute per participant.
 
-For the finalised creator and participant flow charts, see Section 5 of [`docs\PRD.md`](docs/PRD.md).
+For current and target flows, see Section 5 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
 
 ## 6. Technology Stack
 
@@ -278,7 +278,7 @@ BothPls will be tested through actual interactions with users, rather than relyi
 - Identify confusing interactions and usability issues.
 - Verify the experience on supported mobile devices and browsers.
 
-Acceptance criteria and edge cases are listed in [`docs\PRD.md`](docs/PRD.md) (Section 7).
+Acceptance criteria and edge cases are listed in Sections 3 and 6–7 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
 
 **Testing method:** Run the project locally with Node.js/npm and open the local page in the browser to test the interactions. Teammates can also view the same page by configuring the Live Share extension in VS Code.
 
@@ -304,7 +304,7 @@ All third-party materials must be original or appropriately licensed for their i
 
 ## 13. Future Improvements
 
-Potential improvements will be evaluated based on the MVP's performance, user feedback, and available development time. The roadmap below follows [`docs\PRD.md`](docs/PRD.md).
+The roadmap below is historical and pending alignment. Current priorities and future versions are recorded in Sections 3 and 7 of the [corrected v1.6 PRD](docs/BothPls%20PRD%20v1.6.md).
 
 **v1.5 (planned):**
 
