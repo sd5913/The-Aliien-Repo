@@ -69,10 +69,13 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
       if (name === 'my_voted_polls') {
         const votes = (state.votes ?? []).filter((vote) => vote.voter_id === body.p_voter_id);
         const latestVoteByPoll = new Map(votes.map((vote) => [vote.poll_id, vote.created_at]));
-        return reply(state.polls.filter((poll) => latestVoteByPoll.has(poll.id)).map((poll) => ({
+        const rows = state.polls.filter((poll) => latestVoteByPoll.has(poll.id)).map((poll) => ({
           ...poll, last_voted_at: latestVoteByPoll.get(poll.id),
           votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }],
-        })));
+        })).sort((a, b) => b.last_voted_at.localeCompare(a.last_voted_at) || b.id.localeCompare(a.id));
+        const offset = Number(url.searchParams.get('offset') ?? 0);
+        const limit = Number(url.searchParams.get('limit') ?? rows.length);
+        return reply(rows.slice(offset, offset + limit));
       }
       if (name === 'submit_ballot') {
         const vote = { id: '90000000-0000-4000-8000-000000000001', poll_id: body.p_poll_id, voter_id: body.p_voter_id, ranking: body.p_ranking, created_at: new Date().toISOString() };

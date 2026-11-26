@@ -23,7 +23,7 @@
 | 邮箱认证 | 登录 / 注册两个 Tab；注册昵称必填 2–20 个码点；发送后输入验证码并点击验证；注册允许建号，登录不自动建号 | [AuthPage.tsx](../src/features/auth/pages/AuthPage.tsx)、[auth.ts](../src/features/auth/services/auth.ts) |
 | 第三方登录 | Google、GitHub、Apple OAuth 入口已实现；不等同于主动绑定已有账号 | [auth.ts](../src/features/auth/services/auth.ts) |
 | 会话 | 邮箱流程按“记住我”选择 localStorage 或 sessionStorage；同一账号可分别在多设备登录，记录以账号 uid 关联 | [client.ts](../src/lib/supabase/client.ts) |
-| 首页 | 默认广场；最近与广场两个 Tab；游客无需首屏登录；提示条约 2 秒后出现，手动关闭后 7 天冷却 | [HomePage.tsx](../src/features/home/pages/HomePage.tsx) |
+| 首页 | 默认广场；最近与广场两个 Tab；参与过的投票结束后仍保留在最近，点击查看结果；广场仅展示公开且进行中的投票；游客无需首屏登录；提示条约 2 秒后出现，手动关闭后 7 天冷却 | [HomePage.tsx](../src/features/home/pages/HomePage.tsx)、[最近投票保留规则](RecentPolls.md) |
 | 提示条条件 | 是否出现由登录状态及有效关闭时间决定；仅存在语言或草稿记录不会触发 7 天免打扰 | [HomePage.tsx](../src/features/home/pages/HomePage.tsx) |
 | 创建 | 标题、说明、2–5 个选项及可选图片、截止时间、公开开关；公开开关默认关闭；没有独立背景上传控件 | [CreatePollPage.tsx](../src/features/polls/pages/CreatePollPage.tsx) |
 | 管理与分享 | 所有者可编辑进行中投票、分享、结束、删除；发布后进入结果页并触发分享；结束与删除需确认 | [OwnerPollActions.tsx](../src/features/polls/components/OwnerPollActions.tsx)、[CreatePollPage.tsx](../src/features/polls/pages/CreatePollPage.tsx) |
