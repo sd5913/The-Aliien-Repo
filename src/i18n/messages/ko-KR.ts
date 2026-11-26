@@ -1,4 +1,11 @@
 export default {
+  "translation.notice": "한국어 기계 번역 · 오역이 있을 수 있습니다",
+  "translation.loading": "한국어로 번역 중…",
+  "translation.failed": "번역을 사용할 수 없어 원문을 표시합니다.",
+  "translation.original": "원문",
+  "translation.showOriginal": "원문 보기",
+  "translation.translated": "번역 보기",
+  "translation.retry": "번역 다시 시도",
   "app.language": "언어",
   "app.title": "BothPls — 친구와 함께 골라요",
   "app.description": "고르기 어렵나요? BothPls에서 투표를 만들고 친구들의 의견을 들어보세요.",

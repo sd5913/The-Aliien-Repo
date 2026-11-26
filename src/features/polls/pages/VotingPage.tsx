@@ -1,3 +1,5 @@
+import { usePollTranslation } from "../hooks/usePollTranslation";
+import { PollTranslationControl } from "../components/PollTranslationControl";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { readDraft, saveDraft, clearDraft, isVoteDraft } from "../utils/drafts";
@@ -24,7 +26,9 @@ export function VotingPage() {
   const location = useLocation();
   const returnTo = pollReturnTo(location);
   const { polls, loading, error, updatePoll } = usePolls({ pollId: id });
-  const poll = polls.find((item) => item.id === id);
+  const sourcePoll = polls.find((item) => item.id === id);
+  const translation = usePollTranslation(sourcePoll);
+  const poll = translation.poll;
   const { user: accountUser, loading: accountLoading } = useAccount();
   const participant = useParticipant();
   const voter = participant ?? getVoter();
@@ -142,6 +146,7 @@ export function VotingPage() {
   return (
     <PageShell showNavigation={false} backTo={returnTo} title={t("vote.help")}>
       <div className="voting-title"><div className="voting-meta"><StatusPill poll={poll} /><span>{participants(poll.votes.length)}</span></div><h1>{poll.title}</h1>{poll.description && <p>{poll.description}</p>}</div>
+      <PollTranslationControl translation={translation} />
       {!open && <div className="notice-banner">{t("vote.closed")}</div>}
       {draftNotice && <p className="field-hint" role="status">{t(draftNotice)}</p>}
       <OptionCarousel options={poll.options} activeId={activeId} onBrowse={(nextId) => {

@@ -1,3 +1,5 @@
+import { usePollTranslation } from "../hooks/usePollTranslation";
+import { PollTranslationControl } from "./PollTranslationControl";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { canSharePoll, isPollOwner } from "../utils/voting";
@@ -37,6 +39,8 @@ export function PollCard({
   onEnd,
 }: PollCardProps) {
   const { t, locale, votes } = useLocale();
+  const translation = usePollTranslation(poll);
+  const displayed = translation.poll ?? poll;
   const { user: accountUser } = useAccount();
   const owner = isPollOwner(poll, accountUser?.id ?? "");
   const shareAllowed = canSharePoll(poll, accountUser?.id ?? "");
@@ -170,18 +174,19 @@ export function PollCard({
         onPointerCancel={finishDrag}
         onClick={interactive ? handleCardClick : undefined}
       >
-        <PollOptionPreviews options={poll.options} />
+        <PollOptionPreviews options={displayed.options} />
         <div className="my-poll-ticket-copy">
           {(owner || (surface !== "square" && poll.participatedByCurrentIdentity)) && <div className="poll-identity-badges">{owner && <span>{t("poll.createdByMe")}</span>}{!owner && surface !== "square" && poll.participatedByCurrentIdentity && <span>{t("poll.votedByMe")}</span>}</div>}
           {interactive ? (
             <Link className="my-poll-ticket-main" to={to} state={{ returnTo }}>
-              <h3>{poll.title}</h3>
+              <h3>{displayed.title}</h3>
             </Link>
           ) : (
             <div className="my-poll-ticket-main">
-              <h3>{poll.title}</h3>
+              <h3>{displayed.title}</h3>
             </div>
           )}
+          <PollTranslationControl translation={translation} />
           <p className="my-poll-ticket-status">{t(isPollOpen(poll) ? "poll.open" : "poll.closed")} · {surface === "square" ? t("poll.squareParticipants", { count: poll.voteCount ?? poll.votes.length }) : votes(poll.voteCount ?? poll.votes.length)}</p>
           <p className="my-poll-deadline">{t("poll.deadlineValue", { date: deadline })}</p>
           {surface === "square" && (interactive ? <Link className="square-vote-link" to={to} state={{ returnTo }}>{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")} <span aria-hidden="true">↗</span></Link> : <span className="square-vote-link">{t(owner || poll.participatedByCurrentIdentity ? "poll.squareResults" : "poll.squareVote")}</span>)}

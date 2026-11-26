@@ -1,3 +1,5 @@
+import { usePollTranslation } from "../hooks/usePollTranslation";
+import { PollTranslationControl } from "../components/PollTranslationControl";
 import { useLocale } from "../../../i18n/LocaleProvider";
 import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
@@ -25,16 +27,18 @@ export function ResultsPage() {
   const location = useLocation();
   const { polls, loading, error, syncError, editComment, deleteComment, updatePoll, removePoll } = usePolls({ pollId: id });
   const navigate = useNavigate();
-  const poll = polls.find((item) => item.id === id);
+  const sourcePoll = polls.find((item) => item.id === id);
+  const translation = usePollTranslation(sourcePoll);
+  const poll = translation.poll;
   const { user: accountUser, loading: accountLoading } = useAccount();
   const openShare = useSharePoll();
   const [openedShare, setOpenedShare] = useState(false);
   useEffect(() => {
-    if (poll && isPollOwner(poll, accountUser?.id ?? "") && new URLSearchParams(location.search).get("share") === "1" && !openedShare) {
+    if (sourcePoll && isPollOwner(sourcePoll, accountUser?.id ?? "") && new URLSearchParams(location.search).get("share") === "1" && !openedShare) {
       setOpenedShare(true);
-      openShare(poll);
+      openShare(sourcePoll);
     }
-  }, [poll, accountUser?.id, location.search, openedShare, openShare]);
+  }, [sourcePoll, accountUser?.id, location.search, openedShare, openShare]);
   const voter = getVoter();
   const [deletingComment, setDeletingComment] = useState<PollComment | null>(null);
   const [commentBusy, setCommentBusy] = useState(false);
@@ -65,7 +69,7 @@ export function ResultsPage() {
   const returnTo = pollReturnTo(location);
   const closeButton = (
     <>
-    {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll} onShare={() => openShare(poll)}
+    {poll && isPollOwner(poll, accountUser?.id ?? "") && <OwnerPollActions poll={poll} onShare={() => openShare(sourcePoll ?? poll)}
       onEnd={() => updatePoll(poll.id, (current) => ({ ...current, status: "closed" }))}
       onDelete={async () => { await removePoll(poll.id); navigate(returnTo, { replace: true }); }} />}
     <Link className="results-close-button" to="/" aria-label={t("results.close")}>
@@ -113,6 +117,8 @@ export function ResultsPage() {
       <div className="results-heading">
         <StatusPill poll={poll} />
         <h1>{poll.title}</h1>
+        {poll.description && <p>{poll.description}</p>}
+        <PollTranslationControl translation={translation} />
         <p>{participants(poll.votes.length)} · {t("results.proportions")}</p>
       </div>
       {syncError && <p className="field-hint" role="status">{t("results.syncFailed")}</p>}
