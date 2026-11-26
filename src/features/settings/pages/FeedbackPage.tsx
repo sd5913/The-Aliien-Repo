@@ -8,7 +8,6 @@ import { FEEDBACK_IMAGE_MAX_BYTES, FEEDBACK_IMAGE_TYPES, submitFeedback, uploadF
 
 export function FeedbackPage() {
   const { t, locale } = useLocale();
-  const [page, setPage] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [contact, setContact] = useState("");
@@ -44,7 +43,7 @@ export function FeedbackPage() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting.current) return;
-    if (!page.trim() || !title.trim() || !body.trim()) { setError("feedback.required"); return; }
+    if (!title.trim() || !body.trim()) { setError("feedback.required"); return; }
     submitting.current = true;
     setBusy(true);
     setError("");
@@ -54,7 +53,7 @@ export function FeedbackPage() {
         // Keep a successful upload for retries if the subsequent insert fails.
         uploaded.current = { file: screenshot, path };
       }
-      await submitFeedback({ page, title, body, contact, locale, screenshotPath: uploaded.current?.path ?? null });
+      await submitFeedback({ title, body, contact, locale, screenshotPath: uploaded.current?.path ?? null });
       setSubmitted(true);
       setScreenshot(null);
       uploaded.current = null;
@@ -85,10 +84,6 @@ export function FeedbackPage() {
             <form onSubmit={submit} aria-label={t("feedback.title")}>
               <fieldset className="settings-group feedback-fields" disabled={busy}>
                 <legend className="sr-only">{t("feedback.details")}</legend>
-                <div>
-                  <label className="field-label" htmlFor="feedback-page">{t("feedback.page")}</label>
-                  <input id="feedback-page" className="text-input" required maxLength={500} value={page} onChange={event => setPage(event.target.value)} placeholder={t("feedback.pagePlaceholder")} />
-                </div>
                 <div>
                   <label className="field-label" htmlFor="feedback-title">{t("feedback.subject")}</label>
                   <input id="feedback-title" className="text-input" required maxLength={100} value={title} onChange={event => setTitle(event.target.value)} placeholder={t("feedback.subjectPlaceholder")} />

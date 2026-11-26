@@ -19,7 +19,6 @@ async function setup(page, options = {}) {
   return state;
 }
 async function fill(page) {
-  await page.getByLabel('问题页面', { exact: true }).fill('  投票结果页  ');
   await page.getByLabel('标题', { exact: true }).fill('  留言头像显示错误  ');
   await page.getByLabel('问题描述', { exact: true }).fill('  上传的头像显示成链接，挡住了留言。  ');
 }
@@ -30,13 +29,15 @@ for (const accountId of [null, owner]) {
     await page.goto('/settings/preferences');
     await page.getByRole('link', { name: '问题反馈' }).click();
     await expect(page).toHaveURL(/\/settings\/feedback$/);
+    await expect(page.locator('#feedback-page')).toHaveCount(0);
     await submitButton(page).click();
     expect(state.feedback).toHaveLength(0);
     await fill(page);
     await submitButton(page).click();
     await expect(page.getByRole('heading', { name: '反馈已提交' })).toBeFocused();
     expect(state.feedback).toHaveLength(1);
-    expect(state.feedback[0]).toMatchObject({ page: '投票结果页', title: '留言头像显示错误',
+    expect(state.feedback[0]).not.toHaveProperty('page');
+    expect(state.feedback[0]).toMatchObject({ title: '留言头像显示错误',
       body: '上传的头像显示成链接，挡住了留言。', contact: null, screenshot_path: null, locale: 'zh-CN' });
     expect(state.calls.filter(call => call.name === 'image_upload')).toHaveLength(0);
     await page.getByRole('link', { name: '返回设置' }).click();

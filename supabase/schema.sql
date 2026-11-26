@@ -626,7 +626,6 @@ notify pgrst,'reload schema';
 -- Feedback is an inbox: browsers may submit, but only trusted operators may read.
 create table public.user_feedback (
   id uuid primary key default gen_random_uuid(),
-  page text not null check (char_length(btrim(page)) between 1 and 500),
   title text not null check (char_length(btrim(title)) between 1 and 100),
   body text not null check (char_length(btrim(body)) between 1 and 3000),
   contact text check (contact is null or char_length(btrim(contact)) between 1 and 200),
@@ -637,7 +636,7 @@ create table public.user_feedback (
 );
 alter table public.user_feedback enable row level security;
 revoke all on public.user_feedback from public, anon, authenticated;
-grant insert (page, title, body, contact, screenshot_path, locale, app_version)
+grant insert (title, body, contact, screenshot_path, locale, app_version)
   on public.user_feedback to anon, authenticated;
 grant all on public.user_feedback to service_role;
 create policy "visitors submit feedback" on public.user_feedback

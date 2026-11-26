@@ -19,10 +19,10 @@ export async function uploadFeedbackScreenshot(file: File): Promise<string> {
 }
 
 export async function submitFeedback(input: {
-  page: string; title: string; body: string; contact: string; locale: Locale; screenshotPath: string | null;
+  title: string; body: string; contact: string; locale: Locale; screenshotPath: string | null;
 }): Promise<void> {
   const { error } = await supabase.from("user_feedback").insert({
-    page: input.page.trim(), title: input.title.trim(), body: input.body.trim(),
+    title: input.title.trim(), body: input.body.trim(),
     contact: input.contact.trim() || null, screenshot_path: input.screenshotPath,
     locale: input.locale, app_version: packageJson.version,
   });

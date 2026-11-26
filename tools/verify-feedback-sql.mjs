@@ -16,8 +16,8 @@ await db.exec(`
 `);
 await db.exec(readFileSync('supabase/migrations/20261126130816_user_feedback.sql', 'utf8'));
 const path = '10000000-0000-4000-8000-000000000001/screenshot.png';
-const insert = `insert into public.user_feedback(page,title,body,contact,screenshot_path,locale,app_version)
-  values ('投票结果', '头像显示错误', '上传头像显示为链接', null, '${path}', 'zh-CN', '1.5.0')`;
+const insert = `insert into public.user_feedback(title,body,contact,screenshot_path,locale,app_version)
+  values ('头像显示错误', '上传头像显示为链接', null, '${path}', 'zh-CN', '1.5.0')`;
 const denied = async (sql, code = '42501') => {
   await assert.rejects(db.exec(sql), error => error.code === code);
 };
@@ -28,18 +28,18 @@ for (const role of ['anon', 'authenticated']) {
   await denied('select * from public.user_feedback');
   await denied("update public.user_feedback set contact='stolen'");
   await denied('delete from public.user_feedback');
-  await denied(`insert into public.user_feedback(id,page,title,body,locale,app_version)
-    values(gen_random_uuid(),'p','t','b','en-US','1')`);
-  await denied(`insert into public.user_feedback(page,title,body,locale,app_version,created_at)
-    values('p','t','b','en-US','1',now())`);
-  await denied(`insert into public.user_feedback(page,title,body,locale,app_version)
-    values('p','   ','b','en-US','1')`, '23514');
-  await denied(`insert into public.user_feedback(page,title,body,contact,locale,app_version)
-    values('p','t','b',repeat('a',201),'en-US','1')`, '23514');
-  await denied(`insert into public.user_feedback(page,title,body,locale,app_version)
-    values('p','t',repeat('a',3001),'en-US','1')`, '23514');
-  await denied(`insert into public.user_feedback(page,title,body,screenshot_path,locale,app_version)
-    values('p','t','b','https://public.invalid/leak','en-US','1')`, '23514');
+  await denied(`insert into public.user_feedback(id,title,body,locale,app_version)
+    values(gen_random_uuid(),'t','b','en-US','1')`);
+  await denied(`insert into public.user_feedback(title,body,locale,app_version,created_at)
+    values('t','b','en-US','1',now())`);
+  await denied(`insert into public.user_feedback(title,body,locale,app_version)
+    values('   ','b','en-US','1')`, '23514');
+  await denied(`insert into public.user_feedback(title,body,contact,locale,app_version)
+    values('t','b',repeat('a',201),'en-US','1')`, '23514');
+  await denied(`insert into public.user_feedback(title,body,locale,app_version)
+    values('t',repeat('a',3001),'en-US','1')`, '23514');
+  await denied(`insert into public.user_feedback(title,body,screenshot_path,locale,app_version)
+    values('t','b','https://public.invalid/leak','en-US','1')`, '23514');
   await denied(`insert into storage.objects(bucket_id,name) values ('poll-images','${path}')`);
   await denied("insert into storage.objects(bucket_id,name) values ('feedback-screenshots','script.svg')");
   assert.equal((await db.query('select * from storage.objects')).rows.length, 0);
