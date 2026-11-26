@@ -43,6 +43,18 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON();
       state.calls.push({ name, body });
+      if (name === 'recent_polls') {
+        const voted = new Map((state.votes ?? []).filter(vote => vote.voter_id === accountId).map(vote => [vote.poll_id, vote.created_at]));
+        const rows = state.polls.filter(poll => poll.owner_id === accountId || voted.has(poll.id)).map(poll => ({
+          ...poll, participated_by_current_identity: voted.has(poll.id),
+          votes: [{ count: (state.votes ?? []).filter(vote => vote.poll_id === poll.id).length }],
+        })).sort((a, b) => {
+          const activity = poll => Math.max(Date.parse(poll.created_at), Date.parse(voted.get(poll.id) ?? poll.created_at));
+          return activity(b) - activity(a) || b.id.localeCompare(a.id);
+        });
+        const offset = body.p_page * 10;
+        return reply(rows.slice(offset, offset + 11));
+      }
       if (legacyAccountReads && name === 'own_comments') {
         return reject({ code: '42501', message: 'PARTICIPANT_REQUIRED' });
       }
@@ -104,7 +116,15 @@ export async function mockApp(page, { accountId = owner, closed = false, legacyA
       const limit = Number(url.searchParams.get('limit') ?? rows.length);
       return reply(rows.slice(offset, offset + limit).map((poll) => ({ ...poll, votes: [{ count: (state.votes ?? []).filter((vote) => vote.poll_id === poll.id).length }] })));
     }
-    if (url.pathname === '/rest/v1/votes') return reply(state.votes ?? []);
+    if (url.pathname === '/rest/v1/votes') {
+      let votes = state.votes ?? [];
+      const voter = url.searchParams.get('voter_id');
+      const poll = url.searchParams.get('poll_id');
+      if (voter?.startsWith('eq.')) votes = votes.filter(vote => vote.voter_id === voter.slice(3));
+      if (poll?.startsWith('eq.')) votes = votes.filter(vote => vote.poll_id === poll.slice(3));
+      if (poll?.startsWith('in.(')) votes = votes.filter(vote => poll.slice(4, -1).split(',').includes(vote.poll_id));
+      return reply(url.searchParams.get('select') === 'poll_id' ? votes.map(vote => ({ poll_id: vote.poll_id })) : votes);
+    }
     if (url.pathname === '/rest/v1/poll_comments') return reply(state.comments ?? []);
     // Production still has no deployed profiles table: mirroring must never block a profile save.
     if (url.pathname === '/rest/v1/profiles') {

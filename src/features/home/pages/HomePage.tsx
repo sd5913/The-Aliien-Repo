@@ -38,8 +38,9 @@ function RetryIconButton({ onClick }: { onClick: () => void }) {
 
 export function HomePage() {
   const { t, locale, setLocale } = useLocale();
-  const { polls, loading, error, syncError, refresh, removePoll, updatePoll, hasMore, loadingMore, loadMore } =
-    usePolls({ recent: true });
+  const [recentPage, setRecentPage] = useState(0);
+  const { polls, loading, error, syncError, refresh, removePoll, updatePoll, hasMore } =
+    usePolls({ recent: true, page: recentPage });
   const {
     polls: squarePolls,
     loading: squareLoading,
@@ -53,12 +54,19 @@ export function HomePage() {
     loadMore: loadMoreSquare,
   } = usePolls({ square: true });
   const squareLoadMoreRef = useRef<HTMLDivElement>(null);
-  const recentLoadMoreRef = useRef<HTMLDivElement>(null);
+  const recentPanelRef = useRef<HTMLElement>(null);
+  const lastScrolledPage = useRef(0);
   const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
   const [ending, setEnding] = useState<Poll | null>(null);
   const [deleting, setDeleting] = useState<Poll | null>(null);
   const [toast, setToast] = useState<MessageKey | "">("");
   const { user: accountUser, loading: accountLoading } = useAccount();
+  useEffect(() => { setRecentPage(0); }, [accountUser?.id]);
+  useEffect(() => {
+    if (loading || lastScrolledPage.current === recentPage) return;
+    lastScrolledPage.current = recentPage;
+    recentPanelRef.current?.scrollIntoView({ block: "start" });
+  }, [recentPage, loading]);
   const [bannerVisible, setBannerVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(() => {
     try {
@@ -85,18 +93,14 @@ export function HomePage() {
   }, [accountLoading, accountUser, bannerDismissed]);
 
   useEffect(() => {
-    const squareActive = tab === "square";
-    const ref = squareActive ? squareLoadMoreRef.current : recentLoadMoreRef.current;
-    const activeHasMore = squareActive ? squareHasMore : hasMore;
-    const activeLoadingMore = squareActive ? squareLoadingMore : loadingMore;
-    const activeSyncError = squareActive ? squareSyncError : syncError;
-    if (!activeHasMore || activeLoadingMore || activeSyncError || !ref) return;
+    const ref = squareLoadMoreRef.current;
+    if (tab !== "square" || !squareHasMore || squareLoadingMore || squareSyncError || !ref) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) void (squareActive ? loadMoreSquare() : loadMore());
+      if (entries[0]?.isIntersecting) void loadMoreSquare();
     }, { rootMargin: "300px" });
     observer.observe(ref);
     return () => observer.disconnect();
-  }, [tab, squareHasMore, hasMore, squareLoadingMore, loadingMore, squareSyncError, syncError, loadMoreSquare, loadMore]);
+  }, [tab, squareHasMore, squareLoadingMore, squareSyncError, loadMoreSquare]);
 
   const confirmDelete = async () => {
     if (!deleting) return;
@@ -377,6 +381,7 @@ export function HomePage() {
       <section
         className="home-recent"
         id="home-recent-panel"
+        ref={recentPanelRef}
         role="tabpanel"
         aria-labelledby="home-recent-tab"
         hidden={tab !== "recent"}
@@ -421,20 +426,6 @@ export function HomePage() {
                 />
               ))}
             </div>
-            {hasMore && (
-              <div ref={recentLoadMoreRef} className="my-poll-load-more">
-                {loadingMore ? (
-                  <span className="loading-inline">
-                    <LoadingSpinner />
-                    <span>{t("poll.moreLoading")}</span>
-                  </span>
-                ) : (
-                  <button type="button" className="button-soft" onClick={() => void loadMore()}>
-                    {t("poll.more")}
-                  </button>
-                )}
-              </div>
-            )}
             {syncError && (
               <p className="settings-feedback" role="status">
                 {t("home.recentLoadFailed")}
@@ -468,6 +459,11 @@ export function HomePage() {
             </Link>
           </div>
         )}
+        {accountUser && (recentPage > 0 || hasMore) && <nav className="recent-pagination" aria-label={t("home.recentPagination")}>
+          <button type="button" className="button-soft" disabled={loading || recentPage === 0} onClick={() => setRecentPage(page => page - 1)}>{t("home.previousPage")}</button>
+          <span aria-live="polite">{t("home.pageNumber", { page: recentPage + 1 })}</span>
+          <button type="button" className="button-soft" disabled={loading || !hasMore || Boolean(error)} onClick={() => setRecentPage(page => page + 1)}>{t("home.nextPage")}</button>
+        </nav>}
       </section>
       {ending && (
         <Modal

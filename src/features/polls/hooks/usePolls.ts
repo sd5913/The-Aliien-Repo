@@ -17,7 +17,6 @@ import {
   fetchVotedPollsPage,
   submitVote,
   updatePollMeta,
-  RECENT_POLL_PAGE_SIZE,
   SQUARE_POLL_PAGE_SIZE,
 } from "../services/polls";
 import { getVoter, isPollOwner, isPollOpen } from "../utils/voting";
@@ -35,7 +34,7 @@ function metaChanged(current: Poll, updated: Poll): boolean {
 }
 
 type PollQuery =
-  | { recent: true }
+  | { recent: true; page?: number }
   | { square: true }
   | { owned: true; ownedFilter?: "active" | "ended" }
   | { voted: true; votedFilter?: "active" | "ended" }
@@ -43,6 +42,7 @@ type PollQuery =
 
 export function usePolls(query: PollQuery) {
   const recent = "recent" in query;
+  const recentPageIndex = "recent" in query ? query.page ?? 0 : 0;
   const square = "square" in query;
   const owned = "owned" in query;
   const ownedFilter = "owned" in query ? query.ownedFilter : undefined;
@@ -77,7 +77,7 @@ export function usePolls(query: PollQuery) {
       let nextHasMore = page?.hasMore ?? false;
       if (votedPage) { data = votedPage.polls; nextHasMore = votedPage.hasMore; }
       if (recent) {
-        const recentPage = await fetchRecentPolls(participant, user?.id, 0, RECENT_POLL_PAGE_SIZE);
+        const recentPage = await fetchRecentPolls(user?.id, recentPageIndex);
         data = recentPage.polls; nextHasMore = recentPage.hasMore;
       }
       if (square) {
@@ -98,7 +98,7 @@ export function usePolls(query: PollQuery) {
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [accountId, recent, square, owned, ownedFilter, voted, votedFilter, participant, pollId, metadataOnly]);
+  }, [accountId, recent, recentPageIndex, square, owned, ownedFilter, voted, votedFilter, participant, pollId, metadataOnly]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loadingMoreRef.current || loading) return;
@@ -113,9 +113,6 @@ export function usePolls(query: PollQuery) {
         next = page.polls; nextHasMore = page.hasMore;
       } else if (square) {
         const page = await fetchSquarePolls(participant, loadedCount.current, SQUARE_POLL_PAGE_SIZE);
-        next = page.polls; nextHasMore = page.hasMore;
-      } else if (recent) {
-        const page = await fetchRecentPolls(participant, user?.id, loadedCount.current, RECENT_POLL_PAGE_SIZE);
         next = page.polls; nextHasMore = page.hasMore;
       }
       if (!mounted.current || sequence !== requestSequence.current || revision !== version.current) return;

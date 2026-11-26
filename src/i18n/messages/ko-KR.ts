@@ -1,4 +1,8 @@
 export default {
+  "home.recentPagination": "최근 투표 페이지",
+  "home.previousPage": "이전",
+  "home.nextPage": "다음",
+  "home.pageNumber": "{page} 페이지",
   "feedback.title": "문제 신고",
   "feedback.intro": "어떤 문제가 있었나요?",
   "feedback.introBody": "겪으신 문제를 알려 주세요. 더 나은 BothPls를 함께 만들어요.",

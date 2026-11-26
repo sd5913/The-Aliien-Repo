@@ -1,4 +1,8 @@
 export default {
+  "home.recentPagination": "最近投票分页",
+  "home.previousPage": "上一页",
+  "home.nextPage": "下一页",
+  "home.pageNumber": "第 {page} 页",
   "feedback.title": "问题反馈",
   "feedback.intro": "哪里不太对劲？",
   "feedback.introBody": "告诉我们遇到的问题，一起让 BothPls 更好用。",

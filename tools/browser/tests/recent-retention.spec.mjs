@@ -54,9 +54,15 @@ test('older ended participation remains available past five records and across r
   await page.goto('/');
   await openRecent(page);
   await expect(recent(page).locator('.my-poll-card')).toHaveCount(10);
-  await recent(page).getByRole('button', { name: '载入更多投票' }).scrollIntoViewIfNeeded();
-  await expect(recent(page).locator('.my-poll-card')).toHaveCount(13);
+  await recent(page).getByRole('button', { name: '下一页' }).click();
+  await expect(recent(page).locator('.my-poll-card')).toHaveCount(3);
+  await expect(recent(page).getByText('第 2 页')).toBeVisible();
+  await expect(recent(page).getByRole('button', { name: '下一页' })).toBeDisabled();
+  await recent(page).getByRole('button', { name: '上一页' }).click();
+  await expect(recent(page).locator('.my-poll-card')).toHaveCount(10);
   await expect(recent(page).locator('.my-poll-card').first()).toContainText('已参与投票 12');
+  await recent(page).getByRole('button', { name: '下一页' }).click();
+  await expect(recent(page).locator('.my-poll-card')).toHaveCount(3);
   await expect(recent(page).locator('.my-poll-card').last()).toContainText('已参与投票 0');
   await recent(page).getByRole('link', { name: '已参与投票 0', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/poll/${pollId}/results`));

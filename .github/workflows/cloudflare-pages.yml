@@ -36,6 +36,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ci-placeholder-not-a-real-key
       - name: Check Pages SPA output
         run: test -f dist/index.html && test ! -f dist/404.html
+      - name: Test backend prerequisite checks
+        run: node tools/check-backend-prerequisites.test.mjs
 
   deploy:
     name: Deploy production
@@ -78,6 +80,11 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Check Pages SPA output
         run: test -f dist/index.html && test ! -f dist/404.html
+      - name: Check production database prerequisites
+        run: node tools/check-backend-prerequisites.mjs
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Upload to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
