@@ -677,6 +677,9 @@ h1, h2, h3 { color: var(--deep-purple); }
 .auth-tabs button.active { color: #fff; background: linear-gradient(100deg, #7c3aed, #a855f7); box-shadow: 0 4px 10px #7c3aed33; }
 .auth-form { padding: 18px 16px 16px; border: 1px solid #fff9; border-radius: 24px; background: #ffffffa8; box-shadow: var(--soft-shadow); }
 .auth-form .text-input { margin-bottom: 13px; }
+.auth-email-hint { margin: -5px 0 13px; color: #795e91; font-size: 11px; line-height: 1.65; }
+.auth-email-error { margin: -5px 0 13px; color: #b4233c; font-size: 11px; line-height: 1.6; }
+.auth-form .text-input[aria-invalid="true"] { border-color: #c45b75; }
 .auth-submit { margin-top: 4px; }
 .auth-remember { display: flex; align-items: center; gap: 7px; margin: -2px 0 13px; color: #8062a4; font-size: 11px; cursor: pointer; }
 .auth-remember input { accent-color: #7c3aed; }

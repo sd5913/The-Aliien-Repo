@@ -11,6 +11,7 @@ import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
 import { authCallbackUrl } from "../services/auth";
 import { isIosApp, publicAppOrigin } from "../../../lib/platform";
 import { signInWithNativeApple } from "../services/nativeApple";
+import { isValidEmail } from "../utils/email";
 
 type AuthMode = "login" | "register" | "reset";
 const validPassword = (value: string) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,32}$/.test(value);
@@ -19,6 +20,7 @@ function getAuthErrorKey(message: string, mode: AuthMode): MessageKey {
   const normalized = message.toLowerCase();
   if (normalized.includes("email rate limit") || normalized.includes("rate limit")) return "auth.rateLimit";
   if (normalized.includes("email not authorized")) return "auth.emailUnauthorized";
+  if (normalized.includes("email") && /invalid|not valid|format/.test(normalized)) return "auth.emailInvalid";
   if (normalized.includes("invalid login credentials")) return "auth.invalidCredentials";
   if (normalized.includes("already registered") || normalized.includes("already been registered")) return "auth.emailRegistered";
   return mode === "reset" ? "auth.resetFailed" : "auth.emailFailed";
@@ -72,6 +74,7 @@ export function AuthPage() {
     if (pending) return;
     const cleanEmail = email.trim(), cleanNickname = nickname.trim();
     if (!cleanEmail) { setFeedback("auth.emailRequired"); return; }
+    if (!isValidEmail(cleanEmail)) { setFeedback("auth.emailInvalid"); return; }
     if (mode === "register" && Array.from(cleanNickname).length < 2) { setFeedback("auth.nicknameRequired"); return; }
     setPending("email"); setFeedback("");
     try {
@@ -91,6 +94,7 @@ export function AuthPage() {
     setProviderError("");
     const cleanEmail = email.trim(), cleanNickname = nickname.trim();
     if (!recoveryActive && !cleanEmail) return setFeedback("auth.emailRequired");
+    if (!recoveryActive && !isValidEmail(cleanEmail)) return setFeedback("auth.emailInvalid");
     if (!recoveryActive && (mode === "login" || mode === "register") && !emailCodeSent) {
       await requestEmailCode();
       return;
@@ -135,6 +139,7 @@ export function AuthPage() {
     } catch { setProviderError(`auth.${provider}Failed` as MessageKey); setPending(null); }
   };
   const isPasswordForm = recoveryActive;
+  const emailError = feedback === "auth.emailRequired" || feedback === "auth.emailInvalid";
   const heading = recoveryActive ? "auth.chooseNewPassword" : mode === "reset" ? "auth.resetPassword" : mode === "login" ? "auth.welcome" : "auth.join";
   const intro = recoveryActive ? "auth.chooseNewPasswordIntro" : mode === "reset" ? "auth.resetPasswordIntro" : mode === "login" ? "auth.loginIntro" : "auth.registerIntro";
   const submitLabel = pending === "email" ? "auth.submitting" : recoveryActive ? "auth.updatePassword" : mode === "reset" ? "auth.sendResetLink" : emailCodeSent ? "auth.verifyCode" : "auth.sendCode";
@@ -145,7 +150,16 @@ export function AuthPage() {
     {mode !== "reset" && <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}><button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button><button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("register")}>{t("auth.register")}</button></div>}
     <form className="auth-form" onSubmit={submit}>
       {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label><input id="auth-nickname" className="text-input" required value={nickname} disabled={emailCodeSent} onChange={(event) => setNickname(Array.from(event.target.value).slice(0, 20).join(""))} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
-      {!recoveryActive && <><label className="field-label" htmlFor="auth-email">{t("common.email")}</label><input id="auth-email" className="text-input" required type="email" value={email} disabled={emailCodeSent} onChange={(event) => setEmail(event.target.value)} placeholder="name@gmail.com" autoComplete="email" /></>}
+      {!recoveryActive && <>
+        <label className="field-label" htmlFor="auth-email">{t("common.email")}</label>
+        <input id="auth-email" className="text-input" required type="email" maxLength={254} value={email} disabled={emailCodeSent}
+          aria-invalid={emailError || undefined} aria-describedby={`auth-email-hint${emailError ? " auth-email-error" : ""}`}
+          onChange={(event) => { setEmail(event.target.value); if (emailError) setFeedback(""); }}
+          onInvalid={(event) => { event.preventDefault(); setFeedback(email.trim() ? "auth.emailInvalid" : "auth.emailRequired"); event.currentTarget.focus(); }}
+          placeholder="name@gmail.com" autoComplete="email" />
+        <p id="auth-email-hint" className="auth-email-hint">{t("auth.emailHint")}</p>
+        {emailError && <p id="auth-email-error" className="auth-email-error" role="alert">{t(feedback)}</p>}
+      </>}
       {(mode === "login" || mode === "register") && emailCodeSent && <><label className="field-label" htmlFor="auth-email-code">{t("auth.emailCode")}</label><input id="auth-email-code" className="text-input" required inputMode="numeric" autoComplete="one-time-code" value={emailCode} onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="123456" /><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => { setEmailCode(""); setEmailCodeSent(false); setFeedback(""); }}>{t("auth.changeEmail")}</button><button className="auth-forgot-password" type="button" disabled={pending !== null} onClick={() => void requestEmailCode()}>{t("auth.resendCode")}</button></>}
       {(mode === "login" || mode === "register") && <label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /> <span>{t("auth.rememberMe")}</span></label>}
       {isPasswordForm && <><label className="field-label" htmlFor="auth-password">{t("auth.password")}</label><input id="auth-password" className="text-input" required type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={32} placeholder={t("auth.passwordHint")} autoComplete="new-password" /><label className="field-label" htmlFor="auth-confirmation">{t("auth.confirmPassword")}</label><input id="auth-confirmation" className="text-input" required type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={8} maxLength={32} autoComplete="new-password" /></>}
@@ -160,7 +174,7 @@ export function AuthPage() {
       <a className="auth-back-home auth-browser-link" href={authCallbackUrl(returnTo, publicAppOrigin)} target="_blank" rel="noopener noreferrer">{t("auth.iosBrowserLink")}</a>
       <p className="auth-legal">{t("auth.iosBrowserNote")}</p>
     </>}
-    {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.codeSent" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}
+    {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && !emailError && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.codeSent" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}
     {(isIosApp || mode === "register") ? <p className="auth-legal auth-agreement">{t("auth.legalAgree")} <Link className="auth-agreement-link" to="/terms">{t("auth.terms")}</Link> {t("auth.and")} <Link className="auth-agreement-link" to="/privacy">{t("auth.privacy")}</Link></p> : <p className="auth-legal">{t("auth.legal")}</p>}
   </section></PageShell>;
 }
