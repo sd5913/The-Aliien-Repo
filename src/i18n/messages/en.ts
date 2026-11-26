@@ -1,4 +1,11 @@
 export default {
+  "translation.notice": "Machine translated into English · May contain errors",
+  "translation.loading": "Translating into English…",
+  "translation.failed": "Translation unavailable. Showing original.",
+  "translation.original": "Original text",
+  "translation.showOriginal": "View original",
+  "translation.english": "View English",
+  "translation.retry": "Retry translation",
   "app.language": "Language",
   "app.title": "BothPls — Decide with friends",
   "app.description": "Can't decide? Create a BothPls poll and get your friends' opinions.",
