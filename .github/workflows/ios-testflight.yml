@@ -56,6 +56,12 @@ jobs:
           sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
           (( ${sdk%%.*} >= 26 ))
           bash .github/scripts/ios-prepare.sh
+      - name: Verify App Store Connect access
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          ASC_KEY: ${{ secrets.BOTHPLS_ASC_INDIVIDUAL_KEY_BASE64 }}
+          ASC_KEY_ID: ${{ vars.BOTHPLS_ASC_INDIVIDUAL_KEY_ID }}
+        run: node .github/scripts/ios-upload.mjs check-access
       - name: Sign and export the IPA
         if: steps.gate.outputs.enabled == 'true'
         env:
