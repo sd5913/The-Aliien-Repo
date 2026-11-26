@@ -1,103 +1,68 @@
 # BothPls 机器翻译配置与部署
 
-用户选择的界面语言就是投票译文语言。中文界面看中文译文，英文界面看英文译文，韩文界面看韩文译文；登录账号自己发布的投票始终显示原文。首页、投票详情和结果页采用同一规则。
+本说明对应 [PR 58](https://github.com/sd5913/The-Aliien-Repo/pull/58)。已改用开源 [translate.js](https://github.com/xnx3/translate)，固定依赖 i18n-jsautotranslate@4.0.0，使用 client.edge 通道。
 
-本说明对应 [机器翻译 PR 58](https://github.com/sd5913/The-Aliien-Repo/pull/58)。功能默认关闭，按以下步骤配置后再在预览环境验收。全程机器翻译，无人工审核；翻译范围为标题、说明和全部选项，不含评论或图片文字。
+**无需创建 Google Cloud 项目、配置翻译密钥或部署 Supabase 翻译函数。部署包含本 PR 的前端即可。** 网站原有数据库与登录配置仍需保留。
 
-# 一 翻译规则
+## 翻译规则
 
-| 用户选择 | 他人投票 | 自己发布的投票 |
+| 用户选择 | 他人投票 | 当前登录账号发布的投票 |
 | --- | --- | --- |
-| 中文 | 简体中文译文 | 原文 |
-| English | 英文译文 | 原文 |
-| 한국어 | 韩文译文 | 原文 |
+| 中文 | 简体中文 | 原文 |
+| English | 英文 | 原文 |
+| 한국어 | 韩文 | 原文 |
 
-“自己的投票”按当前登录账号与投票创建者 ID 判断。未登录时无法确认归属，按访客浏览规则翻译。切换语言后重新选择对应译文；缓存按投票、内容版本和目标语言隔离。翻译失败继续显示原文，并提供重试，不影响投票。支持语言以翻译服务为准，短词、俚语或混合语言仍可能误译。
+首页、投票详情与结果页遵循同一规则。只翻译标题、描述和全部选项文字，不识别或修改图片，不翻译评论。原始内容、选项 ID 和票数不变；提供查看原文与重试。未登录时无法确认归属，按访客规则翻译。
 
-# 二 获取 Google 翻译密钥
+纯机器翻译，无人工审核；支持语言和质量取决于通道，不能保证任意语言、俚语或短词都准确。
 
-1. 打开 [Google Cloud 控制台](https://console.cloud.google.com/)，创建或选择一个用于翻译测试的项目。
-2. 为该项目启用结算，再进入 APIs & Services 的 Library，搜索并启用 Cloud Translation API。
-3. 进入 APIs & Services 的 Credentials，创建 API key。当前代码使用 Cloud Translation Basic v2，可用 API key；不是 Gemini API key，也不使用 Advanced v3。
-4. 编辑该密钥，在 API restrictions 中限制为 Cloud Translation API。密钥用于 Supabase 服务端调用，不应使用只允许网页来源的 HTTP referrer 限制；若已有固定出口 IP，可按实际出口配置 IP 限制。
-5. 在 Cloud Translation 的 Quotas 页面降低每日字符额度，用于控制试点开销。默认每日字符额度可能不限量，预算提醒不等于自动停用。
+## 部署
 
-密钥是敏感信息：直接保存到下一步的 Supabase Secrets，不要发到聊天、PR、截图或提交进 Git。参考 [Google 开通说明](https://docs.cloud.google.com/translate/docs/setup)、[Basic v2 密钥支持](https://docs.cloud.google.com/translate/docs/authentication)、[密钥限制](https://docs.cloud.google.com/docs/authentication/api-keys) 和 [配额说明](https://docs.cloud.google.com/translate/quotas)。
+1. 使用 PR 58 分支 codex/poll-machine-translation 的最新代码创建前端预览部署。依赖随正常安装步骤安装，无需添加 CDN 脚本。
+2. 翻译默认开启。若环境原来设置了 `VITE_POLL_TRANSLATION_ENABLED=false`，改成 `true` 或移除，然后重新构建部署。
+3. 保留网站已有的 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。翻译不再需要额外密钥。
+4. 预览验收通过后再合并、部署正式网站。提交 PR 不代表正式网站已上线。
 
-# 三 在 Supabase 配置密钥
-
-打开网站使用的 Supabase 项目，进入 Edge Functions 的 Secrets 页面，新增并保存：
-
-| Name | Value |
-| --- | --- |
-| GOOGLE_TRANSLATE_API_KEY | 上一步创建的真实 Google API key |
-
-先确认项目与前端的 `VITE_SUPABASE_URL` 指向同一环境。若使用独立测试 Supabase 项目，该项目需要已有应用数据库和投票读取函数；仅部署翻译函数不会建立整套数据库。
-
-运行环境会提供 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`，无需将 Google 密钥填入这两个变量。不要创建 `VITE_GOOGLE_TRANSLATE_API_KEY`；以 `VITE_` 开头的变量可能进入浏览器构建。
-
-保存成功后，在 Secrets 列表能看到变量名即可，不需要再次展示密钥值。操作参考 [Supabase Secrets 文档](https://supabase.com/docs/guides/functions/secrets)。
-
-# 四 部署翻译函数
-
-以下命令适用于本仓库已安装的 Supabase CLI 3.2.0。终端进入项目，使用 PR 58 的最新分支代码：
+本地运行：
 
 ```powershell
-Set-Location E:\xyt\bothpls\The-Aliien-Repo
-git switch codex/poll-machine-translation
-git pull --ff-only
-npx supabase login
-npx supabase functions deploy translate-poll --remote=YOUR_PROJECT_REF --use-api
-```
-
-把 `YOUR_PROJECT_REF` 换成目标 Supabase 项目的 reference ID；通常是项目地址 `https://项目编号.supabase.co` 中的编号，不是 Google 项目 ID。检查 CLI 显示的目标后确认执行。若本地有未提交改动，先保存工作，再切换分支。
-
-`--use-api` 使用服务端打包，无需本地 Docker。CLI 3 使用 `--remote`，不要照搬旧教程的 `--project-ref`；若版本不同，先查看 `npx supabase functions deploy --help`。
-
-仓库的 `supabase/config.toml` 已为 `translate-poll` 设置 `verify_jwt = false`，以支持游客浏览；函数仍通过现有 `get_poll_by_link` 规则读取内容，不使用 service-role 绕过读取规则。部署后在 Edge Functions 列表确认 `translate-poll` 存在。这项功能不需要新的数据库迁移。参考 [Edge Function 部署说明](https://supabase.com/docs/guides/functions/deploy)。
-
-# 五 在网站预览环境开启功能
-
-若前端托管在 Vercel，打开对应项目的 Environment Variables，给 Preview 环境添加：
-
-```text
-VITE_POLL_TRANSLATION_ENABLED=true
-```
-
-确认同一 Preview 环境已有正确的 `VITE_SUPABASE_URL` 与 `VITE_SUPABASE_ANON_KEY`，然后重新部署 PR 58 对应的分支预览。Supabase 函数部署和 Vercel 前端部署是两个独立步骤。修改环境变量不会改变旧部署，必须重新构建。[Vercel 环境变量说明](https://vercel.com/docs/environment-variables/managing-environment-variables)
-
-本地测试可在终端临时开启，无需修改密钥文件：
-
-```powershell
-$env:VITE_POLL_TRANSLATION_ENABLED = "true"
+npm ci
 npm run dev
 ```
 
-真实服务验收通过后，再将功能代码合并到正式分支，为 Production 配置同名开关并重新部署。不要只给旧主分支加开关；它必须包含 PR 58 的代码。
+构建检查：`npm run build`。关闭翻译：设置 `VITE_POLL_TRANSLATION_ENABLED=false` 后重新构建部署。环境变量修改不影响已经生成的前端文件。
 
-# 六 验收方法
+若已按旧文档部署 translate-poll 或配置 GOOGLE_TRANSLATE_API_KEY，新版本不会调用它们；确认无其他用途后可自行清理。本次未删除任何云端资源。
 
-准备两个账号 A 和 B。用 A 发布一条包含日文标题、西班牙文说明及不同语言选项的投票，用 B 浏览。
+## 请求与缓存
 
-1. B 选择中文：首页与详情显示中文译文，查看原文可看到 A 的原始内容。
-2. B 切换 English 和 한국어：他人投票分别显示英文、韩文，不复用错误语言的缓存。
-3. A 查看自己的投票：无论界面语言如何变化，标题、说明和选项均保持原文，不发起自动翻译请求。
-4. B 在译文下投票：提交的仍是原选项 ID，票数和选项对应关系正确。
-5. A 修改原文后，B 再次查看：新内容重新翻译。
-6. 在测试环境使翻译服务不可用：显示原文和重试入口，仍可正常浏览与投票。
+浏览器通过 translate.js 直接向 edge.microsoft.com 发送待翻译文字和目标语言，不发送应用登录令牌、投票 ID 或用户 ID。他人投票文字交由外部服务处理，包括浏览者有权限访问的链接投票。当前账号自己的投票不发起此请求。
 
-浏览器 Network 中的 `translate-poll` 请求应只有投票 ID 与目标语言：中文为 `zh-CN`、英文为 `en`、韩文为 `ko`；请求中不应出现 Google 密钥。自动化测试使用模拟翻译响应，真实质量需按以上步骤验收。
+只调用文本接口，不启用整页扫描、DOM 替换或额外语言选择器。内存缓存按投票 ID、完整原文和目标语言隔离，最多 200 条、有效期一小时；刷新可能重新请求。空白字段保留，重复文字复用结果。请求超时或失败显示原文，仍可投票。
 
-# 七 常见问题和回退
+client.edge 不要求本站配置 API key，但依赖外部接口及用户网络，不承诺无限额度或长期可用性。若网站自行配置 CSP，connect-src 需要允许 https://edge.microsoft.com。
 
-| 现象 | 检查位置 |
+## 验收
+
+准备账号 A、B，用 A 发布日文标题、西班牙文说明和中韩文选项的投票。
+
+1. B 分别选择中英韩：首页、详情、结果显示对应译文，查看原文可还原。
+2. A 查看自己的投票：任何界面语言下都保留原文，不请求翻译。
+3. B 在译文下投票：提交原始选项 ID，结果对应正确。
+4. A 修改内容后，B 再次读取时获得新内容译文。
+5. 阻断翻译网络：原文仍可读、可投票，恢复后重试成功。
+
+Network 中应出现 edge.microsoft.com/translate/translatetext 请求，目标为 zh-CHS、en 或 ko。省略源语言参数以自动识别每段文字：该接口拒绝 from=auto，适配层已修正 translate.js 默认 URL。
+
+自动化浏览器测试模拟上游响应验证交互与失败路径；另已使用虚构混合语言短句，在真实浏览器中成功获得中英韩译文。此检查不代表正式网站已部署，也不保证所有地区网络可用。
+
+## 常见问题
+
+| 现象 | 检查 |
 | --- | --- |
-| 完全没有翻译提示 | 功能开关是否在当前环境开启并重新构建；是否正在看自己的投票 |
-| 函数不存在或请求 404 | 前端 Supabase 地址与部署目标是否一致；函数名是否为 translate-poll |
-| TRANSLATION_UNAVAILABLE | Supabase Secrets 是否配置 GOOGLE_TRANSLATE_API_KEY |
-| INVALID_TARGET 或切换语言无效 | 前后端是否都部署了 PR 58 最新版本 |
-| TRANSLATION_FAILED | 检查 Google API 是否启用、结算、密钥限制、字符配额和网络状态 |
-| POLL_UNAVAILABLE | 投票是否已删除，现有读取 RPC 与账号访问状态是否正常 |
-| RATE_LIMITED | 当前 worker 的翻译调用达到限制，稍后重试 |
+| 没有翻译提示 | 是否看自己的投票；部署是否包含 PR；开关是否为 false |
+| 翻译不可用 | Network 请求、网络、CSP、上游错误或限流；恢复后重试 |
+| 切换语言后不变 | 是否查看原文或自己的投票；是否打开旧部署 |
+| 文字不准确 | 短词、专有名词、混合语言可能误译，可查看原文 |
 
-需要回退时，将前端 `VITE_POLL_TRANSLATION_ENABLED` 设为 `false` 后重新部署，页面恢复原文显示。缓存为内存缓存，不是永久译文库；冷启动或不同 worker 可能重复调用并计费。Google 字符配额用于限制整体用量，当前 worker 的限流不能替代全局配额。
+参考：[文本接口](https://translate.zvo.cn/4077.html)、[通道说明](https://translate.zvo.cn/4081.html)。

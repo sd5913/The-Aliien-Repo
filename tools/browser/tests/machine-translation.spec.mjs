@@ -7,19 +7,20 @@ async function setup(page, { locale = 'en-US', accountId = null } = {}) {
   state.polls[0].poll_options[0].label = '散步'; state.polls[0].poll_options[1].label = '커피';
   state.translationCalls = 0; state.targets = [];
   await page.addInitScript(locale => { if (!localStorage.getItem('bothpls:locale')) localStorage.setItem('bothpls:locale', locale); }, locale);
-  await page.route('**/functions/v1/translate-poll', async route => {
+  await page.route('https://edge.microsoft.com/translate/translatetext?**', async route => {
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
-    const { target } = route.request().postDataJSON(); state.targets.push(target);
+    const url = new URL(route.request().url());
+    expect(url.searchParams.has('from')).toBe(false);
+    const target = url.searchParams.get('to') === 'zh-CHS' ? 'zh-CN' : url.searchParams.get('to');
+    state.targets.push(target);
     const words = target === 'zh-CN' ? ['周末计划', '你更喜欢什么？', '散步', '咖啡'] : target === 'ko' ? ['주말 계획', '무엇을 선호하나요?', '산책', '커피'] : ['Weekend plans', 'What do you prefer?', 'Take a walk', 'Coffee'];
     state.translationCalls++;
+    const texts = route.request().postDataJSON();
+    const translations = texts.map(text => text === '新しい質問' ? 'Updated question' : words[['週末の予定', '¿Qué prefieres?', '散步', '커피'].indexOf(text)] ?? text);
     if (state.delay) await new Promise(resolve => setTimeout(resolve, state.delay));
-    const row = state.polls[0];
-    const sourceKey = JSON.stringify({ title: row.title, description: row.description,
-      options: row.poll_options.map(o => ({ id: o.id, name: o.label })) });
-    await route.fulfill({ status: state.fail ? 502 : 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json',
-      body: JSON.stringify(state.fail ? { error: 'TRANSLATION_FAILED' } : { sourceKey: state.stale ? 'old' : sourceKey, target: state.wrongTarget ? 'wrong' : target,
-        title: row.title === '新しい質問' ? 'Updated question' : words[0], description: words[1],
-        options: row.poll_options.map((o, i) => ({ id: o.id, name: words[i + 2] })) }) });
+    const result = translations.map(text => ({ translations: [{ text: state.empty ? '' : text, to: target }] }));
+    if (state.incomplete) result.pop();
+    await route.fulfill({ status: state.fail ? 502 : 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify(state.fail ? { error: 'TRANSLATION_FAILED' } : result) });
   });
   return state;
 }
@@ -52,8 +53,8 @@ test('failure keeps original usable and retry succeeds', async ({ page }) => {
   state.fail = false; await page.getByRole('button', { name: 'Retry translation' }).click();
   await expect(page.locator('.voting-title h1, .results-heading h1')).toHaveText('Weekend plans');
 });
-test('stale provider response cannot replace current content', async ({ page }) => {
-  const state = await setup(page); state.stale = true;
+test('incomplete provider response keeps original content', async ({ page }) => {
+  const state = await setup(page); state.incomplete = true;
   await page.goto(`/poll/${pollId}`);
   await expect(page.locator('.poll-translation')).toContainText('Translation unavailable');
   await expect(page.locator('.voting-title h1, .results-heading h1')).toHaveText('週末の予定');
@@ -128,9 +129,21 @@ test('changing user language changes target and does not reuse another language 
   await expect(page.locator('.my-poll-card h3').first()).toHaveText('周末计划');
   expect(state.targets).toEqual(['en', 'zh-CN']);
 });
-test('response in wrong target language falls back to original', async ({ page }) => {
-  const state = await setup(page); state.wrongTarget = true;
+test('empty translation falls back to original', async ({ page }) => {
+  const state = await setup(page); state.empty = true;
   await page.goto(`/poll/${pollId}`);
   await expect(page.locator('.poll-translation')).toContainText('Translation unavailable');
   await expect(page.locator('.voting-title h1')).toHaveText('週末の予定');
+});
+
+test('duplicate text and blank descriptions preserve every option', async ({ page }) => {
+  const state = await setup(page);
+  state.polls[0].description = '';
+  state.polls[0].poll_options[1].label = '散步';
+  await page.goto(`/poll/${pollId}`);
+  await expect(page.locator('.voting-title h1')).toHaveText('Weekend plans');
+  await expect(page.locator('.text-option-content strong')).toHaveText('Take a walk');
+  await page.locator('.carousel-arrow-next').click();
+  await expect(page.locator('.text-option-content strong')).toHaveText('Take a walk');
+  expect(state.translationCalls).toBe(1);
 });

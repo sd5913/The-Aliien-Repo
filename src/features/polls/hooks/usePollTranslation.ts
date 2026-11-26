@@ -8,7 +8,7 @@ export function usePollTranslation(source: Poll | undefined) {
   const { locale } = useLocale();
   const { user, loading: accountLoading } = useAccount();
   const target = locale === "zh-CN" ? "zh-CN" : locale === "ko-KR" ? "ko" : "en";
-  const enabled = import.meta.env.VITE_POLL_TRANSLATION_ENABLED === "true" && !accountLoading
+  const enabled = import.meta.env.VITE_POLL_TRANSLATION_ENABLED !== "false" && !accountLoading
     && Boolean(source) && !(user && source?.creatorId === user.id);
   const sourceKey = source ? pollSourceKey(source) : "";
   const id = source?.id ?? "";
