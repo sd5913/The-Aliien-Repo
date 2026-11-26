@@ -34,6 +34,7 @@ test('non-owner cannot share public polls via voting, results or recent lists', 
   await expect(page.getByRole('dialog', { name: '把选择分享出去' })).toHaveCount(0);
   await page.goto('/');
   const recent = page.locator('.home-recent:not(.home-square)');
+  await page.getByRole('tab', { name: '最近', exact: true }).click();
   await expect(recent.getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   await expect(recent.getByRole('button', { name: '分享投票' })).toHaveCount(0);
   expect(state.calls.some((call) => call.name === 'submit_ballot')).toBe(true);

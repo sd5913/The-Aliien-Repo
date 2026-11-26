@@ -8,7 +8,7 @@ test('guest browses, selects B, logs in, reloads and explicitly confirms once', 
   const target = '/poll/' + pollId + '?returnTo=%2Fsettings#choice';
   await page.goto(target);
   await expect(page.getByLabel('说说你为甚么喜欢这个选项')).toHaveCount(0);
-  await expect(page.locator('#vote-comment')).toBeDisabled();
+  await expect(page.locator('#vote-comment')).not.toBeEditable();
   await page.getByRole('button', { name: '下一个选项' }).click();
   await page.getByRole('button', { name: '选择当前选项 B', exact: false }).click();
   await expect(page).toHaveURL(url => url.pathname === '/auth' && url.searchParams.get('returnTo') === target);
@@ -112,6 +112,7 @@ test('account switches keep separate vote and comment drafts', async ({ page }) 
 test('signed-in accounts can open poll cards while legacy read RPCs are still deployed', async ({ page }) => {
   const state = await mockApp(page, { legacyAccountReads: true });
   await page.goto('/');
+  await page.getByRole('tab', { name: '最近', exact: true }).click();
   await expect(page.locator('.home-recent:not(.home-square)').getByRole('heading', { name: '浏览器测试投票' })).toBeVisible();
   await page.getByRole('tab', { name: '广场', exact: true }).click();
   await page.locator('.home-square').getByRole('heading', { name: '浏览器测试投票' }).click();

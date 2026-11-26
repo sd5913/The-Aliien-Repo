@@ -50,7 +50,7 @@ test('changing language during editing keeps the route, account and original con
 });
 
 test('an account retains language, vote and comment across switching and reload', async ({ page }, info) => {
-  const state = await mockApp(page);
+  const state = await mockApp(page, { accountId: '10000000-0000-4000-8000-000000000099' });
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto(sharedPoll);
   await chooseLanguage(page, 'ko-KR');
@@ -121,12 +121,12 @@ test('the share PNG and its accessible text switch languages without changing th
   const image = dialog.getByRole('img');
   await expect(image).toHaveAttribute('src', /^data:image\/png/);
   const originalImage = await image.getAttribute('src');
-  expect(await page.evaluate(() => window.ticketText)).toContain('扫描二维码，帮我选一选');
+  expect(await page.evaluate(() => window.ticketText)).toContain('扫码识别，帮我选一选');
   await chooseLanguage(page, 'en-US');
   await expect(image).toHaveAccessibleName('Share ticket for “浏览器测试投票” with 2 options');
   await expect(image).not.toHaveAttribute('src', originalImage);
   expect(await page.evaluate(() => window.ticketText)).toContain('Scan to help me choose');
-  await expect(dialog.getByRole('textbox', { name: 'Public poll link' })).toHaveValue(`${new URL(page.url()).origin}${sharedPoll}`);
+  expect(await page.evaluate(() => window.shareClipboardWrites)).toContain(`${new URL(page.url()).origin}${sharedPoll}`);
   await chooseLanguage(page, 'ko-KR');
   await expect(image).toHaveAccessibleName('‘浏览器测试投票’ 공유 티켓, 선택지 2개');
   expect(await page.evaluate(() => window.ticketText)).toEqual(expect.arrayContaining([
@@ -149,13 +149,13 @@ test('language persists from home to auth and updates metadata and validation', 
     );
   }
   await page.screenshot({ path: info.outputPath('home-en.png') });
-  await page.getByRole('link', { name: /Sign in \/ Sign up/ }).click();
+  await page.goto('/auth?mode=login');
   await expect(page.getByRole('button', { name: 'Sign in with GitHub' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue with email' }).click();
-  await expect(page.getByRole('status')).toHaveText('Enter your email address.');
+  await page.getByRole('button', { name: 'Send code' }).click();
+  expect(await page.locator('#auth-email').evaluate(el => el.validity.valueMissing)).toBe(true);
   await chooseLanguage(page, 'ko-KR');
-  await page.getByRole('button', { name: '이메일로 계속하기' }).click();
-  await expect(page.getByRole('status')).toHaveText('이메일 주소를 입력해 주세요.');
+  await page.getByRole('button', { name: '인증 코드 보내기' }).click();
+  expect(await page.locator('#auth-email').evaluate(el => el.validity.valueMissing)).toBe(true);
   await expect(page).toHaveTitle('BothPls — 친구와 함께 골라요');
   await page.screenshot({ path: info.outputPath('auth-ko.png') });
   await page.goto('/missing-page');

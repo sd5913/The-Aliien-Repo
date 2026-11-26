@@ -1,0 +1,78 @@
+name: Upload BothPls to TestFlight
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+concurrency:
+  group: bothpls-testflight
+  queue: max
+jobs:
+  upload:
+    if: github.repository == 'sd5913/The-Aliien-Repo' && github.ref == 'refs/heads/main' && github.ref_protected
+    environment: bothpls-testflight
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Check opt-in
+        id: gate
+        env:
+          ENABLED: ${{ vars.BOTHPLS_TESTFLIGHT_ENABLED }}
+        run: |
+          if [[ "$ENABLED" == true ]]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+            echo "IPA_DIR=$RUNNER_TEMP/bothpls-ipa" >> "$GITHUB_ENV"
+          else
+            echo 'TestFlight automation is disabled.'
+          fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Prepare without Apple credentials
+        id: prepare
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_APP_ORIGIN: ${{ vars.VITE_PUBLIC_APP_ORIGIN }}
+        run: |
+          current_main="$(git ls-remote --exit-code origin refs/heads/main | cut -f1)"
+          if [[ "$current_main" != "$GITHUB_SHA" ]]; then
+            echo 'Dispatch a new run for the current main commit.' >&2
+            exit 1
+          fi
+          number="$(node .github/scripts/ios-upload.mjs build-number)"
+          echo "build=$number" >> "$GITHUB_OUTPUT"
+          xcodebuild -version
+          sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          (( ${sdk%%.*} >= 26 ))
+          bash .github/scripts/ios-prepare.sh
+      - name: Sign and export the IPA
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          BUILD_NUMBER: ${{ steps.prepare.outputs.build }}
+          APPLE_TEAM_ID: ${{ vars.BOTHPLS_APPLE_TEAM_ID }}
+          DISTRIBUTION_P12: ${{ secrets.BOTHPLS_DISTRIBUTION_P12_BASE64 }}
+          DISTRIBUTION_PASSWORD: ${{ secrets.BOTHPLS_DISTRIBUTION_P12_PASSWORD }}
+          PROVISIONING_PROFILE: ${{ secrets.BOTHPLS_PROVISIONING_PROFILE_BASE64 }}
+        run: bash .github/scripts/ios-testflight.sh
+      - name: Upload to App Store Connect
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          BUILD_NUMBER: ${{ steps.prepare.outputs.build }}
+          ASC_KEY: ${{ secrets.BOTHPLS_ASC_INDIVIDUAL_KEY_BASE64 }}
+          ASC_KEY_ID: ${{ vars.BOTHPLS_ASC_INDIVIDUAL_KEY_ID }}
+        run: |
+          node .github/scripts/ios-upload.mjs upload "$IPA_DIR/BothPls.ipa" "$(cat "$IPA_DIR/version")" "$BUILD_NUMBER"
+      - name: Remove the local export
+        if: always() && steps.gate.outputs.enabled == 'true'
+        run: rm -rf "$IPA_DIR"

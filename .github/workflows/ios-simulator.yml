@@ -1,0 +1,45 @@
+name: iOS Simulator
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-simulator-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned iOS simulator app
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-not-a-real-key
+      VITE_PUBLIC_APP_ORIGIN: https://bothpls.example
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check native nonce generation
+        run: |
+          xcodebuild -version
+          xcrun swiftc ios/App/App/AppleNonce.swift tools/ios/AppleNonceCheck.swift -o "$RUNNER_TEMP/apple-nonce-check"
+          "$RUNNER_TEMP/apple-nonce-check"
+      - run: npm run ios:sync
+      - name: Build for the iOS Simulator
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/bothpls-ios" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
+          test -x "$RUNNER_TEMP/bothpls-ios/Build/Products/Debug-iphonesimulator/App.app/App"
+          test -f "$RUNNER_TEMP/bothpls-ios/Build/Products/Debug-iphonesimulator/App.app/public/index.html"

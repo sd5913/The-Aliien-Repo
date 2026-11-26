@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "ios:sync": "npm run build -- --mode ios && cap sync ios",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/core": "8.6.2",
+    "@capacitor/ios": "8.6.2",
     "@supabase/supabase-js": "^2.119.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
@@ -16,6 +19,7 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.6.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

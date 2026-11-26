@@ -6,6 +6,7 @@ supabase/.temp/
 tools/browser/test-results/
 tools/browser/playwright-report/
 dist/
+dist-ios/
 *.tsbuildinfo
 .env
 .env.*

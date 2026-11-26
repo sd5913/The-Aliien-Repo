@@ -10,7 +10,11 @@ async function load(file, replacements = []) {
 }
 const memory = new Map([["bothpls:voter:v1", JSON.stringify({ id: "old-guest", nickname: "历史昵称", participantReady: true, participantToken: "c".repeat(64) })]]);
 globalThis.window = { localStorage: { removeItem: key => memory.delete(key) } };
-const identity = await load("./participant.ts", [[/import \{ VOTER_STORAGE_KEY \} from [^;]+;/, 'const VOTER_STORAGE_KEY = "bothpls:voter:v1";']]);
+globalThis.profileTest = await load("../../settings/utils/profile.ts", [[/import \{ fetchProfile, type Profile \} from [^;]+;/, 'const fetchProfile = async () => { throw new Error("Unexpected profile request"); };']]);
+const identity = await load("./participant.ts", [
+  [/import \{ VOTER_STORAGE_KEY \} from [^;]+;/, 'const VOTER_STORAGE_KEY = "bothpls:voter:v1";'],
+  [/import \{ displayAvatar \} from [^;]+;/, 'const { displayAvatar } = globalThis.profileTest;'],
+]);
 globalThis.identityTest = identity;
 const voting = await load("../../polls/utils/voting.ts", [[/import \{ readParticipant \} from [^;]+;/, 'const { readParticipant } = globalThis.identityTest;']]);
 assert.equal(identity.readParticipant(), null, "Legacy browser credentials cannot authorize writes");
@@ -28,4 +32,5 @@ assert.equal(voting.getVoter().id, "");
 identity.clearParticipant();
 assert.equal(memory.size, 0);
 delete globalThis.identityTest;
+delete globalThis.profileTest;
 console.log("Passed: legacy credential rejection, account identity, switches, anonymous sessions and sign-out.");

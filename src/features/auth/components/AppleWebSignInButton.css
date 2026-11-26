@@ -20,3 +20,4 @@
 .auth-apple-web:focus-visible { outline: 3px solid #6d28d9; outline-offset: 3px; }
 .auth-apple-web:disabled { cursor: wait; opacity: .65; }
 .auth-apple-web + .auth-github { margin-top: 12px; }
+.auth-browser-link { display: block; margin-top: 16px; text-align: center; }

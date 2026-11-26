@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { isIosApp } from "../platform";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -35,4 +36,6 @@ export function setSessionPersistence(rememberMe: boolean) {
   else window.sessionStorage.setItem(persistenceKey, "session");
 }
 
-export const supabase = createClient(url, anonKey, { auth: { storage: authStorage } });
+export const supabase = createClient(url, anonKey, {
+  auth: { storage: authStorage, detectSessionInUrl: !isIosApp },
+});

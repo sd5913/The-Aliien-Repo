@@ -1,4 +1,7 @@
 export default {
+  "auth.iosIntro": "Sign in with Apple to keep making decisions with friends.",
+  "auth.iosBrowserLink": "Use email, Google or GitHub in your browser",
+  "auth.iosBrowserNote": "Browser sign-in does not sign you into the app. Guests can browse; voting requires an account.",
   "app.language": "Language",
   "app.title": "BothPls — Decide with friends",
   "app.description": "Can't decide? Create a BothPls poll and get your friends' opinions.",

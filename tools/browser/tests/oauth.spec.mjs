@@ -50,6 +50,6 @@ test('GitHub cancellation displays retry feedback and keeps email sign-in availa
   await page.getByRole('button', { name: '以 GitHub 登录' }).click();
   await expect(page.getByRole('alert')).toHaveText('未完成登录，请再试一次。');
   await expect(page.getByRole('button', { name: '以 GitHub 登录' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: '继续使用邮箱' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '发送验证码' })).toBeEnabled();
   await expect(page.getByText('Sensitive provider detail')).toHaveCount(0);
 });

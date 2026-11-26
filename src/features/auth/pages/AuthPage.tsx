@@ -8,6 +8,9 @@ import { accountReturnTo } from "../utils/navigation";
 import { PageShell } from "../../../components/layout/PageShell";
 import { sendEmailCode, sendPasswordRecoveryEmail, signInWithApple, signInWithGitHub, signInWithGoogle, updatePassword, verifyEmailCode } from "../services/auth";
 import { AppleWebSignInButton } from "../components/AppleWebSignInButton";
+import { authCallbackUrl } from "../services/auth";
+import { isIosApp, publicAppOrigin } from "../../../lib/platform";
+import { signInWithNativeApple } from "../services/nativeApple";
 
 type AuthMode = "login" | "register" | "reset";
 const validPassword = (value: string) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,32}$/.test(value);
@@ -27,7 +30,7 @@ export function AuthPage() {
   const { hash } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedMode = searchParams.get("mode");
-  const mode: AuthMode = requestedMode === "login" || requestedMode === "reset" ? requestedMode : "register";
+  const mode: AuthMode = isIosApp ? "login" : requestedMode === "login" || requestedMode === "reset" ? requestedMode : "register";
   const returnTo = accountReturnTo(searchParams.get("returnTo"));
   const { user, loading: accountLoading } = useAccount();
   const [email, setEmail] = useState("");
@@ -121,6 +124,11 @@ export function AuthPage() {
     if (pending) return;
     setPending(provider); setFeedback(""); setProviderError("");
     try {
+      if (isIosApp && provider === "apple") {
+        await signInWithNativeApple();
+        setPending(null);
+        return;
+      }
       const signIn = provider === "github" ? signInWithGitHub : provider === "google" ? signInWithGoogle : signInWithApple;
       const { data, error } = await signIn(returnTo);
       if (error || !data.url) throw new Error(`${provider} sign-in did not start`);
@@ -132,7 +140,8 @@ export function AuthPage() {
   const submitLabel = pending === "email" ? "auth.submitting" : recoveryActive ? "auth.updatePassword" : mode === "reset" ? "auth.sendResetLink" : emailCodeSent ? "auth.verifyCode" : "auth.sendCode";
 
   return <PageShell showNavigation={false} headerAction={<Link className="auth-back-home" to="/">{t("auth.browse")}</Link>}><section className="auth-page">
-    <span className="eyebrow">WELCOME TO BOTHPLS</span><h1>{t(heading)}</h1><p className="auth-subtitle">{t(intro)}</p>
+    <span className="eyebrow">WELCOME TO BOTHPLS</span><h1>{t(heading)}</h1><p className="auth-subtitle">{t(isIosApp ? "auth.iosIntro" : intro)}</p>
+    {!isIosApp && <>
     {mode !== "reset" && <div className="auth-tabs" role="tablist" aria-label={t("auth.tabs")}><button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("login")}>{t("auth.login")}</button><button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} disabled={pending !== null} onClick={() => switchMode("register")}>{t("auth.register")}</button></div>}
     <form className="auth-form" onSubmit={submit}>
       {mode === "register" && <><label className="field-label" htmlFor="auth-nickname">{t("common.nickname")} <span className="optional">{t("profile.required")}</span></label><input id="auth-nickname" className="text-input" required value={nickname} disabled={emailCodeSent} onChange={(event) => setNickname(Array.from(event.target.value).slice(0, 20).join(""))} placeholder={t("auth.nicknameHint")} autoComplete="nickname" /></>}
@@ -145,7 +154,13 @@ export function AuthPage() {
       {mode !== "reset" && <p className="auth-mode-prompt">{t(mode === "register" ? "auth.haveAccount" : "auth.noAccount")} <button type="button" disabled={pending !== null} onClick={() => switchMode(mode === "register" ? "login" : "register")}>{t(mode === "register" ? "auth.goLogin" : "auth.goRegister")}</button></p>}
     </form>
     {mode !== "reset" && <><div className="auth-divider" aria-hidden="true">{t("auth.or")}</div><AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={() => void submitProvider("apple")} /><button className="auth-github button-full" type="button" onClick={() => void submitProvider("github")} disabled={pending !== null}>{pending === "github" ? t("auth.githubPending") : t("auth.github")}</button><button className="auth-google button-full" type="button" onClick={() => void submitProvider("google")} disabled={pending !== null}>{pending === "google" ? t("auth.googlePending") : t("auth.google")}</button></>}
+    </>}
+    {isIosApp && <>
+      <AppleWebSignInButton busy={pending === "apple"} disabled={pending !== null} onClick={() => void submitProvider("apple")} />
+      <a className="auth-back-home auth-browser-link" href={authCallbackUrl(returnTo, publicAppOrigin)} target="_blank" rel="noopener noreferrer">{t("auth.iosBrowserLink")}</a>
+      <p className="auth-legal">{t("auth.iosBrowserNote")}</p>
+    </>}
     {providerError && <p className="auth-feedback" role="alert">{t(providerError)}</p>}{feedback && <p className="auth-feedback" role={feedback === "auth.registered" || feedback === "auth.confirmEmail" || feedback === "auth.codeSent" || feedback === "auth.resetSent" || feedback === "auth.passwordUpdated" ? "status" : "alert"}>{t(feedback)}</p>}
-    {mode === "register" ? <p className="auth-legal auth-agreement">{t("auth.legalAgree")} <Link className="auth-agreement-link" to="/terms">{t("auth.terms")}</Link> {t("auth.and")} <Link className="auth-agreement-link" to="/privacy">{t("auth.privacy")}</Link></p> : <p className="auth-legal">{t("auth.legal")}</p>}
+    {(isIosApp || mode === "register") ? <p className="auth-legal auth-agreement">{t("auth.legalAgree")} <Link className="auth-agreement-link" to="/terms">{t("auth.terms")}</Link> {t("auth.and")} <Link className="auth-agreement-link" to="/privacy">{t("auth.privacy")}</Link></p> : <p className="auth-legal">{t("auth.legal")}</p>}
   </section></PageShell>;
 }

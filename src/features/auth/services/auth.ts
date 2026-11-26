@@ -1,8 +1,8 @@
 import { setSessionPersistence, supabase } from "../../../lib/supabase/client";
 import { accountReturnTo } from "../utils/navigation";
 
-function authCallbackUrl(returnTo: string) {
-  return `${window.location.origin}/auth?returnTo=${encodeURIComponent(accountReturnTo(returnTo))}`;
+export function authCallbackUrl(returnTo: string, origin = window.location.origin) {
+  return `${origin}/auth?returnTo=${encodeURIComponent(accountReturnTo(returnTo))}`;
 }
 
 export function signInWithGitHub(returnTo = "/") {

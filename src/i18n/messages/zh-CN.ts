@@ -1,4 +1,7 @@
 export default {
+  "auth.iosIntro": "通过 Apple 登录，继续和朋友一起做决定。",
+  "auth.iosBrowserLink": "在浏览器中使用邮箱、Google 或 GitHub",
+  "auth.iosBrowserNote": "浏览器登录不会同步到 App。游客可浏览，登录后才能投票。",
   "app.language": "语言",
   "app.title": "BothPls — 和朋友一起选",
   "app.description": "难以抉择？开个 BothPls 投票，听听朋友的意见。",

@@ -1,4 +1,7 @@
 export default {
+  "auth.iosIntro": "Apple로 로그인하고 친구들과 함께 결정하세요.",
+  "auth.iosBrowserLink": "브라우저에서 이메일, Google 또는 GitHub 사용",
+  "auth.iosBrowserNote": "브라우저 로그인은 앱에 적용되지 않아요. 둘러보기는 누구나, 투표는 로그인 후 가능해요.",
   "app.language": "언어",
   "app.title": "BothPls — 친구와 함께 골라요",
   "app.description": "고르기 어렵나요? BothPls에서 투표를 만들고 친구들의 의견을 들어보세요.",
