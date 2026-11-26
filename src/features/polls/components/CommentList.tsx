@@ -4,7 +4,20 @@ import { AppIcon } from "../../../components/ui/AppIcon";
 import { useState } from "react";
 import type { PollComment, PollOption } from "../../../types/poll";
 import { useUserSettings } from "../../settings/hooks/useUserSettings";
+import { displayAvatar, isImageAvatar } from "../../settings/utils/profile";
 import { optionColor } from "../utils/optionColors";
+
+function CommentAvatar({ avatar = "", nickname }: { avatar?: string; nickname: string }) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const image = isImageAvatar(avatar);
+  return (
+    <div className="comment-avatar" aria-hidden="true">
+      {image && failedSrc !== avatar ? (
+        <img src={avatar} alt="" onError={() => setFailedSrc(avatar)} />
+      ) : image ? displayAvatar("") : avatar || Array.from(nickname)[0] || displayAvatar("")}
+    </div>
+  );
+}
 
 interface CommentListProps {
   comments: PollComment[];
@@ -57,7 +70,7 @@ export function CommentList({ comments, options, currentVoterId, isPollOwner = f
         const canDelete = Boolean(onDelete && (isPollOwner || isAuthor));
         return (
           <article className="comment-row" key={comment.id}>
-            <div className="comment-avatar">{comment.voter.avatar || comment.voter.nickname.slice(0, 1)}</div>
+            <CommentAvatar avatar={comment.voter.avatar} nickname={comment.voter.nickname} />
             <div className="comment-copy">
               <div className="comment-meta"><strong>{settings.showNickname ? comment.voter.nickname : t("comment.anonymous")}</strong><time>{Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString(locale, { month: "numeric", day: "numeric" })}</time></div>
               {editing ? (
