@@ -2,10 +2,12 @@
 
 已登录用户参与过的投票，在发起者手动结束或到期结束后，仍保留在首页「最近」中，并显示「我投的」和「已结束」。点击进入结果页。非公开投票也按参与记录保留；未参与且非本人创建的投票不进入最近，已删除投票不再显示。
 
-「最近」按创建或最近参与时间排序，并支持载入更多；广场仍仅展示公开且进行中的投票。
+「最近」按创建或最近参与时间排序，每页 10 条，点击「上一页／下一页」替换当前列表。切页后滚动到列表开头，切回窗口或网络恢复时刷新当前页。广场仍仅展示公开且进行中的投票，保留原有载入更多方式。
 
-`20261126132851_retain_participated_polls.sql` 移除参与记录 RPC 原有的 5 条上限，保留当前账号校验，按参与时间和投票 ID 稳定排序。前端按当前所需页数请求历史记录，包含判断下一页所需的一条额外记录。
+`20261126132851_retain_participated_polls.sql` 移除旧参与记录 RPC 的 5 条上限。`20261126134717_recent_polls_pagination.sql` 新增 `recent_polls(p_page)`：从服务端认证会话读取账号，合并创建和参与记录、去重排序，再按页查询。最多返回 11 条，前端显示 10 条，用额外一条判断下一页；不计算总页数。
 
-部署时先应用该迁移，再部署前端。`supabase/schema.sql` 已同步；本地代码和测试通过不表示线上数据库已更新。
+新查询同时覆盖较早创建的投票，解决前端合并时创建记录只取首批的问题。按活动时间、投票 ID 排序；大量并发新增或改票可能使页边界变化，若以后需要在频繁更新时维持浏览快照，可再改为游标分页。广场的参与状态也只查询当前页投票 ID，避免首页加载完整参与历史。
 
-验证：`tools/browser/tests/recent-retention.spec.mjs` 覆盖手动结束、到期结束、非公开投票、刷新后保留、结果页跳转及超过 5 条记录后的分页。`supabase/tests/recent_polls.sql` 使用真实 SQL 检查 12 条参与记录、结束状态、账号隔离及删除行为，由 `node tools/verify-account-sql.mjs` 执行（需设置 `PGLITE_MODULE`）。
+部署时先应用上述迁移，再部署前端。2026-11-26 已在 BothPls 生产项目应用并核对迁移记录；新的翻页界面需本 PR 合并并部署。`supabase/schema.sql` 已同步。Cloudflare 部署前通过 `tools/check-backend-prerequisites.mjs` 检查反馈表和分页 RPC 是否存在且拒绝匿名读取。
+
+验证：`tools/browser/tests/recent-retention.spec.mjs` 覆盖结束后保留及结果页跳转；`recent-pagination.spec.mjs` 覆盖 25 条创建记录的三页替换、返回上一页、当前页刷新、失败重试和三语言窄屏布局。`supabase/tests/recent_pagination.sql` 检查创建／参与合并去重、每次至多 11 条、较旧投票、结束／非公开投票、账号隔离和非法页码；与原有历史测试一同由 `node tools/verify-account-sql.mjs` 执行（需设置 `PGLITE_MODULE`）。

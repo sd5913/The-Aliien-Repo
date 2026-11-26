@@ -36,6 +36,12 @@ const client = createClient("https://square.test", "test-publishable-key", {
     if (missingColumnCode && url.searchParams.get("select").includes("visibility_reviewed_at")) {
       return json({ code: missingColumnCode, message: "column polls.visibility_reviewed_at does not exist" }, 400);
     }
+    if (url.pathname === "/rest/v1/votes") {
+      assert.equal(url.searchParams.get("select"), "poll_id");
+      assert.equal(url.searchParams.get("voter_id"), "eq.current-account");
+      assert.equal(url.searchParams.get("poll_id"), "in.(active-0,active-1,active-2,active-3,active-4,active-5)");
+      return json([{ poll_id: "active-0" }]);
+    }
     assert.equal(url.pathname, "/rest/v1/polls");
     const params = url.searchParams;
     assert.equal(params.get("is_public"), "eq.true");
@@ -70,6 +76,10 @@ assert.equal(cards[0].voteCount, 4);
 assert.equal(cards[0].endsAt, undefined);
 assert.equal(cards[1].endsAt, "2026-11-22T00:00:00.000Z");
 assert.equal(requests.length, 1);
+const participantCards = await fetchSquarePolls({ id: "current-account" });
+assert.equal(participantCards.polls[0].participatedByCurrentIdentity, true);
+assert.equal(participantCards.polls[1].participatedByCurrentIdentity, false);
+assert.ok(requests.every(url => !url.pathname.includes('/rpc/my_voted_polls')));
 const created = [];
 while (created.length < 5) created.push(makeOption(created));
 const active = rows.find(row => row.id === expected[0]);

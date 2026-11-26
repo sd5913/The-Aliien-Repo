@@ -10,6 +10,8 @@
 
 先应用 `supabase/migrations/20261126130816_user_feedback.sql`，再部署前端。迁移创建 `public.user_feedback` 和私有的 `feedback-screenshots` Storage bucket；`supabase/schema.sql` 已同步。
 
+2026-11-26 已在 BothPls 生产 Supabase 项目应用此迁移，核对私有 bucket 的 5 MB 限制，并从正式网页提交一条无截图的验收反馈：接口返回 201，界面显示成功，随后清理该验收记录。截图格式、大小、上传失败重试和权限由本地浏览器／SQL 测试验证；本次未在生产保留测试截图。后续 Cloudflare 发布前会探测反馈表和最近分页 RPC，缺失时阻止上传前端。
+
 团队使用 Supabase Dashboard 的 Table Editor 查看 `user_feedback`，按 `created_at` 倒序处理；`screenshot_path` 对应 Storage 中同名私有文件，可由有权限的团队成员预览。反馈保存提交时的应用版本和界面语言，联系方式留空时存为 NULL。
 
 客户端仅有指定字段的新增权限，不能读取、修改或删除反馈，也不能读取、覆盖或删除截图。管理员通过 Dashboard 或受信任的服务端角色处理；前端只使用现有公开客户端密钥。

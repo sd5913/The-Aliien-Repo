@@ -20,6 +20,7 @@ interface PollRow {
   created_at: string;
   closed_at: string | null;
   last_voted_at?: string;
+  participated_by_current_identity?: boolean;
   poll_options: OptionRow[] | null;
   votes?: { count: number }[] | null;
 }
@@ -143,10 +144,11 @@ export async function fetchSquarePolls(participant?: ParticipantProfile | null, 
   if (error) throw error;
   const rows = (data ?? []) as unknown as PollRow[];
   let votedIds = new Set<string>();
-  if (participant) {
-    const votedResult = await supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" });
-    if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
-    votedIds = new Set(((votedResult.data ?? []) as PollRow[]).map((poll) => poll.id));
+  if (participant && rows.length) {
+    const votedResult = await supabase.from("votes").select("poll_id").eq("voter_id", participant.id)
+      .in("poll_id", rows.slice(0, limit).map(row => row.id));
+    if (votedResult.error) throw votedResult.error;
+    votedIds = new Set((votedResult.data ?? []).map(vote => vote.poll_id as string));
   }
   const polls = rows.slice(0, limit).map((row) => ({ ...toCard(row), participatedByCurrentIdentity: votedIds.has(row.id) }));
   return { polls, hasMore: rows.length > limit };
@@ -199,22 +201,15 @@ function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | u
   return true;
 }
 
-export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string, offset = 0, limit = RECENT_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
-  const [votedResult, ownedPage] = await Promise.all([
-    // Include ended participation; request enough history for the merged page and its next-page sentinel.
-    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }).range(0, offset + limit) : Promise.resolve({ data: [], error: null }),
-    ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
-  ]);
-  if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;
-  const voted = (votedResult.data ?? []) as unknown as PollRow[];
-  const voteActivity = new Map(voted.map((poll) => [poll.id, poll.last_voted_at]));
-  const recent = [...new Map([...voted.map(toCard), ...ownedPage.polls].map((poll) => [poll.id, poll])).values()]
-    .map((poll) => ({ ...poll, participatedByCurrentIdentity: voteActivity.has(poll.id) }))
-    .sort((a, b) => {
-      const activity = (poll: Poll) => Math.max(Date.parse(poll.createdAt), Date.parse(voteActivity.get(poll.id) ?? poll.createdAt));
-      return activity(b) - activity(a) || b.id.localeCompare(a.id);
-    });
-  return { polls: recent.slice(offset, offset + limit), hasMore: recent.length > offset + limit };
+export async function fetchRecentPolls(accountId?: string, page = 0): Promise<{ polls: Poll[]; hasMore: boolean }> {
+  if (!accountId) return { polls: [], hasMore: false };
+  const { data, error } = await supabase.rpc("recent_polls", { p_page: page });
+  if (error) throw error;
+  const rows = (data ?? []) as PollRow[];
+  return {
+    polls: rows.slice(0, RECENT_POLL_PAGE_SIZE).map(row => ({ ...toCard(row), participatedByCurrentIdentity: row.participated_by_current_identity === true })),
+    hasMore: rows.length > RECENT_POLL_PAGE_SIZE,
+  };
 }
 
 export async function fetchPoll(pollId: string, metadataOnly = false): Promise<Poll | null> {

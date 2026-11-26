@@ -1,4 +1,8 @@
 export default {
+  "home.recentPagination": "Recent poll pages",
+  "home.previousPage": "Previous",
+  "home.nextPage": "Next",
+  "home.pageNumber": "Page {page}",
   "feedback.title": "Report a problem",
   "feedback.intro": "Something not quite right?",
   "feedback.introBody": "Tell us what happened. Help make BothPls a little better.",
