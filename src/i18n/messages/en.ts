@@ -4,7 +4,7 @@ export default {
   "translation.failed": "Translation unavailable. Showing original.",
   "translation.original": "Original text",
   "translation.showOriginal": "View original",
-  "translation.english": "View English",
+  "translation.translated": "View translation",
   "translation.retry": "Retry translation",
   "app.language": "Language",
   "app.title": "BothPls — Decide with friends",

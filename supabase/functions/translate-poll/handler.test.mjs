@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHandler } from './handler.ts';
 
 const id = '20000000-0000-4000-8000-000000000001';
-const request = (body = { pollId: id }, headers = {}) => new Request('https://edge.test', {
+const request = (body = { pollId: id, target: 'en' }, headers = {}) => new Request('https://edge.test', {
   method: 'POST', body: JSON.stringify(body), headers,
 });
 function setup() {
@@ -91,4 +91,21 @@ test('network timeouts are contained and return a retryable failure', async () =
     throw new DOMException('Timed out', 'TimeoutError');
   });
   assert.equal((await handler(request())).status, 502);
+});
+test('target languages are validated before reading saved content', async () => {
+  const { state, handler } = setup();
+  for (const target of [undefined, 'fr', 'zh-TW', null, {}, '']) {
+    assert.equal((await handler(request({ pollId: id, target }))).status, 400);
+  }
+  assert.equal(state.reads, 0); assert.equal(state.providerCalls, 0);
+});
+test('each target gets its own provider call and cache entry', async () => {
+  const { state, handler } = setup();
+  for (const target of ['zh-CN', 'en', 'ko']) {
+    const result = await (await handler(request({ pollId: id, target }))).json();
+    assert.equal(state.payload.target, target); assert.equal(result.target, target);
+  }
+  assert.equal(state.providerCalls, 3);
+  await handler(request({ pollId: id, target: 'zh-CN' }));
+  assert.equal(state.providerCalls, 3);
 });

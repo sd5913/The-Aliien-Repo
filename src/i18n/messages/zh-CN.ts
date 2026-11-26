@@ -1,10 +1,10 @@
 export default {
-  "translation.notice": "机器翻译为英文 · 可能存在误译",
-  "translation.loading": "正在翻译为英文…",
+  "translation.notice": "机器翻译为中文 · 可能存在误译",
+  "translation.loading": "正在翻译为中文…",
   "translation.failed": "翻译暂不可用，已显示原文。",
   "translation.original": "原文",
   "translation.showOriginal": "查看原文",
-  "translation.english": "查看英文",
+  "translation.translated": "查看译文",
   "translation.retry": "重试翻译",
   "app.language": "语言",
   "app.title": "BothPls — 和朋友一起选",

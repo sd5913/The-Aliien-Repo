@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import type { Poll } from "../../../types/poll";
+import { useLocale } from "../../../i18n/LocaleProvider";
+import { useAccount } from "../../auth/components/AccountProvider";
 import { pollSourceKey, translatePoll, type PollTranslation } from "../services/translation";
 
 export function usePollTranslation(source: Poll | undefined) {
-  const enabled = import.meta.env.VITE_POLL_TRANSLATION_ENABLED === "true";
+  const { locale } = useLocale();
+  const { user, loading: accountLoading } = useAccount();
+  const target = locale === "zh-CN" ? "zh-CN" : locale === "ko-KR" ? "ko" : "en";
+  const enabled = import.meta.env.VITE_POLL_TRANSLATION_ENABLED === "true" && !accountLoading
+    && Boolean(source) && !(user && source?.creatorId === user.id);
   const sourceKey = source ? pollSourceKey(source) : "";
   const id = source?.id ?? "";
-  const key = `${id}:${sourceKey}`;
+  const key = `${id}:${target}:${sourceKey}`;
   const [result, setResult] = useState<{ key: string; value?: PollTranslation; failed?: boolean }>();
   const [originalKey, setOriginalKey] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -14,11 +20,11 @@ export function usePollTranslation(source: Poll | undefined) {
     if (!enabled || !id) return;
     let active = true;
     setResult(undefined);
-    void translatePoll(id, sourceKey).then(value => {
+    void translatePoll(id, sourceKey, target).then(value => {
       if (active) setResult({ key, value });
     }, () => { if (active) setResult({ key, failed: true }); });
     return () => { active = false; };
-  }, [enabled, id, sourceKey, key, attempt]);
+  }, [enabled, id, sourceKey, target, key, attempt]);
   const current = result?.key === key ? result : undefined;
   const original = originalKey === key;
   const value = enabled && !original ? current?.value : undefined;

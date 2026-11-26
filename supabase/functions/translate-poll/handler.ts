@@ -18,7 +18,8 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch) {
     try {
       const body = await request.text();
       if (body.length > 256) return reply({ error: "INVALID_REQUEST" }, 400);
-      const { pollId } = JSON.parse(body);
+      const { pollId, target } = JSON.parse(body);
+      if (!["zh-CN", "en", "ko"].includes(target)) return reply({ error: "INVALID_TARGET" }, 400);
       if (typeof pollId !== "string" || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(pollId)) return reply({ error: "INVALID_REQUEST" }, 400);
       // Use the caller's existing link-access rules, never a service-role read.
       const pollResponse = await fetcher(`${config.url}/rest/v1/rpc/get_poll_by_link`, {
@@ -35,7 +36,7 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch) {
       const texts = [source.title, source.description, ...source.options.map(o => o.name)];
       if (source.options.length < 2 || source.options.length > 5 || texts.some(t => typeof t !== "string") || texts.join("").length > 6000) return reply({ error: "INVALID_CONTENT" }, 422);
       const sourceKey = JSON.stringify(source);
-      const key = `${pollId}:${sourceKey}`;
+      const key = `${pollId}:${target}:${sourceKey}`;
       const cached = cache.get(key);
       if (cached && cached.expires > Date.now()) return reply(cached.result);
       if (!pending.has(key)) {
@@ -47,7 +48,7 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch) {
           const response = await fetcher("https://translation.googleapis.com/language/translate/v2", {
             method: "POST", headers: { "Content-Type": "application/json", "X-goog-api-key": config.translationKey },
             // Omit source: detect each field's language, including mixed-language polls.
-            body: JSON.stringify({ q: nonEmpty.map(item => item.text), target: "en", format: "text" }), signal: AbortSignal.timeout(10000),
+            body: JSON.stringify({ q: nonEmpty.map(item => item.text), target, format: "text" }), signal: AbortSignal.timeout(10000),
           });
           if (!response.ok) throw new Error("PROVIDER_FAILURE");
           const data = await response.json();
@@ -55,7 +56,7 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch) {
           if (!Array.isArray(translations) || translations.length !== nonEmpty.length || translations.some(t => typeof t.translatedText !== "string" || !t.translatedText.trim())) throw new Error("INVALID_TRANSLATION");
           const translated = [...texts];
           nonEmpty.forEach((item, i) => { translated[item.index] = translations[i].translatedText; });
-          const result = { sourceKey, title: translated[0], description: translated[1],
+          const result = { sourceKey, target, title: translated[0], description: translated[1],
             options: source.options.map((o, i) => ({ id: o.id, name: translated[i + 2] })) };
           if (cache.size >= 200) cache.delete(cache.keys().next().value!);
           cache.set(key, { expires: Date.now() + 3600000, result });
