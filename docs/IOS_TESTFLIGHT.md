@@ -1,5 +1,6 @@
 # BothPls on TestFlight
 
+TestFlight builds use Xcode 27 and require the iOS 27 SDK or later.
 BothPls uses the `App` Xcode scheme and the explicit App ID
 `org.sd5913.bothpls`. For local and simulator development, follow the
 [iOS and Apple sign-in setup](APPLE_SIGN_IN_IOS.md).

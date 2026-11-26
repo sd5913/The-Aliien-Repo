@@ -13,7 +13,7 @@ jobs:
   upload:
     if: github.repository == 'sd5913/The-Aliien-Repo' && github.ref == 'refs/heads/main' && github.ref_protected
     environment: bothpls-testflight
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 40
     steps:
       - name: Check opt-in
@@ -54,7 +54,10 @@ jobs:
           echo "build=$number" >> "$GITHUB_OUTPUT"
           xcodebuild -version
           sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
-          (( ${sdk%%.*} >= 26 ))
+          if (( ${sdk%%.*} < 27 )); then
+            echo "::error::TestFlight requires iOS SDK 27 or later (found $sdk)."
+            exit 1
+          fi
           bash .github/scripts/ios-prepare.sh
       - name: Verify App Store Connect access
         if: steps.gate.outputs.enabled == 'true'

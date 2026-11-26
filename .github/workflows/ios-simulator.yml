@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     name: Build unsigned iOS simulator app
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 25
     env:
       VITE_SUPABASE_URL: https://example.supabase.co
