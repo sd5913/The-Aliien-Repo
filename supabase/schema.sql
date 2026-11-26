@@ -539,7 +539,7 @@ begin
     'votes',jsonb_build_array(jsonb_build_object('count',(select count(*) from public.votes all_votes where all_votes.poll_id=p.id))),
     'last_voted_at',latest_votes.last_voted_at
   ) from latest_votes join public.polls p on p.id=latest_votes.poll_id
-    order by latest_votes.last_voted_at desc limit 5;
+    order by latest_votes.last_voted_at desc,p.id desc;
 end $$;
 
 create or replace function private.update_comment(p_comment_id uuid,p_voter_id uuid,p_token text,p_body text) returns void

@@ -201,7 +201,8 @@ function isNotDeletedAndMatchesFilter(poll: Poll, filter: "active" | "ended" | u
 
 export async function fetchRecentPolls(participant?: ParticipantProfile | null, ownerId?: string, offset = 0, limit = RECENT_POLL_PAGE_SIZE): Promise<{ polls: Poll[]; hasMore: boolean }> {
   const [votedResult, ownedPage] = await Promise.all([
-    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }) : Promise.resolve({ data: [], error: null }),
+    // Include ended participation; request enough history for the merged page and its next-page sentinel.
+    participant ? supabase.rpc("my_voted_polls", { p_voter_id: participant.id, p_token: "" }).range(0, offset + limit) : Promise.resolve({ data: [], error: null }),
     ownerId ? fetchOwnedPollsPage(ownerId, 0) : Promise.resolve({ polls: [], hasMore: false }),
   ]);
   if (votedResult.error && !isLegacyAccountReadError(votedResult.error, "my_voted_polls")) throw votedResult.error;

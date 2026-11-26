@@ -27,6 +27,8 @@ const migration=fs.readdirSync('supabase/migrations').find(f=>f.endsWith('_accou
 await db.exec(fs.readFileSync('supabase/migrations/'+migration,'utf8'));
 const ownerVotingMigration=fs.readdirSync('supabase/migrations').find(f=>f.endsWith('_prevent_poll_owner_voting.sql'));
 await db.exec(fs.readFileSync('supabase/migrations/'+ownerVotingMigration,'utf8'));
+const recentMigration=fs.readdirSync('supabase/migrations').find(f=>f.endsWith('_retain_participated_polls.sql'));
+await db.exec(fs.readFileSync('supabase/migrations/'+recentMigration,'utf8'));
 await db.exec(`do $$ begin
   assert (select count(*) from public.votes where poll_id='90000000-0000-4000-8000-000000000001')=1;
   assert (select count(*) from public.poll_comments where poll_id='90000000-0000-4000-8000-000000000001')=1;
@@ -34,7 +36,7 @@ await db.exec(`do $$ begin
   assert not has_function_privilege('anon','private.delete_comment(uuid,uuid,text)','execute');
 end $$;`);
 
-for (const file of ['account_only.sql', 'permissions.sql', 'comments.sql']) {
+for (const file of ['account_only.sql', 'permissions.sql', 'comments.sql', 'recent_polls.sql']) {
   try { await db.exec(fs.readFileSync('supabase/tests/'+file,'utf8')); }
   catch(e) { console.error(file, e.message, e.where, e.detail); process.exit(1); }
   console.log('Passed: '+file);
