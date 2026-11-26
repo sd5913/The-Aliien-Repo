@@ -4,7 +4,7 @@ import type { MessageKey } from "../../../i18n/catalog";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { clearParticipant } from "../../auth/utils/participant";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PageShell } from "../../../components/layout/PageShell";
 import { signOut } from "../../auth/services/auth";
 import { useUserSettings } from "../hooks/useUserSettings";
@@ -237,6 +237,11 @@ export function SettingsPreferencesPage() {
 
         <section className="settings-group">
           <h2 className="settings-group-title">{t("settings.about")}</h2>
+          <Link className="settings-row" to="/settings/feedback">
+            <span className="settings-tile"><AppIcon name="feedback" size={20} /></span>
+            <span className="settings-row-label">{t("feedback.title")}</span>
+            <span className="settings-chevron"><AppIcon name="chevronRight" size={18} /></span>
+          </Link>
           <div className="settings-row settings-row-static">
             <span className="settings-tile"><AppIcon name="version" size={20} /></span>
             <span className="settings-row-label">{t("settings.version")}</span>

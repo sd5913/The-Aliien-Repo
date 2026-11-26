@@ -23,8 +23,9 @@ import binAlert from "../../../images/icon/bin-alert.svg";
 import google from "../../../images/icon/google.svg";
 import github from "../../../images/icon/github.svg";
 import apple from "../../../images/icon/apple.svg";
+import feedback from "../../../images/icon/feedback.svg";
 
-const icons = { home, my, setting, plus, edit, share, export: exportIcon, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp, camera, person, key, globe, version, changelog, bell, binAlert, google, github, apple };
+const icons = { home, my, setting, plus, edit, share, export: exportIcon, finished, bin, heart, chevronDown, chevronLeft, chevronRight, chevronUp, camera, person, key, globe, version, changelog, bell, binAlert, google, github, apple, feedback };
 
 export function AppIcon({ name, size = 20 }: { name: keyof typeof icons; size?: number }) {
   return <img className="app-icon" src={icons[name]} width={size} height={size} alt="" aria-hidden="true" draggable={false} />;

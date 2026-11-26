@@ -6,6 +6,7 @@ import { ResultsPage } from "../features/polls/pages/ResultsPage";
 import { VotingPage } from "../features/polls/pages/VotingPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { SettingsPreferencesPage } from "../features/settings/pages/SettingsPreferencesPage";
+import { FeedbackPage } from "../features/settings/pages/FeedbackPage";
 import { EditProfilePage } from "../features/settings/pages/EditProfilePage";
 import { AuthPage } from "../features/auth/pages/AuthPage";
 import { LegalPage } from "../features/legal/pages/LegalPage";
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
   { path: "/settings", element: <SettingsPage /> },
   { path: "/profile", loader: () => redirect("/settings") },
   { path: "/settings/preferences", element: <SettingsPreferencesPage /> },
+  { path: "/settings/feedback", element: <FeedbackPage /> },
   { path: "/edit-profile", element: <RequireAccount><EditProfilePage /></RequireAccount> },
   { path: "/create", element: <RequireAccount><CreatePollPage /></RequireAccount> },
   { path: "/join", element: <ParticipantLoginPage /> },
