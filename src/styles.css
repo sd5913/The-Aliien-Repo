@@ -745,6 +745,25 @@ h1, h2, h3 { color: var(--deep-purple); }
 .share-dialog-actions { display: flex; margin-top: 22px; }
 .share-dialog-actions > * { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 56px; padding: 0 24px; border: 1px solid #d9c9f4; border-radius: 20px; background: linear-gradient(135deg, #f7f2ff 0%, #e9defb 100%); box-shadow: 0 4px 14px #69409c18; color: var(--deep-purple); font-size: 16px; font-weight: 700; text-decoration: none; cursor: pointer; }
 .share-dialog-actions .is-disabled { opacity: .45; cursor: wait; }
+.share-dialog-actions-ios { flex-wrap: wrap; gap: 8px; }
+.share-dialog-actions-ios > button { flex: 1 1 120px; padding-inline: 12px; }
+.share-dialog-actions-ios > button:disabled { opacity: .45; }
+.paste-poll-prompt {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  inset-inline: 12px;
+  z-index: 100;
+  max-width: 420px;
+  margin-inline: auto;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--deep-purple);
+  box-shadow: 0 4px 24px #38205430;
+}
+.paste-poll-prompt p { margin: 0 0 10px; }
+.paste-poll-prompt > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.paste-poll-prompt button { min-height: 44px; }
 .share-download-icon { flex: 0 0 auto; }
 .share-dialog-note { margin: 7px 0 0; text-align: center; color: #9673b7; font-size: 11px; }
 .share-dialog .toast-message { z-index: 10; position: fixed; }
