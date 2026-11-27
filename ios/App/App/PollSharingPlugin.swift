@@ -5,7 +5,7 @@ import UIKit
 final class PollSharingPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "PollSharingPlugin"
     let jsName = "PollSharing"
-    let pluginMethods = [
+    let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "detectLink", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readLink", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "share", returnType: CAPPluginReturnPromise)
