@@ -18,6 +18,7 @@
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		936971AB423E40A4956217E4 /* AppleNonce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936971AB423E40A4956217E1 /* AppleNonce.swift */; };
 		936971AB423E40A4956217E5 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936971AB423E40A4956217E2 /* AppleSignInPlugin.swift */; };
+		9BD17455F3684CE890B40301 /* PollSharingPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD17455F3684CE890B40302 /* PollSharingPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		936971AB423E40A4956217E1 /* AppleNonce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleNonce.swift; sourceTree = "<group>"; };
 		936971AB423E40A4956217E2 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
+		9BD17455F3684CE890B40302 /* PollSharingPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollSharingPlugin.swift; sourceTree = "<group>"; };
 		936971AB423E40A4956217E3 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +74,7 @@
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				936971AB423E40A4956217E1 /* AppleNonce.swift */,
 				936971AB423E40A4956217E2 /* AppleSignInPlugin.swift */,
+				9BD17455F3684CE890B40302 /* PollSharingPlugin.swift */,
 				936971AB423E40A4956217E3 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -175,6 +178,7 @@
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				936971AB423E40A4956217E4 /* AppleNonce.swift in Sources */,
 				936971AB423E40A4956217E5 /* AppleSignInPlugin.swift in Sources */,
+				9BD17455F3684CE890B40301 /* PollSharingPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

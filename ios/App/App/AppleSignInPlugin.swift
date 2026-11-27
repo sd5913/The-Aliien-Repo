@@ -5,6 +5,7 @@ import UIKit
 final class BothPlsViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(AppleSignInPlugin())
+        bridge?.registerPluginInstance(PollSharingPlugin())
     }
 }
 

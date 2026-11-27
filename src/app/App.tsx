@@ -4,7 +4,14 @@ import { RouterProvider } from "react-router-dom";
 import { ShareProvider } from "../features/polls/components/ShareProvider";
 import { router } from "./router";
 import { AccountProvider } from "../features/auth/components/AccountProvider";
+import { PastePollPrompt } from "../features/polls/components/PastePollPrompt";
+import { isIosApp } from "../lib/platform";
+
+const openPastedPoll = (path: string) => { void router.navigate(path); };
 
 export function App() {
-  return <LocaleProvider><AccountProvider><ShareProvider><RouterProvider router={router} /></ShareProvider></AccountProvider></LocaleProvider>;
+  return <LocaleProvider><AccountProvider><ShareProvider>
+    <RouterProvider router={router} />
+    {isIosApp && <PastePollPrompt openPoll={openPastedPoll} />}
+  </ShareProvider></AccountProvider></LocaleProvider>;
 }

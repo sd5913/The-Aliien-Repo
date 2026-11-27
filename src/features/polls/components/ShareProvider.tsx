@@ -10,9 +10,11 @@ import {
 } from "react";
 import { Toast } from "../../../components/ui/Toast";
 import type { Poll } from "../../../types/poll";
-import { copyPollLink, renderShareTicket } from "../utils/share";
+import { copyPollLink, pollUrl, renderShareTicket } from "../utils/share";
 import { useAccount } from "../../auth/components/AccountProvider";
 import { canSharePoll } from "../utils/voting";
+import { isIosApp } from "../../../lib/platform";
+import { nativePollSharing } from "../services/nativePollSharing";
 
 const ShareContext = createContext<(poll: Poll) => void>(() => {});
 export const useSharePoll = () => useContext(ShareContext);
@@ -38,7 +40,18 @@ function ShareDialog({
   const ready = preview?.poll === poll && preview.locale === locale;
   const image = ready ? preview.image : undefined;
   const [toast, setToast] = useState<MessageKey | "">("");
+  const [sharing, setSharing] = useState(false);
   const toastMessage = toast || feedback;
+  const shareOnIos = async (item: { url: string } | { png: string }) => {
+    setSharing(true);
+    try {
+      await nativePollSharing.share(item);
+    } catch {
+      setToast("share.nativeFailed");
+    } finally {
+      setSharing(false);
+    }
+  };
   useEffect(() => {
     const element = dialog.current!;
     const focused = document.activeElement as HTMLElement | null;
@@ -100,7 +113,14 @@ function ShareDialog({
             </p>
           )}
         </div>
-        <div className="share-dialog-actions">
+        {isIosApp ? <div className="share-dialog-actions share-dialog-actions-ios">
+          <button type="button" disabled={sharing} onClick={() => void shareOnIos({ url: pollUrl(poll.id) })}>
+            {t("share.nativeLink")}
+          </button>
+          <button type="button" disabled={!image || sharing} onClick={() => {
+            if (image) void shareOnIos({ png: image.slice("data:image/png;base64,".length) });
+          }}>{t("share.nativeTicket")}</button>
+        </div> : <div className="share-dialog-actions">
           <a
             className={`button-soft${image ? "" : " is-disabled"}`}
             href={image || undefined}
@@ -117,7 +137,7 @@ function ShareDialog({
             </svg>
             {t("share.download")}
           </a>
-        </div>
+        </div>}
         <p className="share-dialog-note">{t("share.note")}</p>
         {toastMessage && (
           <Toast
@@ -140,6 +160,7 @@ export function ShareProvider({ children }: { children: ReactNode }) {
   const open = (selected: Poll) => {
     if (loading || !canSharePoll(selected, user?.id ?? "")) return;
     setPoll(selected);
+    if (isIosApp) return;
     // Begin inside the click gesture: browsers require user activation for clipboard writes.
     void copyPollLink(selected.id)
       .then(() => setToast("share.copied"))

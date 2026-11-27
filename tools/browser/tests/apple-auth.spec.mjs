@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { test, expect } from '@playwright/test';
-import { mockApp, owner, pollId } from './fixtures.mjs';
+import { mockApp, owner } from './fixtures.mjs';
 
 const authorizeUrl = 'https://*.supabase.co/auth/v1/authorize**';
 const tokenUrl = 'https://*.supabase.co/auth/v1/token?grant_type=id_token';
@@ -116,15 +116,6 @@ test('iOS points email, Google and GitHub to an HTTPS browser session with a san
   await expect(await popup).toHaveURL(callback.href);
   await expect(page).toHaveURL(/127\.0\.0\.1:5180\/auth/);
   await expect(page.getByRole('button', { name: appleLabel })).toBeEnabled();
-});
-
-test('iOS poll shares point to the public website', async ({ page }) => {
-  await mockNativeBridge(page, []);
-  await mockApp(page);
-  await page.goto('/poll/' + pollId + '/results');
-  await page.getByRole('button', { name: '管理投票' }).click();
-  await page.getByRole('button', { name: '分享投票' }).click();
-  await expect.poll(() => page.evaluate(() => window.shareClipboardWrites)).toContain(publicAppOrigin + '/poll/' + pollId);
 });
 
 for (const [locale, label, intro] of [
